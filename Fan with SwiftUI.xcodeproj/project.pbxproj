@@ -9,12 +9,34 @@
 /* Begin PBXBuildFile section */
 		930CFF412581878D00E8E979 /* Tests_iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF402581878D00E8E979 /* Tests_iOS.swift */; };
 		930CFF4C2581878D00E8E979 /* Tests_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF4B2581878D00E8E979 /* Tests_macOS.swift */; };
-		930CFF4E2581878D00E8E979 /* whf001App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF252581878B00E8E979 /* whf001App.swift */; };
-		930CFF4F2581878D00E8E979 /* whf001App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF252581878B00E8E979 /* whf001App.swift */; };
+		930CFF4E2581878D00E8E979 /* Airspace Fan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF252581878B00E8E979 /* Airspace Fan.swift */; };
+		930CFF4F2581878D00E8E979 /* Airspace Fan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF252581878B00E8E979 /* Airspace Fan.swift */; };
 		930CFF502581878D00E8E979 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF262581878B00E8E979 /* ContentView.swift */; };
 		930CFF512581878D00E8E979 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF262581878B00E8E979 /* ContentView.swift */; };
 		930CFF522581878D00E8E979 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 930CFF272581878C00E8E979 /* Assets.xcassets */; };
 		930CFF532581878D00E8E979 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 930CFF272581878C00E8E979 /* Assets.xcassets */; };
+		930CFF67258187EE00E8E979 /* Network resources.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF66258187EE00E8E979 /* Network resources.swift */; };
+		930CFF68258187EE00E8E979 /* Network resources.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF66258187EE00E8E979 /* Network resources.swift */; };
+		930CFF732581881000E8E979 /* Fan Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF722581881000E8E979 /* Fan Model.swift */; };
+		930CFF742581881000E8E979 /* Fan Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF722581881000E8E979 /* Fan Model.swift */; };
+		930CFF7A2581881C00E8E979 /* Fan Model View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF792581881C00E8E979 /* Fan Model View.swift */; };
+		930CFF7B2581881C00E8E979 /* Fan Model View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF792581881C00E8E979 /* Fan Model View.swift */; };
+		930CFF8D2581884000E8E979 /* House Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF8C2581884000E8E979 /* House Model.swift */; };
+		930CFF8E2581884000E8E979 /* House Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF8C2581884000E8E979 /* House Model.swift */; };
+		930CFF942581884B00E8E979 /* House View Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF932581884B00E8E979 /* House View Model.swift */; };
+		930CFF952581884B00E8E979 /* House View Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF932581884B00E8E979 /* House View Model.swift */; };
+		930CFFAE2581889600E8E979 /* Settings View Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFFAD2581889600E8E979 /* Settings View Model.swift */; };
+		930CFFAF2581889600E8E979 /* Settings View Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFFAD2581889600E8E979 /* Settings View Model.swift */; };
+		930CFFB52581889E00E8E979 /* Settings Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFFB42581889E00E8E979 /* Settings Model.swift */; };
+		930CFFB62581889E00E8E979 /* Settings Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFFB42581889E00E8E979 /* Settings Model.swift */; };
+		930CFFC5258188F400E8E979 /* Fan View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFFC4258188F400E8E979 /* Fan View.swift */; };
+		930CFFC6258188F400E8E979 /* Fan View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFFC4258188F400E8E979 /* Fan View.swift */; };
+		930CFFCC258188FF00E8E979 /* House View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFFCB258188FF00E8E979 /* House View.swift */; };
+		930CFFCD258188FF00E8E979 /* House View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFFCB258188FF00E8E979 /* House View.swift */; };
+		930CFFD32581890700E8E979 /* Settings View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFFD22581890700E8E979 /* Settings View.swift */; };
+		930CFFD42581890700E8E979 /* Settings View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFFD22581890700E8E979 /* Settings View.swift */; };
+		932D6B4D2582998A00E2F9C0 /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 932D6B4C2582998A00E2F9C0 /* Utilities.swift */; };
+		932D6B4E2582998A00E2F9C0 /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 932D6B4C2582998A00E2F9C0 /* Utilities.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -35,12 +57,12 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		930CFF252581878B00E8E979 /* whf001App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = whf001App.swift; sourceTree = "<group>"; };
+		930CFF252581878B00E8E979 /* Airspace Fan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Airspace Fan.swift"; sourceTree = "<group>"; };
 		930CFF262581878B00E8E979 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		930CFF272581878C00E8E979 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		930CFF2C2581878C00E8E979 /* whf001.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = whf001.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		930CFF2C2581878C00E8E979 /* Fan with SwiftUI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Fan with SwiftUI.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		930CFF2F2581878C00E8E979 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		930CFF342581878C00E8E979 /* whf001.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = whf001.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		930CFF342581878C00E8E979 /* Fan with SwiftUI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Fan with SwiftUI.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		930CFF362581878D00E8E979 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		930CFF372581878D00E8E979 /* macOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = macOS.entitlements; sourceTree = "<group>"; };
 		930CFF3C2581878D00E8E979 /* Tests iOS.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Tests iOS.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -49,6 +71,17 @@
 		930CFF472581878D00E8E979 /* Tests macOS.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Tests macOS.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		930CFF4B2581878D00E8E979 /* Tests_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests_macOS.swift; sourceTree = "<group>"; };
 		930CFF4D2581878D00E8E979 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		930CFF66258187EE00E8E979 /* Network resources.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Network resources.swift"; sourceTree = "<group>"; };
+		930CFF722581881000E8E979 /* Fan Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Fan Model.swift"; sourceTree = "<group>"; };
+		930CFF792581881C00E8E979 /* Fan Model View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Fan Model View.swift"; sourceTree = "<group>"; };
+		930CFF8C2581884000E8E979 /* House Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "House Model.swift"; sourceTree = "<group>"; };
+		930CFF932581884B00E8E979 /* House View Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "House View Model.swift"; sourceTree = "<group>"; };
+		930CFFAD2581889600E8E979 /* Settings View Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Settings View Model.swift"; sourceTree = "<group>"; };
+		930CFFB42581889E00E8E979 /* Settings Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Settings Model.swift"; sourceTree = "<group>"; };
+		930CFFC4258188F400E8E979 /* Fan View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Fan View.swift"; sourceTree = "<group>"; };
+		930CFFCB258188FF00E8E979 /* House View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "House View.swift"; sourceTree = "<group>"; };
+		930CFFD22581890700E8E979 /* Settings View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Settings View.swift"; sourceTree = "<group>"; };
+		932D6B4C2582998A00E2F9C0 /* Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilities.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -98,9 +131,14 @@
 		930CFF242581878B00E8E979 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
-				930CFF252581878B00E8E979 /* whf001App.swift */,
+				930CFF252581878B00E8E979 /* Airspace Fan.swift */,
 				930CFF262581878B00E8E979 /* ContentView.swift */,
+				932D6B4C2582998A00E2F9C0 /* Utilities.swift */,
 				930CFF272581878C00E8E979 /* Assets.xcassets */,
+				930CFF6D258187F400E8E979 /* Network */,
+				930CFF872581882E00E8E979 /* Fan */,
+				930CFFA12581885A00E8E979 /* House */,
+				930CFFBB258188A300E8E979 /* Settings */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -108,8 +146,8 @@
 		930CFF2D2581878C00E8E979 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				930CFF2C2581878C00E8E979 /* whf001.app */,
-				930CFF342581878C00E8E979 /* whf001.app */,
+				930CFF2C2581878C00E8E979 /* Fan with SwiftUI.app */,
+				930CFF342581878C00E8E979 /* Fan with SwiftUI.app */,
 				930CFF3C2581878D00E8E979 /* Tests iOS.xctest */,
 				930CFF472581878D00E8E979 /* Tests macOS.xctest */,
 			);
@@ -151,12 +189,50 @@
 			path = "Tests macOS";
 			sourceTree = "<group>";
 		};
+		930CFF6D258187F400E8E979 /* Network */ = {
+			isa = PBXGroup;
+			children = (
+				930CFF66258187EE00E8E979 /* Network resources.swift */,
+			);
+			path = Network;
+			sourceTree = "<group>";
+		};
+		930CFF872581882E00E8E979 /* Fan */ = {
+			isa = PBXGroup;
+			children = (
+				930CFF722581881000E8E979 /* Fan Model.swift */,
+				930CFF792581881C00E8E979 /* Fan Model View.swift */,
+				930CFFC4258188F400E8E979 /* Fan View.swift */,
+			);
+			path = Fan;
+			sourceTree = "<group>";
+		};
+		930CFFA12581885A00E8E979 /* House */ = {
+			isa = PBXGroup;
+			children = (
+				930CFF8C2581884000E8E979 /* House Model.swift */,
+				930CFF932581884B00E8E979 /* House View Model.swift */,
+				930CFFCB258188FF00E8E979 /* House View.swift */,
+			);
+			path = House;
+			sourceTree = "<group>";
+		};
+		930CFFBB258188A300E8E979 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				930CFFAD2581889600E8E979 /* Settings View Model.swift */,
+				930CFFB42581889E00E8E979 /* Settings Model.swift */,
+				930CFFD22581890700E8E979 /* Settings View.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		930CFF2B2581878C00E8E979 /* whf001 (iOS) */ = {
+		930CFF2B2581878C00E8E979 /* Fan with SwiftUI (iOS) */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 930CFF562581878D00E8E979 /* Build configuration list for PBXNativeTarget "whf001 (iOS)" */;
+			buildConfigurationList = 930CFF562581878D00E8E979 /* Build configuration list for PBXNativeTarget "Fan with SwiftUI (iOS)" */;
 			buildPhases = (
 				930CFF282581878C00E8E979 /* Sources */,
 				930CFF292581878C00E8E979 /* Frameworks */,
@@ -166,14 +242,14 @@
 			);
 			dependencies = (
 			);
-			name = "whf001 (iOS)";
+			name = "Fan with SwiftUI (iOS)";
 			productName = "whf001 (iOS)";
-			productReference = 930CFF2C2581878C00E8E979 /* whf001.app */;
+			productReference = 930CFF2C2581878C00E8E979 /* Fan with SwiftUI.app */;
 			productType = "com.apple.product-type.application";
 		};
-		930CFF332581878C00E8E979 /* whf001 (macOS) */ = {
+		930CFF332581878C00E8E979 /* Fan with SwiftUI (macOS) */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 930CFF592581878D00E8E979 /* Build configuration list for PBXNativeTarget "whf001 (macOS)" */;
+			buildConfigurationList = 930CFF592581878D00E8E979 /* Build configuration list for PBXNativeTarget "Fan with SwiftUI (macOS)" */;
 			buildPhases = (
 				930CFF302581878C00E8E979 /* Sources */,
 				930CFF312581878C00E8E979 /* Frameworks */,
@@ -183,9 +259,9 @@
 			);
 			dependencies = (
 			);
-			name = "whf001 (macOS)";
+			name = "Fan with SwiftUI (macOS)";
 			productName = "whf001 (macOS)";
-			productReference = 930CFF342581878C00E8E979 /* whf001.app */;
+			productReference = 930CFF342581878C00E8E979 /* Fan with SwiftUI.app */;
 			productType = "com.apple.product-type.application";
 		};
 		930CFF3B2581878D00E8E979 /* Tests iOS */ = {
@@ -249,7 +325,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 930CFF232581878B00E8E979 /* Build configuration list for PBXProject "whf001" */;
+			buildConfigurationList = 930CFF232581878B00E8E979 /* Build configuration list for PBXProject "Fan with SwiftUI" */;
 			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -262,8 +338,8 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				930CFF2B2581878C00E8E979 /* whf001 (iOS) */,
-				930CFF332581878C00E8E979 /* whf001 (macOS) */,
+				930CFF2B2581878C00E8E979 /* Fan with SwiftUI (iOS) */,
+				930CFF332581878C00E8E979 /* Fan with SwiftUI (macOS) */,
 				930CFF3B2581878D00E8E979 /* Tests iOS */,
 				930CFF462581878D00E8E979 /* Tests macOS */,
 			);
@@ -308,8 +384,19 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				930CFF7A2581881C00E8E979 /* Fan Model View.swift in Sources */,
+				930CFFC5258188F400E8E979 /* Fan View.swift in Sources */,
+				930CFFAE2581889600E8E979 /* Settings View Model.swift in Sources */,
+				930CFF942581884B00E8E979 /* House View Model.swift in Sources */,
+				932D6B4D2582998A00E2F9C0 /* Utilities.swift in Sources */,
+				930CFF8D2581884000E8E979 /* House Model.swift in Sources */,
+				930CFFCC258188FF00E8E979 /* House View.swift in Sources */,
+				930CFF732581881000E8E979 /* Fan Model.swift in Sources */,
 				930CFF502581878D00E8E979 /* ContentView.swift in Sources */,
-				930CFF4E2581878D00E8E979 /* whf001App.swift in Sources */,
+				930CFFB52581889E00E8E979 /* Settings Model.swift in Sources */,
+				930CFF4E2581878D00E8E979 /* Airspace Fan.swift in Sources */,
+				930CFFD32581890700E8E979 /* Settings View.swift in Sources */,
+				930CFF67258187EE00E8E979 /* Network resources.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -317,8 +404,19 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				930CFF7B2581881C00E8E979 /* Fan Model View.swift in Sources */,
+				930CFFC6258188F400E8E979 /* Fan View.swift in Sources */,
+				930CFFAF2581889600E8E979 /* Settings View Model.swift in Sources */,
+				930CFF952581884B00E8E979 /* House View Model.swift in Sources */,
+				932D6B4E2582998A00E2F9C0 /* Utilities.swift in Sources */,
+				930CFF8E2581884000E8E979 /* House Model.swift in Sources */,
+				930CFFCD258188FF00E8E979 /* House View.swift in Sources */,
+				930CFF742581881000E8E979 /* Fan Model.swift in Sources */,
 				930CFF512581878D00E8E979 /* ContentView.swift in Sources */,
-				930CFF4F2581878D00E8E979 /* whf001App.swift in Sources */,
+				930CFFB62581889E00E8E979 /* Settings Model.swift in Sources */,
+				930CFF4F2581878D00E8E979 /* Airspace Fan.swift in Sources */,
+				930CFFD42581890700E8E979 /* Settings View.swift in Sources */,
+				930CFF68258187EE00E8E979 /* Network resources.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -343,12 +441,12 @@
 /* Begin PBXTargetDependency section */
 		930CFF3E2581878D00E8E979 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 930CFF2B2581878C00E8E979 /* whf001 (iOS) */;
+			target = 930CFF2B2581878C00E8E979 /* Fan with SwiftUI (iOS) */;
 			targetProxy = 930CFF3D2581878D00E8E979 /* PBXContainerItemProxy */;
 		};
 		930CFF492581878D00E8E979 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 930CFF332581878C00E8E979 /* whf001 (macOS) */;
+			target = 930CFF332581878C00E8E979 /* Fan with SwiftUI (macOS) */;
 			targetProxy = 930CFF482581878D00E8E979 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -480,7 +578,7 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.porchdog.whf001;
-				PRODUCT_NAME = whf001;
+				PRODUCT_NAME = "Fan with SwiftUI";
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -502,7 +600,7 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.porchdog.whf001;
-				PRODUCT_NAME = whf001;
+				PRODUCT_NAME = "Fan with SwiftUI";
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -528,7 +626,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.porchdog.whf001;
-				PRODUCT_NAME = whf001;
+				PRODUCT_NAME = "Fan with SwiftUI";
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.0;
 			};
@@ -552,7 +650,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.porchdog.whf001;
-				PRODUCT_NAME = whf001;
+				PRODUCT_NAME = "Fan with SwiftUI";
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.0;
 			};
@@ -650,7 +748,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		930CFF232581878B00E8E979 /* Build configuration list for PBXProject "whf001" */ = {
+		930CFF232581878B00E8E979 /* Build configuration list for PBXProject "Fan with SwiftUI" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				930CFF542581878D00E8E979 /* Debug */,
@@ -659,7 +757,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		930CFF562581878D00E8E979 /* Build configuration list for PBXNativeTarget "whf001 (iOS)" */ = {
+		930CFF562581878D00E8E979 /* Build configuration list for PBXNativeTarget "Fan with SwiftUI (iOS)" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				930CFF572581878D00E8E979 /* Debug */,
@@ -668,7 +766,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		930CFF592581878D00E8E979 /* Build configuration list for PBXNativeTarget "whf001 (macOS)" */ = {
+		930CFF592581878D00E8E979 /* Build configuration list for PBXNativeTarget "Fan with SwiftUI (macOS)" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				930CFF5A2581878D00E8E979 /* Debug */,

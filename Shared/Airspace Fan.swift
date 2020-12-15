@@ -8,10 +8,10 @@
 import SwiftUI
 
 @main
-struct whf001App: App {
+struct AirspaceFanApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            TestHouse().getView()
         }
     }
 }
