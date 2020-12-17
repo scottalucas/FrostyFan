@@ -26,16 +26,16 @@ class HouseViewModel: ObservableObject {
             .assign(to: &$fanModels)
     }
     
-    func refreshFan(atIndex index: Int) {
-        guard fanModels.indices.contains(index) else { return }
-        fanModels[index].connection.update()
-    }
-    
-    func refreshAllFans () {
-        for model in fanModels {
-            model.connection.update()
-        }
-    }
+//    func refreshFan(atIndex index: Int) {
+//        guard fanModels.indices.contains(index) else { return }
+//        fanModels[index].update()
+//    }
+//    
+//    func refreshAllFans () {
+//        for model in fanModels {
+//            model.connection.update()
+//        }
+//    }
     
     func getView (viewModel: HouseViewModel? = nil) -> some View {
         HouseView(viewModel: self)

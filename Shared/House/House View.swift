@@ -14,11 +14,15 @@ struct HouseView: View {
     var body: some View {
         TabView (selection: $currentTab)
         {
-            FanViewPageContainer(viewModel: viewModel)
-                .tabItem {
-                    ViewPrimitive.Icon.fanIcon
-                    Text("Fan")
+            VStack {
+                FanViewPageContainer(viewModel: viewModel)
+                Text("Weather info")
+                Spacer()
                 }
+            .tabItem {
+                ViewPrimitive.Icon.fanIcon
+                Text("Fan")
+            }
                 .tag(1)
             
             Text("Connect")
@@ -40,7 +44,7 @@ struct HouseView: View {
     
     init (viewModel: HouseViewModel) {
         self.viewModel = viewModel
-        viewModel.refreshAllFans()
+//        viewModel.fanModels.forEach({ $0.update() })
     }
 }
 
@@ -56,12 +60,12 @@ struct FanViewPageContainer: View {
                 ForEach (0..<viewModel.fanModels.count) { fanModelIndex in
                     viewModel.fanModels[fanModelIndex]
                         .getView()
-                        .padding([.bottom], viewModel.fanModels.count == 0 ? 0 : 40)
+                        .padding([.bottom], viewModel.fanModels.count == 0 ? 0 : 100)
                         .tag(fanModelIndex)
                 }
             }
-            .onChange(of: selectedFan) { fan in
-                viewModel.refreshFan(atIndex: fan)
+            .onChange(of: selectedFan) { fanIndex in
+                viewModel.fanModels[fanIndex].update()
             }
             .tabViewStyle(PageTabViewStyle())
             .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .always))
@@ -72,7 +76,7 @@ struct FanViewPageContainer: View {
 
 struct HouseViewPreviews: PreviewProvider {
     static var previews: some View {
-        FanViewPageContainer(viewModel: TestHouseViewModel(withHouse: TestHouse()))
-//        HouseView(viewModel: TestHouseViewModel(withHouse: TestHouse()))
+//        FanViewPageContainer(viewModel: TestHouseViewModel(withHouse: TestHouse()))
+        HouseView(viewModel: TestHouseViewModel(withHouse: TestHouse()))
     }
 }
