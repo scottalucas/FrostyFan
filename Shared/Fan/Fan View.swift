@@ -60,11 +60,7 @@ struct FanView: View {
 
 struct SpeedController: View {
     @ObservedObject private var viewModel: FanViewModel
-    @State private var userSelected: Bool = true {
-        willSet {
-            print("Will set userSelected to \(newValue)")
-        }
-    }
+    @State private var userSelected: Bool = true
     @State private var pickerSelection: Int = -1
     
     var body: some View {
@@ -76,14 +72,13 @@ struct SpeedController: View {
             }
             .pickerStyle(SegmentedPickerStyle())
             .onChange(of: pickerSelection) { value in
-                print("On change \(value)")
+//                print("On change \(value)")
                 if userSelected {
                     print("Setting speed to \(value)")
-                    viewModel.setSpeed(to: value)
-                }
+                    viewModel.fanConnector(targetSpeed: value)                }
             }
             .onReceive(viewModel.$actualSpeed) { newSpd in
-                print("On receive new \(newSpd.description), current \(pickerSelection)")
+//                print("On receive new \(newSpd.description), current \(pickerSelection)")
                 userSelected = false
                 pickerSelection = newSpd
                 Timer.scheduledTimer(withTimeInterval: 0.05, repeats: false) { _ in

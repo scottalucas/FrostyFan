@@ -19,86 +19,94 @@ class FanViewModel: ObservableObject {
     @Published var name = "Fan"
     @Published var controllerSegments: [String] = ["Off", "On"]
     @Published var interlocked: Bool = false
-    private var speedAdjustmentPublisher: AnyCancellable?
-    var speedIsAdjusting: Bool = false {
-        didSet {
-            print ("Set speed is adjusting to \(speedIsAdjusting)")
-        }
-    }
-    private var userSpeedTarget: Int? = nil //nil before an adjustment has been requested
     private var bag = Set<AnyCancellable>()
-    
     init (forModel model: FanModel) {
         self.model = model
         startSubscribers()
     }
     
-    func setSpeed (to: Int) {
-        guard to != actualSpeed else { return }
-        let slowTimer = Timer.publish(every: 3.0, on: .main, in: .common)
-            .autoconnect()
-            .eraseToAnyPublisher()
-        let fastTimer = Timer.publish(every: 0.5, on: .main, in: .common)
-            .autoconnect()
-            .eraseToAnyPublisher()
-        let timerSource = PassthroughSubject<AnyPublisher<Date, Never>, Never>()
+    func fanConnector (targetSpeed finalTarget: Int?) {
+        enum ConnectTimer { case maintenance, slow, fast
+            func timer (sendAction action: @escaping () -> FanModel.Action) -> AnyPublisher<FanModel.Action, Never> {
+                switch self {
+                case .maintenance:
+                    return Timer.publish(every: 60.0, on: .main, in: .common)
+                    .autoconnect()
+                    .map { _ in action() }
+                    .eraseToAnyPublisher()
+                case .fast:
+                    return Timer.publish(every: 0.5, on: .main, in: .common)
+                    .autoconnect()
+                    .map { _ in action() }
+                    .eraseToAnyPublisher()
+                case .slow:
+                    return Timer.publish(every: 10.0, on: .main, in: .common)
+                    .autoconnect()
+                    .map { _ in action() }
+                    .eraseToAnyPublisher()
+                }
+            }
+        }
+        var previousSpeed: Int? = nil
+        var nextAction: FanModel.Action = .refresh
+        let timerSource = CurrentValueSubject<AnyPublisher<FanModel.Action, Never>, Never>(ConnectTimer.maintenance.timer { return nextAction })
         
-        speedAdjustmentPublisher = adjust(toSpeed: to, usingTimerSource: timerSource.eraseToAnyPublisher())
+        adjust(usingTimerSource: timerSource.eraseToAnyPublisher())
             .print("Adjust publisher")
             .sink(receiveCompletion: { [weak self] comp in
                 guard let self = self else { return }
                 switch comp {
                 case .failure(let err):
-                    print("Failed to adjust, error: \(err.localizedDescription)")
+                    print("Failed to adjust, error: \(err.localizedDescription), fan maintenance timer needs to be restarted.")
                 case .finished:
-                    print("successful adjust, requested speed: \(to) actual speed: \(self.actualSpeed.description)")
+                    print("Unexpected completion, requested speed: \(finalTarget?.description ?? "update only"), actual speed: \(self.actualSpeed.description)")
                 }
-            }, receiveValue: { [weak self] lastSpeed in
-                guard let self = self else { return }
-                if lastSpeed == to { self.speedAdjustmentPublisher?.cancel(); return }
-                if lastSpeed > 0 { timerSource.send(fastTimer) }
+            }, receiveValue: { currentSpeed in
+                guard let goal = finalTarget else { return } //maintenance timer should have been set elsewhere, should be safe to return
+                
+                if currentSpeed == goal { // goal has been met, switch to refresh
+                    nextAction = .refresh
+                } else if (goal == 0) {
+                    nextAction = .off
+                } else if ( currentSpeed == previousSpeed ) { //goal not met but speed isn't changing, fan is unresponsive
+                    nextAction = .refresh
+                } else if ( currentSpeed < goal ) {
+                    nextAction = .faster
+                } else if ( currentSpeed > goal ) {
+                    nextAction = .slower
+                }
+                
+                if currentSpeed == 0 { timerSource.send(ConnectTimer.slow.timer { return nextAction }) }
+                
+                if (currentSpeed == 1 && previousSpeed == 0) { timerSource.send(ConnectTimer.fast.timer { return nextAction }) }
+                
+                if (currentSpeed == goal) { timerSource.send(ConnectTimer.maintenance.timer { return nextAction }) }
+                
+                previousSpeed = currentSpeed
             })
-        if actualSpeed == 0 { timerSource.send(slowTimer) } else { timerSource.send(fastTimer) }
+            .store(in: &bag)
+        
+        timerSource.send(finalTarget == nil ? ConnectTimer.maintenance.timer { return nextAction } : ConnectTimer.fast.timer { return nextAction } ) //starts up here
     }
     
     func getView () -> some View {
         FanView(fanViewModel: self)
     }
     
-    private func adjust (toSpeed target: Int, usingTimerSource timerSource: AnyPublisher<AnyPublisher<Date, Never>, Never>) -> AnyPublisher <Int, FanViewModel.AdjustmentError> {
+    private func adjust (usingTimerSource timerSource: AnyPublisher<AnyPublisher<FanModel.Action, Never>, Never>) -> AnyPublisher <Int, FanViewModel.AdjustmentError> {
         typealias err = FanViewModel.AdjustmentError
         
         func fail(withError: Error) -> AnyPublisher<Int, FanViewModel.AdjustmentError> {
             let err: FanViewModel.AdjustmentError = withError as? FanViewModel.AdjustmentError ?? .unknownError(withError.localizedDescription)
             return Fail<Int, FanViewModel.AdjustmentError>.init(error: err).eraseToAnyPublisher()
         }
-//
-//        func getAction (actualSpeed aSpd: Int, targetSpeed tSpd: Int) -> throws FanModel.Action {
-//
-//            switch (actualSpeed, target) {
-//            case (_, 0):
-//                command = .off
-//            case let (a, _) where a == -1:
-//                command = .refresh
-//            case let (a, t) where a < t:
-//                command = .faster
-//            case let (a, t) where a > t:
-//                command = .slower
-//            case let (a, t) where a == t:
-//                return throw AdjustmentError.notNeeded
-//            default:
-//                return throw AdjustmentError.notReady("Actual: \(actualSpeed.description) target: \(userSpeedTarget?.description ?? "Nil")"))
-//            }
-//        }
-        
+       
         return timerSource
-            .prepend ( Just(Date()).eraseToAnyPublisher() )
+            .prepend ( Just(.refresh).eraseToAnyPublisher() )
             .switchToLatest()
-//            .filter { [weak self] _ in self?.actualSpeed != target }
-            .flatMap { [weak self] _ -> AnyPublisher<Int, FanViewModel.AdjustmentError> in
+            .flatMap { [weak self] action -> AnyPublisher<Int, FanViewModel.AdjustmentError> in
                 guard let self = self else { return fail(withError: err.parentOutOfScope) }
-                let oldSpeed = self.actualSpeed
-                return self.model.adjustFan(action: .refresh)
+                return self.model.adjustFan(action: action)
                     .retry(3)
                     .mapError { e in
                         err.retrievalError(e)
@@ -107,8 +115,6 @@ class FanViewModel: ObservableObject {
                     .tryMap {
                         self.model.chars = $0
                         guard let nSpd = FanValue.getValue(forKey: .speed, fromTable: $0), let newSpeed = Int(nSpd) else { throw err.retrievalError(.unknown("Bad values returned.")) }
-//                        guard newSpeed != oldSpeed else { throw err.speedDidNotChange }
-                        if newSpeed == oldSpeed { print ("Warning, speed did not change.") }
                         return newSpeed
                     }
                     .catch { e in fail(withError: e) }
@@ -171,7 +177,6 @@ extension FanViewModel {
         model.$chars
             .map { (FanValue.getValue(forKey: .speed, fromTable: $0) ?? "-1") }
             .map { Int($0) ?? -1 }
-            .print("Char publisher")
             .receive(on: DispatchQueue.main)
             .assign(to: &$actualSpeed)
         
@@ -199,62 +204,5 @@ extension FanViewModel {
             .map { (Int($0) ?? 0) == 1 || (Int($1) ?? 0) == 1 }
             .receive(on: DispatchQueue.main)
             .assign(to: &$interlocked)
-
-//        slowTimer
-//            .setFailureType(to: URLError.self)
-//            Just(true)
-//                .flatMap { sw in
-//                    .delay(1.0)
-//                }
-//            .map { _ in
-//                URL(string: "http://0.0.0.0:8181")!            }
-//            .flatMap { url in
-//                URLSession.shared.dataTaskPublisher(for: url)
-//            }
-////            .print()
-//            .sink(receiveCompletion: { comp in
-//                print ("Completion: \(comp)")
-//            }, receiveValue: { val in
-//                print("val: \(val)")
-//            })
-//            
-//            .store(in: &bag)
-        
-        //        model.$speed //speed adjustment subscriber.
-        //            .filter { [weak self] _ in
-        //                guard let self = self else { return false }
-        //                return self.speedIsAdjusting == true
-        //            } //abandon if speedIsAdjusting == false or the object's been deallocated
-        //            .compactMap { [weak self] optAct -> (Int, Int)? in
-        //                guard let self = self else { return nil }
-        //                guard let act = optAct, let req = self.requestedSpeed else {
-        //                    self.speedIsAdjusting = false
-        //                    return nil
-        //                } // turn off speedIsAdjusting flag and abandon if we are already at the requested speed
-        //                return (act, req)
-        //            }
-        //            .map { (act, req) -> FanModel.Action in
-        //                switch (act, req) {
-        //                case let (a, r) where a == r:
-        //                    self.speedIsAdjusting = false
-        //                    return .refresh
-        //                case (_, 0):
-        //                    return .off
-        //                case let (a, r) where a > r:
-        //                    return .slower
-        //                case let (a, r) where a < r:
-        //                    return .faster
-        //                default:
-        //                    self.speedIsAdjusting = false
-        //                    return .refresh
-        //                }
-        //            }
-        //            .throttle(for: .seconds(throttleInterval), scheduler: DispatchQueue.main, latest: true)
-        //            .sink { [weak self] action in
-        //                self?.model.update(action)
-        //                }
-        //            .store(in: &bag)
-        
-        
     }
 }
