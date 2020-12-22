@@ -12,17 +12,16 @@ class FanConnection: ObservableObject {
     private var ipAddress: String
     private var characteristics = CurrentValueSubject<Dictionary<String, String?>, Never>([:])
     @Published var characteristicsPublisher: AnyPublisher<Dictionary<String, String?>, Never>
-    var lastConnectionError: ConnectionError?
     private var bag = Set<AnyCancellable>()
     static var requiredKeys: Set<String> = ["fanspd", "doorinprocess", "timeremaining", "macaddr", "ipaddr", "model", "softver", "interlock1", "interlock2", "cfm", "power" , "house_temp", "attic_temp", "DIPS", "switch2"]
     
-    enum ConnectionError: Error {
-        case badUrl
-        case networkError (String)
-        case serverError (Int)
-        case decodeError (String)
-        case unknown (String)
-    }
+//    enum ConnectionError: Error {
+//        case badUrl
+//        case networkError (String)
+//        case serverError (Int)
+//        case decodeError (String)
+//        case unknown (String)
+//    }
     
     init (address ipAddress: String = "192.168.1.122") {
         self.ipAddress = ipAddress

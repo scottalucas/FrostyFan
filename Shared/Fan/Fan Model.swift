@@ -55,15 +55,21 @@ class FanModel: ObservableObject {
         update()
     }
     
-    private func adjustFan (action: Action? = nil) -> AnyPublisher<Dictionary<String, String?>, ConnectionError> {
-        guard var url = URL(string: "http://\(ipAddr)") else {
-            return Fail.init(outputType: Dictionary<String, String?>.self, failure: ConnectionError.badUrl)
-                .eraseToAnyPublisher()
+    func adjustFan (action: Action? = nil) -> AnyPublisher<Dictionary<String, String?>, ConnectionError> {
+        func fail(withError: Error) -> AnyPublisher<Dictionary<String, String?>, ConnectionError> {
+            let err: ConnectionError = withError as? ConnectionError ?? .unknown(withError.localizedDescription)
+            return Fail<Dictionary<String, String?>, ConnectionError>.init(error: err).eraseToAnyPublisher()
         }
-        url.appendPathComponent(action == nil ? "/fanspd.cgi" : "/fanspd.cgi?dir=\(action!.rawValue)")
+        
+        guard var u = URL(string: "http://\(ipAddr)") else {
+            return fail(withError: ConnectionError.badUrl)
+        }
+        u.appendPathComponent(action == nil ? "/fanspd.cgi" : "/fanspd.cgi?dir=\(action!.rawValue)")
+        guard let urlStr = u.absoluteString.removingPercentEncoding, let url = URL(string: urlStr) else { return fail(withError: ConnectionError.badUrl) }
+        
         return URLSession.shared
             .dataTaskPublisher(for: url)
-            .print("\(self.ipAddr)")
+//            .print("\(self.ipAddr)")
             .mapError { ConnectionError.networkError($0.localizedDescription) }
 //            .flatMap { (data, resp) in
             .flatMap { (data, resp) -> AnyPublisher<Dictionary<String, String?>, FanModel.ConnectionError> in
@@ -134,6 +140,21 @@ extension FanModel {
         case timer = 2
         case slower = 3
         case off = 4
+
+        var description: String {
+            switch self {
+            case .refresh:
+                return "refresh"
+            case .faster:
+                return "faster"
+            case .timer:
+                return "timer"
+            case .slower:
+                return "slower"
+            case .off:
+                return "off"
+            }
+        }
     }
 }
 

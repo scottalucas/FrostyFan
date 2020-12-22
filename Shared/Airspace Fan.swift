@@ -9,9 +9,11 @@ import SwiftUI
 
 @main
 struct AirspaceFanApp: App {
+
     var body: some Scene {
         WindowGroup {
-            TestHouse().getView()
+            
+            ContentView()
         }
     }
 }

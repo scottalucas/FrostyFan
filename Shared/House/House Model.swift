@@ -35,6 +35,7 @@ struct DummyFanModel {
 class TestHouse: House {
     override init () {
         super.init()
-        fansAt = ["0.0.0.0:8181", "192.168.1.122"]
+//        fansAt = ["0.0.0.0:8181", "192.168.1.122"]
+        fansAt = ["0.0.0.0:8181"]
     }
 }

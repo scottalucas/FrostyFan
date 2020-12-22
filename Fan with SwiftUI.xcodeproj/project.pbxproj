@@ -35,6 +35,8 @@
 		930CFFD42581890700E8E979 /* Settings View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFFD22581890700E8E979 /* Settings View.swift */; };
 		932D6B4D2582998A00E2F9C0 /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 932D6B4C2582998A00E2F9C0 /* Utilities.swift */; };
 		932D6B4E2582998A00E2F9C0 /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 932D6B4C2582998A00E2F9C0 /* Utilities.swift */; };
+		93857625258E90D60031ECD4 /* Custom Controls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93857624258E90D60031ECD4 /* Custom Controls.swift */; };
+		93857626258E90D60031ECD4 /* Custom Controls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93857624258E90D60031ECD4 /* Custom Controls.swift */; };
 		93CF9548258984A1004BBD49 /* Fan View Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93CF9547258984A1004BBD49 /* Fan View Model.swift */; };
 		93CF9549258984A1004BBD49 /* Fan View Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93CF9547258984A1004BBD49 /* Fan View Model.swift */; };
 /* End PBXBuildFile section */
@@ -81,6 +83,7 @@
 		930CFFCB258188FF00E8E979 /* House View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "House View.swift"; sourceTree = "<group>"; };
 		930CFFD22581890700E8E979 /* Settings View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Settings View.swift"; sourceTree = "<group>"; };
 		932D6B4C2582998A00E2F9C0 /* Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilities.swift; sourceTree = "<group>"; };
+		93857624258E90D60031ECD4 /* Custom Controls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Custom Controls.swift"; sourceTree = "<group>"; };
 		93CF9547258984A1004BBD49 /* Fan View Model.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Fan View Model.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -134,6 +137,7 @@
 				930CFF252581878B00E8E979 /* Airspace Fan.swift */,
 				930CFF262581878B00E8E979 /* ContentView.swift */,
 				932D6B4C2582998A00E2F9C0 /* Utilities.swift */,
+				93857624258E90D60031ECD4 /* Custom Controls.swift */,
 				930CFF272581878C00E8E979 /* Assets.xcassets */,
 				930CFF6D258187F400E8E979 /* Network */,
 				930CFF872581882E00E8E979 /* Fan */,
@@ -397,6 +401,7 @@
 				93CF9548258984A1004BBD49 /* Fan View Model.swift in Sources */,
 				930CFFD32581890700E8E979 /* Settings View.swift in Sources */,
 				930CFF67258187EE00E8E979 /* Network resources.swift in Sources */,
+				93857625258E90D60031ECD4 /* Custom Controls.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -417,6 +422,7 @@
 				93CF9549258984A1004BBD49 /* Fan View Model.swift in Sources */,
 				930CFFD42581890700E8E979 /* Settings View.swift in Sources */,
 				930CFF68258187EE00E8E979 /* Network resources.swift in Sources */,
+				93857626258E90D60031ECD4 /* Custom Controls.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

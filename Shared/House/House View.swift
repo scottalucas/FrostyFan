@@ -20,26 +20,26 @@ struct HouseView: View {
                 Spacer()
                 }
             .tabItem {
-                ViewPrimitive.Icon.fanIcon
+                Image.fanIcon
                 Text("Fan")
             }
                 .tag(1)
             
             Text("Connect")
                 .tabItem {
-                    ViewPrimitive.Icon.network
+                    Image.network
                     Text("Connect")
                 }
                 .tag(2)
             
             Text("Alarms")
                 .tabItem {
-                    ViewPrimitive.Icon.bell
+                    Image.bell
                     Text("Alarms")
                 }
                 .tag(3)
         }
-        .accentColor(ViewPrimitive.AppColor.Main.view)
+        .accentColor(Color.main)
     }
     
     init (viewModel: HouseViewModel) {
