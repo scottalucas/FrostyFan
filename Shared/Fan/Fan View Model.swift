@@ -49,9 +49,9 @@ class FanViewModel: ObservableObject {
         action.send(.refresh)
     }
     
-    private func fanCommFailed(withError commErr: Error) -> AnyPublisher<Int, FanViewModel.AdjustmentError> {
-        let err: FanViewModel.AdjustmentError = commErr as? FanViewModel.AdjustmentError ?? .unknownError(commErr.localizedDescription)
-        return Fail<Int, FanViewModel.AdjustmentError>.init(error: err).eraseToAnyPublisher()
+    private func fanCommFailed(withError commErr: Error) -> AnyPublisher<Int, AdjustmentError> {
+        let err: AdjustmentError = commErr as? AdjustmentError ?? .upstream(commErr)
+        return Fail<Int, AdjustmentError>.init(error: err).eraseToAnyPublisher()
     }
     
     func fanConnector(targetSpeed finalTarget: Int?) {
@@ -59,100 +59,11 @@ class FanViewModel: ObservableObject {
         if finalTarget == 0 { action.send(.off) }
         timing.send(.now)
     }
-    //    func fanConnector (targetSpeed finalTarget: Int?) {
-    //        currentAdjuster?.cancel()
-    //        struct ConnectTimer {
-    //            static let maintenance = Timer.publish(every: 60.0, on: .main, in: .common).autoconnect()
-    //
-    //            static let fast = Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
-    //
-    //            static let slow = Timer.publish(every: 10.0, on: .main, in: .common).autoconnect()
-    //        }
-    //
-    //        var previousSpeed: Int? = nil
-    //        var nextAction: FanModel.Action = .refresh
-    //        let timerSource = CurrentValueSubject<AnyPublisher<FanModel.Action, Never>, Never>(ConnectTimer.maintenance.map { _ in nextAction }.eraseToAnyPublisher())
-    //
-    //        currentAdjuster = adjust(usingTimerSource: timerSource.eraseToAnyPublisher())
-    //            .print("Adjust publisher")
-    //            .sink(receiveCompletion: { [weak self] comp in
-    //                guard let self = self else { return }
-    //                switch comp {
-    //                case .failure(let err):
-    //                    print("Failed to adjust, error: \(err.localizedDescription), fan maintenance timer needs to be restarted.")
-    //                case .finished:
-    //                    print("Unexpected completion, requested speed: \(finalTarget?.description ?? "update only"), actual speed: \(self.actualSpeed.description)")
-    //                }
-    //            }, receiveValue: { currentSpeed in
-    //                guard let goal = finalTarget else { return } //maintenance timer should have been set elsewhere, should be safe to return
-    //
-    //                if currentSpeed == goal { // goal has been met, switch to refresh
-    //                    nextAction = .refresh
-    //                } else if (goal == 0) {
-    //                    nextAction = .off
-    //                } else if ( currentSpeed == previousSpeed ) { //goal not met but speed isn't changing, fan is unresponsive
-    //                    nextAction = .refresh
-    //                } else if ( currentSpeed < goal ) {
-    //                    nextAction = .faster
-    //                } else if ( currentSpeed > goal ) {
-    //                    nextAction = .slower
-    //                }
-    //
-    //                if currentSpeed == 0 { timerSource.send(ConnectTimer.slow.map { _ in nextAction }.eraseToAnyPublisher()) }
-    //
-    //                if (currentSpeed == 1 && previousSpeed == 0) { timerSource.send(ConnectTimer.fast.map { _ in nextAction }.eraseToAnyPublisher()) }
-    //
-    //                if (currentSpeed == goal) { timerSource.send(ConnectTimer.maintenance.map { _ in nextAction }.eraseToAnyPublisher()) }
-    //
-    //                previousSpeed = currentSpeed
-    //            })
-    //        //            .store(in: &bag)
-    //
-    //        timerSource.send(finalTarget == nil ? ConnectTimer.maintenance.map { _ in nextAction }.eraseToAnyPublisher() : ConnectTimer.fast.map { _ in nextAction }.eraseToAnyPublisher() ) //starts up here
-    //    }
     
     func getView () -> some View {
         FanView(fanViewModel: self)
     }
-    
-    //    private func adjust (usingTimerSource timerSource: AnyPublisher<AnyPublisher<FanModel.Action, Never>, Never>) -> AnyPublisher <Int, FanViewModel.AdjustmentError> {
-    //        typealias err = FanViewModel.AdjustmentError
-    //
-    //        func fail(withError: Error) -> AnyPublisher<Int, FanViewModel.AdjustmentError> {
-    //            let err: FanViewModel.AdjustmentError = withError as? FanViewModel.AdjustmentError ?? .unknownError(withError.localizedDescription)
-    //            return Fail<Int, FanViewModel.AdjustmentError>.init(error: err).eraseToAnyPublisher()
-    //        }
-    //
-    //        return timerSource
-    //            .prepend ( Just(.refresh).eraseToAnyPublisher() )
-    //            .switchToLatest()
-    //            .flatMap { [weak self] action -> AnyPublisher<Int, FanViewModel.AdjustmentError> in
-    //                guard let self = self else { return fail(withError: err.parentOutOfScope) }
-    //                return self.model.adjustFan(action: action)
-    //                    .retry(3)
-    //                    .mapError { e in
-    //                        err.retrievalError(e)
-    //                    }
-    //                    .receive(on: DispatchQueue.main)
-    //                    .tryMap {
-    //                        self.model.chars = $0
-    //                        guard let nSpd = FanValue.getValue(forKey: .speed, fromTable: $0), let newSpeed = Int(nSpd) else { throw err.retrievalError(.unknown("Bad values returned.")) }
-    //                        return newSpeed
-    //                    }
-    //                    .catch { e in fail(withError: e) }
-    //                    .eraseToAnyPublisher()
-    //            }
-    //            .eraseToAnyPublisher()
-    //
-    //    }
-    //
-    //    private func test () -> AnyPublisher<Dictionary<String, String?>, FanModel.ConnectionError> {
-    //        return model.adjustFan(action: .faster).eraseToAnyPublisher()
-    //    }
-    
 }
-
-
 
 extension FanViewModel {
     convenience init () {
@@ -174,14 +85,7 @@ extension FanViewModel {
 }
 
 extension FanViewModel {
-    enum AdjustmentError: Error {
-        case notReady (String)
-        case notNeeded
-        case retrievalError(FanModel.ConnectionError)
-        case parentOutOfScope
-        case speedDidNotChange
-        case unknownError (String)
-    }
+
 }
 
 extension FanViewModel {
@@ -195,23 +99,26 @@ extension FanViewModel {
             .switchToLatest()
             .combineLatest(action.removeDuplicates().print("actions"))
             .map { (_, act) in return act }
+//            .flatMap { $0 }
             .print("before flat map")
-            .flatMap { [weak self] action -> AnyPublisher<Int, FanViewModel.AdjustmentError> in
-                guard let self = self else { return Fail<Int, FanViewModel.AdjustmentError>.init(error: .parentOutOfScope).eraseToAnyPublisher()}
+            .map { [weak self] action -> AnyPublisher<Int, AdjustmentError> in
+                guard let self = self else { return AdjustmentError.parentOutOfScope.publisher(valueType: Int.self) }
                 return self.model.adjustFan(action: action)
                     .retry(3)
                     .mapError { e in
                         AdjustmentError.retrievalError(e)
                     }
                     .receive(on: DispatchQueue.main)
-                    .tryMap {
+                    .tryMap { [weak self] in
+                        guard let self = self else { throw AdjustmentError.parentOutOfScope }
                         self.model.chars = $0
-                        guard let nSpd = FanValue.getValue(forKey: .speed, fromTable: $0), let newSpeed = Int(nSpd) else { throw AdjustmentError.retrievalError(.unknown("Bad values returned.")) }
+                        guard let nSpd = FanValue.getValue(forKey: .speed, fromTable: $0), let newSpeed = Int(nSpd) else { throw AdjustmentError.retrievalError(ConnectionError.decodeError("Bad values returned.")) }
                         return newSpeed
                     }
-                    .catch { [weak self] e in self?.fanCommFailed(withError: e) ?? Fail<Int, FanViewModel.AdjustmentError>.init(error: .parentOutOfScope).eraseToAnyPublisher() }
+                    .catch { [weak self] e in self?.fanCommFailed(withError: e) ?? Fail<Int, AdjustmentError>.init(error: .parentOutOfScope).eraseToAnyPublisher() }
                     .eraseToAnyPublisher()
             }
+            .flatMap { $0 }
             .eraseToAnyPublisher()
             .print("end of publisher")
             .sink(receiveCompletion: { comp in

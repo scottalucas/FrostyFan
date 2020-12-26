@@ -7,54 +7,6 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "66015F47-DE41-4527-9E7E-4619447E1740"
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "Shared/Custom Controls.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "33"
-            endingLineNumber = "33"
-            landmarkName = "SizeAwareViewModifier"
-            landmarkType = "14">
-            <Locations>
-               <Location
-                  uuid = "66015F47-DE41-4527-9E7E-4619447E1740 - fd5da42aa94bfd59"
-                  shouldBeEnabled = "No"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "Fan_with_SwiftUI.SizeAwareViewModifier.body(content: SwiftUI._ViewModifier_Content&lt;Fan_with_SwiftUI.SizeAwareViewModifier&gt;) -&gt; some"
-                  moduleName = "Fan with SwiftUI"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/scottlucas/Dropbox/Personal%20files/Mad%20Scientist/Swift%20Development/Fan/Airscape%20Fan%20SwiftUI/whf001/Shared/Custom%20Controls.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "33"
-                  endingLineNumber = "33"
-                  offsetFromSymbolStart = "295">
-               </Location>
-               <Location
-                  uuid = "66015F47-DE41-4527-9E7E-4619447E1740 - e997e77de438f0c9"
-                  shouldBeEnabled = "No"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "closure #1 (__C.CGSize) -&gt; () in Fan_with_SwiftUI.SizeAwareViewModifier.body(content: SwiftUI._ViewModifier_Content&lt;Fan_with_SwiftUI.SizeAwareViewModifier&gt;) -&gt; some"
-                  moduleName = "Fan with SwiftUI"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/scottlucas/Dropbox/Personal%20files/Mad%20Scientist/Swift%20Development/Fan/Airscape%20Fan%20SwiftUI/whf001/Shared/Custom%20Controls.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "33"
-                  endingLineNumber = "33"
-                  offsetFromSymbolStart = "183">
-               </Location>
-            </Locations>
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
             uuid = "E66EAFF0-D51B-4FE4-9294-56BCF288E1B7"
             shouldBeEnabled = "No"
             ignoreCount = "0"
@@ -62,8 +14,8 @@
             filePath = "Shared/Custom Controls.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "187"
-            endingLineNumber = "187"
+            startingLineNumber = "45"
+            endingLineNumber = "45"
             landmarkName = "body"
             landmarkType = "24">
          </BreakpointContent>
@@ -78,42 +30,10 @@
             filePath = "Shared/Custom Controls.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "179"
-            endingLineNumber = "179"
+            startingLineNumber = "37"
+            endingLineNumber = "37"
             landmarkName = "body"
             landmarkType = "24">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "FE80D5F7-1B1F-4F68-A84E-707C6DDDCB63"
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "Shared/Fan/Fan View Model.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "119"
-            endingLineNumber = "119"
-            landmarkName = "FanViewModel"
-            landmarkType = "3">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "3527CD47-445D-4CF3-A6A7-3CCDF7086774"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "Shared/Fan/Fan View Model.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "76"
-            endingLineNumber = "76"
-            landmarkName = "FanViewModel"
-            landmarkType = "3">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -126,8 +46,8 @@
             filePath = "Shared/Fan/Fan Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "76"
-            endingLineNumber = "76"
+            startingLineNumber = "58"
+            endingLineNumber = "58"
             landmarkName = "adjustFan(action:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -142,8 +62,8 @@
             filePath = "Shared/Fan/Fan Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "80"
-            endingLineNumber = "80"
+            startingLineNumber = "62"
+            endingLineNumber = "62"
             landmarkName = "adjustFan(action:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -158,8 +78,8 @@
             filePath = "Shared/Fan/Fan Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "71"
-            endingLineNumber = "71"
+            startingLineNumber = "53"
+            endingLineNumber = "53"
             landmarkName = "adjustFan(action:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -263,56 +183,6 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "4DC04130-CAF0-40E0-AA45-EB2592429FA4"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "Yes"
-            filePath = "Shared/Fan/Fan View Model.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "89"
-            endingLineNumber = "89"
-            landmarkName = "FanViewModel"
-            landmarkType = "3">
-            <Actions>
-               <BreakpointActionProxy
-                  ActionExtensionID = "Xcode.BreakpointAction.Log">
-                  <ActionContent
-                     message = "current @currentSpeed@ goal @goal@ original @finalTarget@"
-                     conveyanceType = "0">
-                  </ActionContent>
-               </BreakpointActionProxy>
-            </Actions>
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "56B875D3-FBB5-4715-A23F-91C5FBF13A0C"
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "Shared/Fan/Fan View Model.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "64"
-            endingLineNumber = "64"
-            landmarkName = "FanViewModel"
-            landmarkType = "3">
-            <Actions>
-               <BreakpointActionProxy
-                  ActionExtensionID = "Xcode.BreakpointAction.Log">
-                  <ActionContent
-                     message = "fanConnector called, final target @finalTarget@"
-                     conveyanceType = "0">
-                  </ActionContent>
-               </BreakpointActionProxy>
-            </Actions>
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
             uuid = "CB28E8DF-0707-4962-B258-A55D6F0198DD"
             shouldBeEnabled = "No"
             ignoreCount = "0"
@@ -377,42 +247,10 @@
             filePath = "Shared/Fan/Fan View Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "227"
-            endingLineNumber = "227"
+            startingLineNumber = "134"
+            endingLineNumber = "134"
             landmarkName = "startSubscribers()"
             landmarkType = "7">
-            <Locations>
-               <Location
-                  uuid = "56E997B1-E215-4300-9601-74C60A19BC50 - 17459afb827524eb"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "closure #5 (Swift.Int) -&gt; () in Fan_with_SwiftUI.FanViewModel.startSubscribers() -&gt; ()"
-                  moduleName = "Fan with SwiftUI"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/scottlucas/Dropbox/Personal%20files/Mad%20Scientist/Swift%20Development/Fan/Airscape%20Fan%20SwiftUI/whf001/Shared/Fan/Fan%20View%20Model.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "226"
-                  endingLineNumber = "226"
-                  offsetFromSymbolStart = "338">
-               </Location>
-               <Location
-                  uuid = "56E997B1-E215-4300-9601-74C60A19BC50 - 2a24bd33feaf7627"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "$defer #1 () -&gt; () in closure #5 (Swift.Int) -&gt; () in Fan_with_SwiftUI.FanViewModel.startSubscribers() -&gt; ()"
-                  moduleName = "Fan with SwiftUI"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/scottlucas/Dropbox/Personal%20files/Mad%20Scientist/Swift%20Development/Fan/Airscape%20Fan%20SwiftUI/whf001/Shared/Fan/Fan%20View%20Model.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "225"
-                  endingLineNumber = "225"
-                  offsetFromSymbolStart = "78">
-               </Location>
-            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -425,8 +263,8 @@
             filePath = "Shared/Fan/Fan View Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "219"
-            endingLineNumber = "219"
+            startingLineNumber = "126"
+            endingLineNumber = "126"
             landmarkName = "startSubscribers()"
             landmarkType = "7">
          </BreakpointContent>
@@ -441,9 +279,25 @@
             filePath = "Shared/Fan/Fan View Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "250"
-            endingLineNumber = "250"
+            startingLineNumber = "157"
+            endingLineNumber = "157"
             landmarkName = "startSubscribers()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "6DF5C8C9-9888-4416-AB42-A88B678CE2D9"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Shared/Custom Operators.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "35"
+            endingLineNumber = "35"
+            landmarkName = "adjustFan()"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

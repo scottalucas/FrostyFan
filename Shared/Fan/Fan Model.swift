@@ -25,54 +25,36 @@ class FanModel: ObservableObject {
 //    private var characteristics = Dictionary<String, String>()
     var ipAddr: String
     @Published var chars : Dictionary<String, String?> = [:]
-//    @Published var speed: Int?
-//    @Published var model: String?
-//    @Published var swVersion: String?
-//    @Published var availableLevels: Int?
-//    @Published var opening: Bool?
-//    @Published var timerRemaining: Int?
-//    @Published var macAddr: String?
-//    @Published var interlock1: Bool?
-//    @Published var interlock2: Bool?
-//    @Published var cfm: Int?
-//    @Published var power: Int?
-//    @Published var houseTemp: Int?
-//    @Published var atticTemp: Int?
-//    @Published var serverResponse: String?
-//    @Published var dipSwitches: String?
-//    @Published var remoteSwitch: String?
-//    var speedAdjustPublisher = PassthroughSubject<Int, FanConnection.ConnectionError>()
-//    private var characteristicsRetriever: Future<Dictionary<String,String?>, FanConnection.ConnectionError>
-//    private var characteristicsPublisher = CurrentValueSubject<Dictionary<String, String?>, Never>([:])
+
     private var bag = Set<AnyCancellable>()
 //    @Published var setpoint: Int?
     
     init(forAddress address: String) {
         connection = FanConnection(address: address)
         ipAddr = address
-//        characteristicsRetriever = FanConnection.updateFuture(ipAddr: address)
-//        startSubscribers()
         update()
     }
     
+    func testAdjustFan (action: Action? = nil) -> AnyPublisher<Dictionary<String, String?>, ConnectionError> {
+        return Just(["fanspd":"4", "model":"3.5e"]).eraseToAnyPublisher().setFailureType(to: ConnectionError.self).eraseToAnyPublisher()
+    }
+    
     func adjustFan (action: Action? = nil) -> AnyPublisher<Dictionary<String, String?>, ConnectionError> {
-        func fail(withError: Error) -> AnyPublisher<Dictionary<String, String?>, ConnectionError> {
-            let err: ConnectionError = withError as? ConnectionError ?? .unknown(withError.localizedDescription)
-            return Fail<Dictionary<String, String?>, ConnectionError>.init(error: err).eraseToAnyPublisher()
-        }
+        typealias Output = Dictionary<String, String?>
+        typealias Error = ConnectionError
         
         guard var u = URL(string: "http://\(ipAddr)") else {
-            return fail(withError: ConnectionError.badUrl)
+            return ConnectionError.badUrl.publisher(valueType: Output.self)
         }
         u.appendPathComponent(action == nil ? "/fanspd.cgi" : "/fanspd.cgi?dir=\(action!.rawValue)")
-        guard let urlStr = u.absoluteString.removingPercentEncoding, let url = URL(string: urlStr) else { return fail(withError: ConnectionError.badUrl) }
+        guard let urlStr = u.absoluteString.removingPercentEncoding, let url = URL(string: urlStr) else { return ConnectionError.badUrl.publisher(valueType: Output.self) }
         
         return URLSession.shared
             .dataTaskPublisher(for: url)
 //            .print("\(self.ipAddr)")
             .mapError { ConnectionError.networkError($0.localizedDescription) }
 //            .flatMap { (data, resp) in
-            .flatMap { (data, resp) -> AnyPublisher<Dictionary<String, String?>, FanModel.ConnectionError> in
+            .flatMap { (data, resp) -> AnyPublisher<Output, Error> in
                 do {
                     guard let resp = resp as? HTTPURLResponse else {
                         throw ConnectionError.networkError("Unknown error")
@@ -105,9 +87,9 @@ class FanModel: ObservableObject {
                         .eraseToAnyPublisher()
                     
                 } catch let error as ConnectionError {
-                    return Fail (outputType: Dictionary<String, String?>.self, failure: error).eraseToAnyPublisher()
+                    return error.publisher(valueType: Output.self)
                 } catch {
-                    return Fail (outputType: Dictionary<String, String?>.self, failure: ConnectionError.unknown(error.localizedDescription)).eraseToAnyPublisher()
+                    return ConnectionError.cast(error).publisher(valueType: Output.self)
                 }
             }
             .eraseToAnyPublisher()
@@ -159,124 +141,6 @@ extension FanModel {
 }
 
 extension FanModel {
-    enum ConnectionError: Error {
-        case badUrl
-        case networkError (String)
-        case serverError (Int)
-        case decodeError (String)
-        case unknown (String)
-    }
-}
+    
 
-extension FanModel {
-//    func startSubscribers () {
-//        characteristicsPublisher
-//            .map({ [weak self] dict in
-//                guard let s = dict["fanspd"], let s2 = s, let spd = Int(s2) else { return nil }
-////                self?.speedAdjustPublisher.send(spd)
-//                return spd
-//            })
-//            .receive(on: DispatchQueue.main)
-//            .assign(to: &$speed)
-//
-//        characteristicsPublisher
-//            .map({ dict in
-//                guard let optStringRemaining = dict["timeremaining"], let stringRemaining = optStringRemaining, let remaining = Int(stringRemaining) else { return nil }
-//                return remaining
-//            })
-//            .receive(on: DispatchQueue.main)
-//            .assign(to: &$timerRemaining)
-//
-//        characteristicsPublisher
-//            .map({ dict in
-//                dict["macaddr"] ?? nil
-//            })
-//            .receive(on: DispatchQueue.main)
-//            .assign(to: &$macAddr)
-//
-//        characteristicsPublisher
-//            .map({ dict in
-//                guard let inProcess = dict["doorinprocess"] else { return nil }
-//                return inProcess == "1" ? true : false
-//            })
-//            .receive(on: DispatchQueue.main)
-//            .assign(to: &$opening)
-//
-//        characteristicsPublisher
-//            .map({ dict in
-//                dict["model"] ?? nil
-//            })
-//            .receive(on: DispatchQueue.main)
-//            .assign(to: &$model)
-//
-//        characteristicsPublisher
-//            .map({ dict in
-//                dict["softver"] ?? nil
-//            })
-//            .receive(on: DispatchQueue.main)
-//            .assign(to: &$swVersion)
-//
-//        characteristicsPublisher
-//            .map({ dict in
-//                guard let interlock1Str = dict["interlock1"] else { return nil }
-//                return interlock1Str == "0" ? false : true
-//            })
-//            .receive(on: DispatchQueue.main)
-//            .assign(to: &$interlock1)
-//
-//        characteristicsPublisher
-//            .map({ dict in
-//                guard let interlock2Str = dict["interlock2"] else { return nil }
-//                return interlock2Str == "0" ? false : true
-//            })
-//            .receive(on: DispatchQueue.main)
-//            .assign(to: &$interlock2)
-//
-//        characteristicsPublisher
-//            .map({ dict in
-//                guard let s = dict["cfm"], let s2 = s, let cfm = Int(s2) else { return nil }
-//                return cfm
-//            })
-//            .receive(on: DispatchQueue.main)
-//            .assign(to: &$cfm)
-//
-//        characteristicsPublisher
-//            .map({ dict in
-//                guard let s = dict["power"], let s2 = s, let power = Int(s2) else { return nil }
-//                return power
-//            })
-//            .receive(on: DispatchQueue.main)
-//            .assign(to: &$power)
-//
-//        characteristicsPublisher
-//            .map({ dict in
-//                guard let s = dict["house_temp"], let s2 = s, let hTemp = Int(s2) else { return nil }
-//                return hTemp
-//            })
-//            .receive(on: DispatchQueue.main)
-//            .assign(to: &$houseTemp)
-//
-//
-//        characteristicsPublisher
-//            .map({ dict in
-//                guard let s = dict["attic_temp"], let s2 = s, let aTemp = Int(s2) else { return nil }
-//                return aTemp
-//            })
-//            .receive(on: DispatchQueue.main)
-//            .assign(to: &$atticTemp)
-//
-//        characteristicsPublisher
-//            .map({ dict in
-//                dict["DIPS"] ?? nil
-//            })
-//            .receive(on: DispatchQueue.main)
-//            .assign(to: &$dipSwitches)
-//
-//        characteristicsPublisher
-//            .map({ dict in
-//                dict["switch2"] ?? nil
-//            })
-//            .receive(on: DispatchQueue.main)
-//            .assign(to: &$remoteSwitch)
-//    }
 }
