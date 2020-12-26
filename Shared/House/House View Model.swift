@@ -24,18 +24,8 @@ class HouseViewModel: ObservableObject {
                 }
             }
             .assign(to: &$fanModels)
+        print("init house view model with fans \(fanModels.map({ $0.ipAddr }))")
     }
-    
-//    func refreshFan(atIndex index: Int) {
-//        guard fanModels.indices.contains(index) else { return }
-//        fanModels[index].update()
-//    }
-//    
-//    func refreshAllFans () {
-//        for model in fanModels {
-//            model.connection.update()
-//        }
-//    }
     
     func getView (viewModel: HouseViewModel? = nil) -> some View {
         HouseView(viewModel: self)

@@ -12,19 +12,21 @@ import Combine
 class FanViewModel: ObservableObject {
     @ObservedObject var model: FanModel
     @Published var fanRotationDuration: Double = 0.0
-    @Published var actualSpeed: Int = -1
+    @Published var speed: Int = -1
     @Published var opening: String = "No"
     @Published var airspaceFanModel: String = "Model number"
     @Published var macAddr: String?
     @Published var name = "Fan"
     @Published var controllerSegments: [String] = ["Off", "On"]
     @Published var interlocked: Bool = false
+    private var userSpeedChange: Bool?
     
     private var bag = Set<AnyCancellable>()
     
     init (forModel model: FanModel) {
         self.model = model
         startSubscribers()
+        print("init fan view model \(model.ipAddr)")
     }
     
     private func fanCommFailed(withError commErr: Error) -> AnyPublisher<Int, AdjustmentError> {
@@ -63,6 +65,14 @@ extension FanViewModel {
 extension FanViewModel {
     func startSubscribers () {
         
+        $speed
+            .filter { [weak self] _ in return self?.userSpeedChange ?? false }
+            .sink(receiveValue: { [weak self] newSpeed in
+                guard let self = self else { return }
+                self.model.setFan(toSpeed: newSpeed)
+            })
+            .store(in: &bag)
+        
         model.$chars
             .map { FanModel.FanKey.getValue(forKey: .macAddr, fromTable: $0) ?? "Not found" }
             .map { UserSettings().names[$0] ?? "Fan" }
@@ -78,7 +88,13 @@ extension FanViewModel {
             .map { (FanModel.FanKey.getValue(forKey: .speed, fromTable: $0) ?? "-1") }
             .map { Int($0) ?? -1 }
             .receive(on: DispatchQueue.main)
-            .assign(to: &$actualSpeed)
+            .sink(receiveValue: { [weak self] newSpeed in
+                guard let self = self else { return }
+                self.userSpeedChange = false
+                self.speed = newSpeed
+                self.userSpeedChange = true
+            })
+            .store(in: &bag)
         
         model.$chars
             .map { (FanModel.FanKey.getValue(forKey: .speed, fromTable: $0) ?? "0.0") }

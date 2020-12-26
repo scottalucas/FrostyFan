@@ -20,7 +20,7 @@ struct FanView: View {
                     Text("Speed: \(fanViewModel.fanRotationDuration)")
                     Text("Mac: \(fanViewModel.macAddr ?? "Not found")")
                     Text("Name: \(fanViewModel.name)")
-                    Text("Level: \(fanViewModel.actualSpeed.description)")
+                    Text("Level: \(fanViewModel.speed.description)")
                     SpeedController(viewModel: fanViewModel)
                     .padding([.leading, .trailing], 20)
                 }
@@ -38,19 +38,12 @@ struct FanView: View {
                 }
             }
         }
-//        .onChange(of: displayedSpeed) { item in
-////            fanViewModel.displayedSpeedChange(to: self.displayedSpeed)
-//            print ("Displayed: \(self.displayedSpeed) Item: \(item)")
-//        }
         .onReceive(fanViewModel.$fanRotationDuration) { val in
             withAnimation(.linear(duration: 0)) { self.angle = .zero } //needed to stop previous animation
             withAnimation(Animation.linear(duration: val).repeatForever(autoreverses: false)) {
                 self.angle += .degrees(360.0/6.0)
             }
         }
-//        .onReceive(fanViewModel.$actualSpeed) { spd in
-//            if !fanViewModel.speedIsAdjusting { displayedSpeed = spd ?? displayedSpeed}
-//        }
     }
     
     init(fanViewModel: FanViewModel) {
@@ -65,26 +58,12 @@ struct SpeedController: View {
     
     var body: some View {
         VStack {
-            Picker (selection: $pickerSelection, label: Text("Picker")) {
+            Picker (selection: $viewModel.speed, label: Text("Picker")) {
                 ForEach ((0..<viewModel.controllerSegments.count), id: \.self) { segmentIndex in
                     Text(viewModel.controllerSegments[segmentIndex])
                 }
             }
             .pickerStyle(SegmentedPickerStyle())
-            .onChange(of: pickerSelection) { value in
-//                print("On change \(value)")
-                if userSelected {
-                    print("Setting speed to \(value)")
-                    viewModel.setFan(toSpeed: value)                }
-            }
-            .onReceive(viewModel.$actualSpeed) { newSpd in
-//                print("On receive new \(newSpd.description), current \(pickerSelection)")
-                userSelected = false
-                pickerSelection = newSpd
-                Timer.scheduledTimer(withTimeInterval: 0.05, repeats: false) { _ in
-                    userSelected = true
-                }
-            }
         }
         
     }

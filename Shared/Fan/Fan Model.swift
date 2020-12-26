@@ -25,6 +25,7 @@ class FanModel: ObservableObject {
         ipAddr = address
         emit()
         timing.send(.now)
+        print("init fan model \(ipAddr)")
     }
     
     private func fanCommFailed(withError commErr: Error) -> AnyPublisher<Int, AdjustmentError> {
@@ -92,7 +93,7 @@ extension FanModel {
             case .slow:
                 return Timer.publish(every: 5.0, on: .main, in: .common).autoconnect().eraseToAnyPublisher()
             case .maintenance:
-                return Timer.publish(every: 10.0, on: .main, in: .common).autoconnect().eraseToAnyPublisher()
+                return Timer.publish(every: 30, on: .main, in: .common).autoconnect().eraseToAnyPublisher()
             case .now:
                 return Just(Date()).eraseToAnyPublisher()
             }

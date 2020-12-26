@@ -64,9 +64,9 @@ struct FanViewPageContainer: View {
                         .tag(fanModelIndex)
                 }
             }
-            .onChange(of: selectedFan) { fanIndex in
-                viewModel.fanModels[fanIndex].setFan() //might not need to do this if the fan model's getting reint'd every time we change pages
-            }
+//            .onChange(of: selectedFan) { fanIndex in
+//                viewModel.fanModels[fanIndex].setFan() //might not need to do this if the fan model's getting reint'd every time we change pages
+//            }
             .tabViewStyle(PageTabViewStyle())
             .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .always))
             .ignoresSafeArea(.all, edges: [.top])
