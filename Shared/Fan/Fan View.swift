@@ -75,7 +75,7 @@ struct SpeedController: View {
 //                print("On change \(value)")
                 if userSelected {
                     print("Setting speed to \(value)")
-                    viewModel.fanConnector(targetSpeed: value)                }
+                    viewModel.setFan(toSpeed: value)                }
             }
             .onReceive(viewModel.$actualSpeed) { newSpd in
 //                print("On receive new \(newSpd.description), current \(pickerSelection)")
