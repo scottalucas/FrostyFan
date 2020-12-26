@@ -9,113 +9,35 @@ import Foundation
 import Combine
 import SwiftUI
 
-enum FanValue : String {
-    case speed = "fanspd", model = "model", swVersion = "softver", damper = "doorinprocess", timer = "timeremaining", macAddr = "macaddr", interlock1 = "interlock1", interlock2 = "interlock2", cfm = "cfm", power = "power", houseTemp = "house_temp", atticTemp = "attic_temp", DIPSwitch = "DIPS", remoteSwitch = "switch2"
-    
-    static func getValue(forKey key: FanValue, fromTable table: [String : String?]) -> String? {
-        return table[key.rawValue] ?? nil
-    }
-    
-    static var requiredKeys: Set<String> = ["fanspd", "doorinprocess", "timeremaining", "macaddr", "ipaddr", "model", "softver", "interlock1", "interlock2", "cfm", "power" , "house_temp", "attic_temp", "DIPS", "switch2"]
-}
 
 
 class FanModel: ObservableObject {
-    @ObservedObject var connection = FanConnection()
-//    private var characteristics = Dictionary<String, String>()
     var ipAddr: String
     @Published var chars : Dictionary<String, String?> = [:]
-
+    private let timing = PassthroughSubject<FanConnectionTimers, Never>()
+    private let action = CurrentValueSubject<FanModel.Action, Never>(.refresh)
+    private var targetSpeed: Int?
+    private var lastSpeed: Int?
     private var bag = Set<AnyCancellable>()
-//    @Published var setpoint: Int?
+
     
     init(forAddress address: String) {
-        connection = FanConnection(address: address)
         ipAddr = address
-        adjustFan()
+        emit()
+        timing.send(.now)
     }
     
-    func testAdjustFan (action: Action? = nil) -> AnyPublisher<Dictionary<String, String?>, ConnectionError> {
-        return Just(["fanspd":"4", "model":"3.5e"]).eraseToAnyPublisher().setFailureType(to: ConnectionError.self).eraseToAnyPublisher()
+    private func fanCommFailed(withError commErr: Error) -> AnyPublisher<Int, AdjustmentError> {
+        let err: AdjustmentError = commErr as? AdjustmentError ?? .upstream(commErr)
+        return Fail<Int, AdjustmentError>.init(error: err).eraseToAnyPublisher()
     }
     
-    func adjustFan (action: Action = .refresh) {
-        
-        Just (action)
-            .adjustFan(at: ipAddr)
-            .sink(receiveCompletion: {comp in
-                print(comp)
-            }, receiveValue: { dict in
-                print(dict)
-            })
-            .store(in: &bag)
-        
+    func setFan(toSpeed finalTarget: Int? = nil) {
+        self.targetSpeed = finalTarget
+        if finalTarget == 0 { action.send(.off) }
+        if finalTarget == nil { action.send(.refresh) }
+        timing.send(.now)
     }
-    
-    //    func adjustFan (action: Action? = nil) -> AnyPublisher<Dictionary<String, String?>, ConnectionError> {
-    //        typealias Output = Dictionary<String, String?>
-//        typealias Error = ConnectionError
-//
-//        guard var u = URL(string: "http://\(ipAddr)") else {
-//            return ConnectionError.badUrl.publisher(valueType: Output.self)
-//        }
-//        u.appendPathComponent(action == nil ? "/fanspd.cgi" : "/fanspd.cgi?dir=\(action!.rawValue)")
-//        guard let urlStr = u.absoluteString.removingPercentEncoding, let url = URL(string: urlStr) else { return ConnectionError.badUrl.publisher(valueType: Output.self) }
-//
-//        return URLSession.shared
-//            .dataTaskPublisher(for: url)
-////            .print("\(self.ipAddr)")
-//            .mapError { ConnectionError.networkError($0.localizedDescription) }
-////            .flatMap { (data, resp) in
-//            .flatMap { (data, resp) -> AnyPublisher<Output, Error> in
-//                do {
-//                    guard let resp = resp as? HTTPURLResponse else {
-//                        throw ConnectionError.networkError("Unknown error")
-//                    }
-//                    guard (200..<300).contains(resp.statusCode) else {
-//                        throw ConnectionError.networkError("Bad status code: \(resp.statusCode)")
-//                    }
-//                    guard let decodedData = String(data: data, encoding: .ascii) else {
-//                        throw ConnectionError.decodeError("Failed to convert data to text, data length: \(data.count)")
-//                    }
-//
-//                    let tupleArray = decodedData
-//                        .filter({ !$0.isWhitespace })
-//                        .split(separator: "<")
-//                        .filter({ !$0.contains("/") && $0.contains(">") })
-//                        .map ({ $0.split(separator: ">", maxSplits: 1) })
-//                        .map ({ arr -> (String, String?) in
-//                            let newTuple = (String(arr[0]), arr.count == 2 ? String(arr[1]) : nil)
-//                            return newTuple
-//                        })
-//
-//                    let newDict = Dictionary(tupleArray, uniquingKeysWith: { (first, _) in first })
-//
-//                    guard FanConnection.requiredKeys.isSubset(of: Set( newDict.keys.map({ String($0) }) )) else {
-//                            throw ConnectionError.decodeError("Missing required fan parameters")
-//                            }
-//
-//                    return Just(newDict)
-//                        .setFailureType(to: ConnectionError.self)
-//                        .eraseToAnyPublisher()
-//
-//                } catch let error as ConnectionError {
-//                    return error.publisher(valueType: Output.self)
-//                } catch {
-//                    return ConnectionError.cast(error).publisher(valueType: Output.self)
-//                }
-//            }
-//            .eraseToAnyPublisher()
-//    }
-    
-//    func update(_ msg: Action? = nil) {
-//        adjustFan()
-////            .receive(on: DispatchQueue.main)
-//            .sink(receiveCompletion: { _ in }, receiveValue: {[weak self] dict in
-//                self?.chars = dict
-//            })
-//            .store(in: &bag)
-//    }
     
     func getView () -> some View {
         FanViewModel(forModel: self).getView()
@@ -129,6 +51,16 @@ extension FanModel {
 }
 
 extension FanModel {
+    
+    enum FanKey : String {
+        case speed = "fanspd", model = "model", swVersion = "softver", damper = "doorinprocess", timer = "timeremaining", macAddr = "macaddr", interlock1 = "interlock1", interlock2 = "interlock2", cfm = "cfm", power = "power", houseTemp = "house_temp", atticTemp = "attic_temp", DIPSwitch = "DIPS", remoteSwitch = "switch2"
+        
+        static func getValue(forKey key: FanModel.FanKey, fromTable table: [String : String?]) -> String? {
+            return table[key.rawValue] ?? nil
+        }
+        
+        static var requiredKeys: Set<String> = ["fanspd", "doorinprocess", "timeremaining", "macaddr", "ipaddr", "model", "softver", "interlock1", "interlock2", "cfm", "power" , "house_temp", "attic_temp", "DIPS", "switch2"]
+    }
     enum Action: Int {
         case refresh = 0
         case faster = 1
@@ -151,9 +83,89 @@ extension FanModel {
             }
         }
     }
+    enum FanConnectionTimers {
+        case maintenance, fast, slow, now
+        var publisher: AnyPublisher<Date, Never> {
+            switch self {
+            case .fast:
+                return Timer.publish(every: 0.5, on: .main, in: .common).autoconnect().eraseToAnyPublisher()
+            case .slow:
+                return Timer.publish(every: 5.0, on: .main, in: .common).autoconnect().eraseToAnyPublisher()
+            case .maintenance:
+                return Timer.publish(every: 10.0, on: .main, in: .common).autoconnect().eraseToAnyPublisher()
+            case .now:
+                return Just(Date()).eraseToAnyPublisher()
+            }
+        }
+    }
 }
 
 extension FanModel {
-    
-
+    func emit () {
+        timing
+            .removeDuplicates()
+            .map { timerType in
+                timerType.publisher
+            }
+            .switchToLatest()
+            .combineLatest(action.removeDuplicates())
+            .map { [weak self] (_, action) -> AnyPublisher<Int, AdjustmentError> in
+                guard let self = self else {
+                    return AdjustmentError.parentOutOfScope.publisher(valueType: Int.self) }
+                return Just (action)
+                    .adjustFan(at: self.ipAddr)
+                    .receive(on: DispatchQueue.main)
+                    .flatMap { [weak self] chars -> AnyPublisher<Int, AdjustmentError> in
+                        guard let self = self else { return AdjustmentError.parentOutOfScope.publisher(valueType: Int.self) }
+                        self.chars = chars
+                        guard let nSpd = FanModel.FanKey.getValue(forKey: .speed, fromTable: chars), let newSpeed = Int(nSpd) else { return AdjustmentError.retrievalError(ConnectionError.decodeError("Bad values returned.")).publisher(valueType: Int.self) }
+                        return Just.init(newSpeed).setFailureType(to: AdjustmentError.self).eraseToAnyPublisher()
+                    }
+                    .eraseToAnyPublisher()
+            }
+            .flatMap { $0 }
+            .sink(receiveCompletion: { comp in
+                if case .failure(let err) = comp {
+                    print("Failed timer source, error: \(err.localizedDescription)")
+                }
+                if case .finished = comp {
+                    print ("Unexpected completion.")
+                }
+                
+            }, receiveValue: { [weak self] currentSpeed in
+                defer { self?.lastSpeed = currentSpeed }
+                guard let self = self else { return }
+                guard let target = self.targetSpeed else {
+                    self.action.send(.refresh)
+                    self.timing.send(.maintenance)
+                    return
+                }
+                guard target != currentSpeed else { // complete
+                    self.action.send(.refresh)
+                    self.timing.send(.maintenance)
+                    return
+                }
+                // we have a target speed, target speed != current speed
+                if currentSpeed == 0 { //fan starting up
+                    self.timing.send(.slow)
+                } else if self.lastSpeed == nil { //don't have a previous speed, probably first time through
+                    self.timing.send(.fast)
+                } else if currentSpeed == self.lastSpeed! { //unresponsive fan
+                    self.timing.send(.slow)
+                } else {
+                    self.timing.send(.fast)
+                }
+                
+                switch (target - currentSpeed) {
+                case let delta where delta > 0:
+                    self.action.send(.faster)
+                case let delta where delta < 0:
+                    self.action.send(.slower)
+                default:
+                    self.action.send(.refresh)
+                }
+            })
+            .store(in: &bag)
+    }
+  
 }
