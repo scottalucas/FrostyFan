@@ -91,23 +91,24 @@ extension FanViewModel {
 extension FanViewModel {
     func startSubscribers () {
         
-        timing.print("timer source")
+        timing
+//            .print("timer source")
             .removeDuplicates()
             .map { timerType in
                 timerType.publisher
             }
             .switchToLatest()
-            .combineLatest(action.removeDuplicates().print("actions"))
+            .combineLatest(action.removeDuplicates())
+//            .print("actions"))
             .map { (_, act) in return act }
 //            .flatMap { $0 }
-            .print("before flat map")
+//            .print("before flat map")
             .map { [weak self] action -> AnyPublisher<Int, AdjustmentError> in
-                guard let self = self else { return AdjustmentError.parentOutOfScope.publisher(valueType: Int.self) }
-                return self.model.adjustFan(action: action)
-                    .retry(3)
-                    .mapError { e in
-                        AdjustmentError.retrievalError(e)
-                    }
+                guard let self = self else {
+                    return AdjustmentError.parentOutOfScope.publisher(valueType: Int.self) }
+                return Just (action)
+                    .adjustFan(at: self.model.ipAddr)
+                    .print("adjust fan")
                     .receive(on: DispatchQueue.main)
                     .tryMap { [weak self] in
                         guard let self = self else { throw AdjustmentError.parentOutOfScope }
@@ -115,12 +116,12 @@ extension FanViewModel {
                         guard let nSpd = FanValue.getValue(forKey: .speed, fromTable: $0), let newSpeed = Int(nSpd) else { throw AdjustmentError.retrievalError(ConnectionError.decodeError("Bad values returned.")) }
                         return newSpeed
                     }
-                    .catch { [weak self] e in self?.fanCommFailed(withError: e) ?? Fail<Int, AdjustmentError>.init(error: .parentOutOfScope).eraseToAnyPublisher() }
+                    .catch { [weak self] e in self?.fanCommFailed(withError: e) ?? AdjustmentError.parentOutOfScope.publisher(valueType: Int.self) }
                     .eraseToAnyPublisher()
             }
             .flatMap { $0 }
             .eraseToAnyPublisher()
-            .print("end of publisher")
+//            .print("end of publisher")
             .sink(receiveCompletion: { comp in
                 //                guard let self = self else { return }
                 if case .failure(let err) = comp {

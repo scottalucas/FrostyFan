@@ -65,7 +65,7 @@ struct FanViewPageContainer: View {
                 }
             }
             .onChange(of: selectedFan) { fanIndex in
-                viewModel.fanModels[fanIndex].update()
+                viewModel.fanModels[fanIndex].adjustFan()
             }
             .tabViewStyle(PageTabViewStyle())
             .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .always))

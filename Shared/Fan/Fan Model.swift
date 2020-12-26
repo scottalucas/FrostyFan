@@ -32,77 +32,90 @@ class FanModel: ObservableObject {
     init(forAddress address: String) {
         connection = FanConnection(address: address)
         ipAddr = address
-        update()
+        adjustFan()
     }
     
     func testAdjustFan (action: Action? = nil) -> AnyPublisher<Dictionary<String, String?>, ConnectionError> {
         return Just(["fanspd":"4", "model":"3.5e"]).eraseToAnyPublisher().setFailureType(to: ConnectionError.self).eraseToAnyPublisher()
     }
     
-    func adjustFan (action: Action? = nil) -> AnyPublisher<Dictionary<String, String?>, ConnectionError> {
-        typealias Output = Dictionary<String, String?>
-        typealias Error = ConnectionError
+    func adjustFan (action: Action = .refresh) {
         
-        guard var u = URL(string: "http://\(ipAddr)") else {
-            return ConnectionError.badUrl.publisher(valueType: Output.self)
-        }
-        u.appendPathComponent(action == nil ? "/fanspd.cgi" : "/fanspd.cgi?dir=\(action!.rawValue)")
-        guard let urlStr = u.absoluteString.removingPercentEncoding, let url = URL(string: urlStr) else { return ConnectionError.badUrl.publisher(valueType: Output.self) }
-        
-        return URLSession.shared
-            .dataTaskPublisher(for: url)
-//            .print("\(self.ipAddr)")
-            .mapError { ConnectionError.networkError($0.localizedDescription) }
-//            .flatMap { (data, resp) in
-            .flatMap { (data, resp) -> AnyPublisher<Output, Error> in
-                do {
-                    guard let resp = resp as? HTTPURLResponse else {
-                        throw ConnectionError.networkError("Unknown error")
-                    }
-                    guard (200..<300).contains(resp.statusCode) else {
-                        throw ConnectionError.networkError("Bad status code: \(resp.statusCode)")
-                    }
-                    guard let decodedData = String(data: data, encoding: .ascii) else {
-                        throw ConnectionError.decodeError("Failed to convert data to text, data length: \(data.count)")
-                    }
-                    
-                    let tupleArray = decodedData
-                        .filter({ !$0.isWhitespace })
-                        .split(separator: "<")
-                        .filter({ !$0.contains("/") && $0.contains(">") })
-                        .map ({ $0.split(separator: ">", maxSplits: 1) })
-                        .map ({ arr -> (String, String?) in
-                            let newTuple = (String(arr[0]), arr.count == 2 ? String(arr[1]) : nil)
-                            return newTuple
-                        })
-                    
-                    let newDict = Dictionary(tupleArray, uniquingKeysWith: { (first, _) in first })
-                    
-                    guard FanConnection.requiredKeys.isSubset(of: Set( newDict.keys.map({ String($0) }) )) else {
-                            throw ConnectionError.decodeError("Missing required fan parameters")
-                            }
-                    
-                    return Just(newDict)
-                        .setFailureType(to: ConnectionError.self)
-                        .eraseToAnyPublisher()
-                    
-                } catch let error as ConnectionError {
-                    return error.publisher(valueType: Output.self)
-                } catch {
-                    return ConnectionError.cast(error).publisher(valueType: Output.self)
-                }
-            }
-            .eraseToAnyPublisher()
-    }
-    
-    func update(_ msg: Action? = nil) {
-        adjustFan()
-            .receive(on: DispatchQueue.main)
-            .sink(receiveCompletion: { _ in }, receiveValue: {[weak self] dict in
-                self?.chars = dict
+        Just (action)
+            .adjustFan(at: ipAddr)
+            .sink(receiveCompletion: {comp in
+                print(comp)
+            }, receiveValue: { dict in
+                print(dict)
             })
             .store(in: &bag)
+        
     }
+    
+    //    func adjustFan (action: Action? = nil) -> AnyPublisher<Dictionary<String, String?>, ConnectionError> {
+    //        typealias Output = Dictionary<String, String?>
+//        typealias Error = ConnectionError
+//
+//        guard var u = URL(string: "http://\(ipAddr)") else {
+//            return ConnectionError.badUrl.publisher(valueType: Output.self)
+//        }
+//        u.appendPathComponent(action == nil ? "/fanspd.cgi" : "/fanspd.cgi?dir=\(action!.rawValue)")
+//        guard let urlStr = u.absoluteString.removingPercentEncoding, let url = URL(string: urlStr) else { return ConnectionError.badUrl.publisher(valueType: Output.self) }
+//
+//        return URLSession.shared
+//            .dataTaskPublisher(for: url)
+////            .print("\(self.ipAddr)")
+//            .mapError { ConnectionError.networkError($0.localizedDescription) }
+////            .flatMap { (data, resp) in
+//            .flatMap { (data, resp) -> AnyPublisher<Output, Error> in
+//                do {
+//                    guard let resp = resp as? HTTPURLResponse else {
+//                        throw ConnectionError.networkError("Unknown error")
+//                    }
+//                    guard (200..<300).contains(resp.statusCode) else {
+//                        throw ConnectionError.networkError("Bad status code: \(resp.statusCode)")
+//                    }
+//                    guard let decodedData = String(data: data, encoding: .ascii) else {
+//                        throw ConnectionError.decodeError("Failed to convert data to text, data length: \(data.count)")
+//                    }
+//
+//                    let tupleArray = decodedData
+//                        .filter({ !$0.isWhitespace })
+//                        .split(separator: "<")
+//                        .filter({ !$0.contains("/") && $0.contains(">") })
+//                        .map ({ $0.split(separator: ">", maxSplits: 1) })
+//                        .map ({ arr -> (String, String?) in
+//                            let newTuple = (String(arr[0]), arr.count == 2 ? String(arr[1]) : nil)
+//                            return newTuple
+//                        })
+//
+//                    let newDict = Dictionary(tupleArray, uniquingKeysWith: { (first, _) in first })
+//
+//                    guard FanConnection.requiredKeys.isSubset(of: Set( newDict.keys.map({ String($0) }) )) else {
+//                            throw ConnectionError.decodeError("Missing required fan parameters")
+//                            }
+//
+//                    return Just(newDict)
+//                        .setFailureType(to: ConnectionError.self)
+//                        .eraseToAnyPublisher()
+//
+//                } catch let error as ConnectionError {
+//                    return error.publisher(valueType: Output.self)
+//                } catch {
+//                    return ConnectionError.cast(error).publisher(valueType: Output.self)
+//                }
+//            }
+//            .eraseToAnyPublisher()
+//    }
+    
+//    func update(_ msg: Action? = nil) {
+//        adjustFan()
+////            .receive(on: DispatchQueue.main)
+//            .sink(receiveCompletion: { _ in }, receiveValue: {[weak self] dict in
+//                self?.chars = dict
+//            })
+//            .store(in: &bag)
+//    }
     
     func getView () -> some View {
         FanViewModel(forModel: self).getView()

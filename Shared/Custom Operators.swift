@@ -22,16 +22,21 @@ extension Publisher where Output == FanModel.Action, Failure == Never {
     }
 }
 
-extension Publisher where Output == URL, Failure == ConnectionError {
+extension Publisher where Output == FanModel.Action, Failure == Never {
     
-    func adjustFan() -> AnyPublisher<Dictionary<String,String?>, AdjustmentError> {
+    func adjustFan(at ip: String) -> AnyPublisher<Dictionary<String,String?>, AdjustmentError> {
         typealias Output = Dictionary<String,String?>
         typealias Failure = AdjustmentError
         
         return self
-            .mapError { Failure.upstream($0) }
-            .flatMap { url -> AnyPublisher<Output, Failure> in
-                return URLSession.shared.dataTaskPublisher(for: url)
+            .setFailureType(to: Failure.self)
+            .flatMap { action -> AnyPublisher<Output, Failure> in
+                guard let baseUrl = URL(string: "http://\(ip)"),
+                      let urlStr = baseUrl.appendingPathComponent("/fanspd.cgi?dir=\(action.rawValue)").absoluteString.removingPercentEncoding,
+                      let finalURL = URL(string: urlStr)
+                else { return AdjustmentError.upstream(ConnectionError.badUrl).publisher(valueType: Output.self) }
+                
+                return URLSession.shared.dataTaskPublisher(for: finalURL)
                     .tryMap { (data, resp) -> Output in
                         guard let resp = resp as? HTTPURLResponse else {
                             throw Failure.upstream(ConnectionError.networkError("Bad response from fan."))
@@ -60,7 +65,9 @@ extension Publisher where Output == URL, Failure == ConnectionError {
 
                         return newDict
                     }
+                    .retry(3)
                     .mapError { $0 as? Failure ?? Failure.cast($0) }
+                    .print("data task pub")
                     .eraseToAnyPublisher()
             }
             .eraseToAnyPublisher()
@@ -96,17 +103,17 @@ extension Publisher where Output == String, Failure == ConnectionError {
             .eraseToAnyPublisher()
     }
 }
-
-extension Publisher where Output == FanModel.Action, Failure == Never {
-    
-    func updateFan (atIp ip: String) -> AnyPublisher<Dictionary<String,String?>, AdjustmentError> {
-        typealias Output = Dictionary<String, String?>
-        typealias Failure = AdjustmentError
-        return self
-            .getAdjustmentURL(for: ip)
-            .adjustFan()
-    }
-}
+//
+//extension Publisher where Output == FanModel.Action, Failure == Never {
+//    
+//    func updateFan (atIp ip: String) -> AnyPublisher<Dictionary<String,String?>, AdjustmentError> {
+//        typealias Output = Dictionary<String, String?>
+//        typealias Failure = AdjustmentError
+//        return self
+//            .getAdjustmentURL(for: ip)
+//            .adjustFan()
+//    }
+//}
 
 
 //extension Publisher where Output == FanModel.Action, Failure == Never {
