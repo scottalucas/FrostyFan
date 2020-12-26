@@ -24,26 +24,43 @@ extension Publisher where Output == FanModel.Action, Failure == Never {
 
 extension Publisher where Output == URL, Failure == ConnectionError {
     
-    func adjustFan() -> AnyPublisher<String, ConnectionError> {
-        typealias Output = String
-        typealias Failure = ConnectionError
+    func adjustFan() -> AnyPublisher<Dictionary<String,String?>, AdjustmentError> {
+        typealias Output = Dictionary<String,String?>
+        typealias Failure = AdjustmentError
         
         return self
+            .mapError { Failure.upstream($0) }
             .flatMap { url -> AnyPublisher<Output, Failure> in
                 return URLSession.shared.dataTaskPublisher(for: url)
                     .tryMap { (data, resp) -> Output in
                         guard let resp = resp as? HTTPURLResponse else {
-                            throw Failure.networkError("Bad response from fan.")
+                            throw Failure.upstream(ConnectionError.networkError("Bad response from fan."))
                         }
                         guard (200..<300).contains(resp.statusCode) else {
-                            throw Failure.networkError("Bad status code: \(resp.statusCode)")
+                            throw Failure.upstream(ConnectionError.networkError("Bad status code: \(resp.statusCode)"))
                         }
                         guard let decodedData = String(data: data, encoding: .ascii) else {
-                            throw Failure.decodeError("Failed to convert data to text, data length: \(data.count)")
+                            throw Failure.upstream(ConnectionError.decodeError("Failed to convert data to text, data length: \(data.count)"))
                         }
-                        return decodedData
+                        let tupleArray = decodedData
+                            .filter({ !$0.isWhitespace })
+                            .split(separator: "<")
+                            .filter({ !$0.contains("/") && $0.contains(">") })
+                            .map ({ $0.split(separator: ">", maxSplits: 1) })
+                            .map ({ arr -> (String, String?) in
+                                let newTuple = (String(arr[0]), arr.count == 2 ? String(arr[1]) : nil)
+                                return newTuple
+                            })
+                        
+                        let newDict = Dictionary(tupleArray, uniquingKeysWith: { (first, _) in first })
+
+                        guard FanConnection.requiredKeys.isSubset(of: Set( newDict.keys.map({ String($0) }) )) else {
+                            throw Failure.missingKeys
+                        }
+
+                        return newDict
                     }
-                    .mapError { $0 as? ConnectionError ?? ConnectionError.cast($0) }
+                    .mapError { $0 as? Failure ?? Failure.cast($0) }
                     .eraseToAnyPublisher()
             }
             .eraseToAnyPublisher()
@@ -88,7 +105,6 @@ extension Publisher where Output == FanModel.Action, Failure == Never {
         return self
             .getAdjustmentURL(for: ip)
             .adjustFan()
-            .parseFanResponse()
     }
 }
 
