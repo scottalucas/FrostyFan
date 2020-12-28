@@ -10,7 +10,7 @@ import Combine
 
 extension Publisher where Output == FanModel.Action, Failure == Never {
     
-    func adjustFan(at ip: String) -> AnyPublisher<Dictionary<String,String?>, AdjustmentError> {
+    func adjustFan(at ip: String, retry: Bool = false) -> AnyPublisher<Dictionary<String,String?>, AdjustmentError> {
         typealias Output = Dictionary<String,String?>
         typealias Failure = AdjustmentError
         
@@ -51,7 +51,7 @@ extension Publisher where Output == FanModel.Action, Failure == Never {
 
                         return newDict
                     }
-                    .retry(3)
+                    .retry(retry ? 3 : 0)
                     .mapError { $0 as? Failure ?? Failure.cast($0) }
                     .eraseToAnyPublisher()
             }

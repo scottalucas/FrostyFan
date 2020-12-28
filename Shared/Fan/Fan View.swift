@@ -17,12 +17,16 @@ struct FanView: View {
             ZStack {
                 VStack {
                     Spacer()
+                    Spacer()
+                    Spacer()
+                    Spacer()
                     Text("Speed: \(fanViewModel.fanRotationDuration)")
                     Text("Mac: \(fanViewModel.macAddr ?? "Not found")")
                     Text("Name: \(fanViewModel.name)")
                     Text("Level: \(fanViewModel.speed.description)")
                     SpeedController(viewModel: fanViewModel)
                     .padding([.leading, .trailing], 20)
+                    Spacer ()
                 }
                 .zIndex(/*@START_MENU_TOKEN@*/1.0/*@END_MENU_TOKEN@*/)
                 VStack {
@@ -36,6 +40,7 @@ struct FanView: View {
                         .scaleEffect(1.5)
                     Spacer()
                 }
+                .zIndex(0)
             }
         }
         .onReceive(fanViewModel.$fanRotationDuration) { val in
@@ -65,7 +70,6 @@ struct SpeedController: View {
             }
             .pickerStyle(SegmentedPickerStyle())
         }
-        
     }
     
     init(viewModel: FanViewModel) {

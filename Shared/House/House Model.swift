@@ -16,12 +16,13 @@ class House: ObservableObject {
     private var bag = Set<AnyCancellable>()
     
     private init () {
-//        startSubs()
         scanForFans()
     }
     
     func scanForFans () {
         scanning = true
+        fansAt.removeAll()
+        TestItems.fans.forEach ({ fansAt.update(with: $0) })
         scanner
             .sink(receiveCompletion: { [weak self] comp in
                 self?.scanning = false
@@ -31,8 +32,9 @@ class House: ObservableObject {
                 if case .failure (let err) = comp {
                     print ("error: \(err)")
                 }
-            }, receiveValue: { addr in
+            }, receiveValue: { [weak self] addr in
                 print ("Got address: \(addr)")
+                self?.fansAt.update(with: addr)
             })
             .store(in: &bag)
     }
@@ -50,43 +52,18 @@ extension House {
     var scanner: AnyPublisher<String, Never> {
         return
             NetworkAddress.hosts.publisher
-            .eraseToAnyPublisher()
             .flatMap ({ host -> AnyPublisher<String, Never> in
                 return Just (FanModel.Action.refresh)
-                    .adjustFan(at: host)
+                    .adjustFan(at: host, retry: false)
                     .tryMap { dict in
                         let addr = FanModel.FanKey.getValue(forKey: .ipAddress, fromTable: dict)
                         guard let a = addr else { throw AdjustmentError.notFound }
                         return a }
                     .replaceError(with: "Not found")
                     .filter({ $0 != "Not found" })
-                    .timeout(.seconds(10), scheduler: DispatchQueue.main)
+                    .timeout(.seconds(2), scheduler: DispatchQueue.main)
                     .eraseToAnyPublisher()
             })
             .eraseToAnyPublisher()
     }
 }
-
-
-struct DummyFanModel {
-    var models = [String]()
-    
-    init () {
-        models = ["One", "Two"]
-    }
-    
-    func getView() -> some View {
-        Group {
-            ForEach ((0..<models.count)) { idx in
-                return Text(models[idx])
-            }
-        }
-    }
-}
-
-//class TestHouse: House {
-//    override init() {
-//        super.init()
-//        fansAt.update(with: "0.0.0.0:8181")
-//    }
-//}

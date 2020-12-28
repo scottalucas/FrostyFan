@@ -7,6 +7,9 @@
 
 import Foundation
 
+struct TestItems {
+    static var fans: [String] = ["0.0.0.0:8181"]
+}
 
 class TestViewModel: ObservableObject {
     @Published var segmentState: Int = 0
