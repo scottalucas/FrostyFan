@@ -18,6 +18,7 @@ enum AdjustmentError: Error, FallbackSafe {
     case parentOutOfScope
     case speedDidNotChange
     case missingKeys
+    case notFound
     case upstream (Error)
     
     static func cast(_ error: Error) -> AdjustmentError {
@@ -40,6 +41,7 @@ enum ConnectionError: Error, FallbackSafe {
     }
     
     case badUrl
+    case timeout
     case networkError (String)
     case serverError (String)
     case decodeError (String)

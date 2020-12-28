@@ -26,12 +26,6 @@ class FanViewModel: ObservableObject {
     init (forModel model: FanModel) {
         self.model = model
         startSubscribers()
-        print("init fan view model \(model.ipAddr)")
-    }
-    
-    private func fanCommFailed(withError commErr: Error) -> AnyPublisher<Int, AdjustmentError> {
-        let err: AdjustmentError = commErr as? AdjustmentError ?? .upstream(commErr)
-        return Fail<Int, AdjustmentError>.init(error: err).eraseToAnyPublisher()
     }
     
     func setFan(toSpeed finalTarget: Int?) {

@@ -10,20 +10,23 @@ import SwiftUI
 import Combine
 
 class HouseViewModel: ObservableObject {
-    private var model: House
+//    private var model = House.shared
     @State var currentPageTag: Int = 0
     @Published var fanModels = [FanModel]()
+    @Published var scanning = false
     
-    init (withHouse: House) {
-        self.model = withHouse
-        
-        model.$fansAt
+    init () {       
+        House.shared.$fansAt
             .map {
                 $0.map { addr in
                     FanModel(forAddress: addr)
                 }
             }
             .assign(to: &$fanModels)
+        
+        House.shared.$scanning
+            .assign(to: &$scanning)
+        
         print("init house view model with fans \(fanModels.map({ $0.ipAddr }))")
     }
     
@@ -33,7 +36,8 @@ class HouseViewModel: ObservableObject {
 }
 
 class TestHouseViewModel: HouseViewModel {
-    override init (withHouse: House = TestHouse()) {
-        super.init(withHouse: TestHouse())
+    override init () {
+        super.init()
+        House.shared.fansAt.update(with: "0.0.0.0:8181")
     }
 }

@@ -16,7 +16,11 @@ struct HouseView: View {
         {
             VStack {
                 FanViewPageContainer(viewModel: viewModel)
-                Text("Weather info")
+                if viewModel.scanning {
+                    Text("Scanning")
+                } else {
+                    Text("Weather info")
+                }
                 Spacer()
                 }
             .tabItem {
@@ -25,10 +29,10 @@ struct HouseView: View {
             }
                 .tag(1)
             
-            Text("Connect")
+            Text("Timer")
                 .tabItem {
-                    Image.network
-                    Text("Connect")
+                    Image.timer
+                    Text("Timer")
                 }
                 .tag(2)
             
@@ -57,16 +61,13 @@ struct FanViewPageContainer: View {
             Text("No fans connected")
         } else {
             TabView (selection: $selectedFan) {
-                ForEach (0..<viewModel.fanModels.count) { fanModelIndex in
+                ForEach (0..<viewModel.fanModels.count, id: \.self) { fanModelIndex in
                     viewModel.fanModels[fanModelIndex]
                         .getView()
                         .padding([.bottom], viewModel.fanModels.count == 0 ? 0 : 100)
                         .tag(fanModelIndex)
                 }
             }
-//            .onChange(of: selectedFan) { fanIndex in
-//                viewModel.fanModels[fanIndex].setFan() //might not need to do this if the fan model's getting reint'd every time we change pages
-//            }
             .tabViewStyle(PageTabViewStyle())
             .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .always))
             .ignoresSafeArea(.all, edges: [.top])
@@ -77,6 +78,6 @@ struct FanViewPageContainer: View {
 struct HouseViewPreviews: PreviewProvider {
     static var previews: some View {
 //        FanViewPageContainer(viewModel: TestHouseViewModel(withHouse: TestHouse()))
-        HouseView(viewModel: TestHouseViewModel(withHouse: TestHouse()))
+        HouseView(viewModel: TestHouseViewModel())
     }
 }

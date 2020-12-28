@@ -28,9 +28,8 @@ class FanModel: ObservableObject {
         print("init fan model \(ipAddr)")
     }
     
-    private func fanCommFailed(withError commErr: Error) -> AnyPublisher<Int, AdjustmentError> {
-        let err: AdjustmentError = commErr as? AdjustmentError ?? .upstream(commErr)
-        return Fail<Int, AdjustmentError>.init(error: err).eraseToAnyPublisher()
+    private func fanCommFailed(withError commErr: Error) {
+        House.shared.lostFan(atIp: self.ipAddr)
     }
     
     func setFan(toSpeed finalTarget: Int? = nil) {
@@ -54,7 +53,7 @@ extension FanModel {
 extension FanModel {
     
     enum FanKey : String {
-        case speed = "fanspd", model = "model", swVersion = "softver", damper = "doorinprocess", timer = "timeremaining", macAddr = "macaddr", interlock1 = "interlock1", interlock2 = "interlock2", cfm = "cfm", power = "power", houseTemp = "house_temp", atticTemp = "attic_temp", DIPSwitch = "DIPS", remoteSwitch = "switch2"
+        case speed = "fanspd", model = "model", swVersion = "softver", damper = "doorinprocess", timer = "timeremaining", macAddr = "macaddr", interlock1 = "interlock1", interlock2 = "interlock2", cfm = "cfm", power = "power", houseTemp = "house_temp", atticTemp = "attic_temp", DIPSwitch = "DIPS", remoteSwitch = "switch2", ipAddress = "ipaddr"
         
         static func getValue(forKey key: FanModel.FanKey, fromTable table: [String : String?]) -> String? {
             return table[key.rawValue] ?? nil
@@ -125,11 +124,13 @@ extension FanModel {
                     .eraseToAnyPublisher()
             }
             .flatMap { $0 }
-            .sink(receiveCompletion: { comp in
+            .sink(receiveCompletion: { [weak self] comp in
                 if case .failure(let err) = comp {
                     print("Failed timer source, error: \(err.localizedDescription)")
+                    self?.fanCommFailed(withError: err)
                 }
                 if case .finished = comp {
+                    self?.fanCommFailed(withError: AdjustmentError.retrievalError(.networkError("Communication with fan failed.")))
                     print ("Unexpected completion.")
                 }
                 

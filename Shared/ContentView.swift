@@ -9,7 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        TestHouse().getView()
+        House.shared.getView()
     }
     
     init () {
@@ -18,6 +18,13 @@ struct ContentView: View {
         app.selectedSegmentTintColor = .main
         app.setTitleTextAttributes([.foregroundColor: UIColor.main], for: .normal)
         app.setTitleTextAttributes([.foregroundColor: UIColor.background], for: .selected)
+        House.shared.fansAt.insert("0.0.0.0:8181")
+//        Timer.scheduledTimer(withTimeInterval: 5, repeats: false) { _ in
+//            House.shared.lostFan(atIp: "0.0.0.0:8181")
+//        }
+//        Timer.scheduledTimer(withTimeInterval: 10, repeats: false) { _ in
+//            House.shared.fansAt.update (with: "0.0.0.0:8181")
+//        }
     }
 }
 
