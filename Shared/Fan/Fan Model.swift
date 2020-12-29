@@ -17,13 +17,13 @@ class FanModel: ObservableObject {
     private let timing = PassthroughSubject<FanConnectionTimers, Never>()
     private let action = CurrentValueSubject<FanModel.Action, Never>(.refresh)
     private var targetSpeed: Int?
-    private var lastSpeed: Int?
+    private var lastReportedSpeed: Int?
     private var bag = Set<AnyCancellable>()
 
     
     init(forAddress address: String) {
         ipAddr = address
-        emit()
+        emitOrderToFan()
         timing.send(.now)
         print("init fan model \(ipAddr)")
     }
@@ -34,8 +34,7 @@ class FanModel: ObservableObject {
     
     func setFan(toSpeed finalTarget: Int? = nil) {
         self.targetSpeed = finalTarget
-        if finalTarget == 0 { action.send(.off) }
-        if finalTarget == nil { action.send(.refresh) }
+        action.send(.refresh)
         timing.send(.now)
     }
     
@@ -101,7 +100,7 @@ extension FanModel {
 }
 
 extension FanModel {
-    func emit () {
+    private func emitOrderToFan () {
         timing
             .removeDuplicates()
             .map { timerType in
@@ -113,13 +112,13 @@ extension FanModel {
                 guard let self = self else {
                     return AdjustmentError.parentOutOfScope.publisher(valueType: Int.self) }
                 return Just (action)
-                    .adjustFan(at: self.ipAddr)
+                    .adjustPhysicalFan(atNetworkAddr: self.ipAddr)
                     .receive(on: DispatchQueue.main)
-                    .flatMap { [weak self] chars -> AnyPublisher<Int, AdjustmentError> in
+                    .flatMap { [weak self] chars -> AnyPublisher<Int, AdjustmentError> in //publishes the speed reported back by the fan
                         guard let self = self else { return AdjustmentError.parentOutOfScope.publisher(valueType: Int.self) }
                         self.chars = chars
                         guard let nSpd = FanModel.FanKey.getValue(forKey: .speed, fromTable: chars), let newSpeed = Int(nSpd) else { return AdjustmentError.retrievalError(ConnectionError.decodeError("Bad values returned.")).publisher(valueType: Int.self) }
-                        return Just.init(newSpeed).setFailureType(to: AdjustmentError.self).eraseToAnyPublisher()
+                        return Just(newSpeed).setFailureType(to: AdjustmentError.self).eraseToAnyPublisher()
                     }
                     .eraseToAnyPublisher()
             }
@@ -135,9 +134,9 @@ extension FanModel {
                 }
                 
             }, receiveValue: { [weak self] currentSpeed in
-                defer { self?.lastSpeed = currentSpeed }
+                defer { self?.lastReportedSpeed = currentSpeed }
                 guard let self = self else { return }
-                guard let target = self.targetSpeed else {
+                guard let target = self.targetSpeed else { //target == nil if user has never set speed
                     self.action.send(.refresh)
                     self.timing.send(.maintenance)
                     return
@@ -150,18 +149,18 @@ extension FanModel {
                 // we have a target speed, target speed != current speed
                 if currentSpeed == 0 { //fan starting up
                     self.timing.send(.slow)
-                } else if self.lastSpeed == nil { //don't have a previous speed, probably first time through
-                    self.timing.send(.fast)
-                } else if currentSpeed == self.lastSpeed! { //unresponsive fan
+                } else if currentSpeed == self.lastReportedSpeed! { //unresponsive fan
                     self.timing.send(.slow)
                 } else {
                     self.timing.send(.fast)
                 }
                 
-                switch (target - currentSpeed) {
-                case let delta where delta > 0:
+                switch (target, currentSpeed) {
+                case (let t, _) where t == 0:
+                    self.action.send(.off)
+                case (let t, let c) where t > c:
                     self.action.send(.faster)
-                case let delta where delta < 0:
+                case (let t, let c) where t < c:
                     self.action.send(.slower)
                 default:
                     self.action.send(.refresh)

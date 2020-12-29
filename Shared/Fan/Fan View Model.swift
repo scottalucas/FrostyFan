@@ -12,14 +12,16 @@ import Combine
 class FanViewModel: ObservableObject {
     @ObservedObject var model: FanModel
     @Published var fanRotationDuration: Double = 0.0
-    @Published var speed: Int = -1
+    @Published var displayedSegmentNumber: Int = -1
     @Published var opening: String = "No"
     @Published var airspaceFanModel: String = "Model number"
     @Published var macAddr: String?
     @Published var name = "Fan"
     @Published var controllerSegments: [String] = ["Off", "On"]
     @Published var interlocked: Bool = false
-    private var userSpeedChange: Bool?
+    private var physicalFanSpeed: Int?
+    private var displayedMotorSpeed: Int?
+    private var displayMotor = PassthroughSubject<AnyPublisher<Double, Never>, Never>()
     
     private var bag = Set<AnyCancellable>()
     
@@ -59,8 +61,11 @@ extension FanViewModel {
 extension FanViewModel {
     func startSubscribers () {
         
-        $speed
-            .filter { [weak self] _ in return self?.userSpeedChange ?? false }
+        $displayedSegmentNumber
+            .filter { [weak self] dSpeed in
+                guard let self = self, let pSpeed = self.physicalFanSpeed else { return false }
+                return dSpeed != pSpeed
+            }
             .sink(receiveValue: { [weak self] newSpeed in
                 guard let self = self else { return }
                 self.model.setFan(toSpeed: newSpeed)
@@ -79,22 +84,21 @@ extension FanViewModel {
             .assign(to: &$macAddr)
         
         model.$chars
-            .map { (FanModel.FanKey.getValue(forKey: .speed, fromTable: $0) ?? "-1") }
-            .map { Int($0) ?? -1 }
+            .map { dict -> String? in (FanModel.FanKey.getValue(forKey: .speed, fromTable: dict)) }
+            .filter({ $0 != nil })
+            .map { Int($0!) }
+            .filter { $0 != nil }
             .receive(on: DispatchQueue.main)
-            .sink(receiveValue: { [weak self] newSpeed in
-                guard let self = self else { return }
-                self.userSpeedChange = false
-                self.speed = newSpeed
-                self.userSpeedChange = true
+            .sink(receiveValue: { [weak self] actualSpeed in
+                if self?.physicalFanSpeed == nil { self?.displayedSegmentNumber = actualSpeed! } //should only happen first time through
+                self?.physicalFanSpeed = actualSpeed!
+                self?.setDisplayMotor(toSpeed: actualSpeed!)
             })
             .store(in: &bag)
         
-        model.$chars
-            .map { (FanModel.FanKey.getValue(forKey: .speed, fromTable: $0) ?? "0.0") }
-            .map { Double($0) ?? 0.0 }
-            .map { $0 == 0.0 ? 0.0 : 1.0/$0 }
-            .receive(on: DispatchQueue.main)
+        displayMotor
+            .switchToLatest()
+            .print("timer")
             .assign(to: &$fanRotationDuration)
         
         model.$chars
@@ -114,5 +118,21 @@ extension FanViewModel {
             .map { (Int($0) ?? 0) == 1 || (Int($1) ?? 0) == 1 }
             .receive(on: DispatchQueue.main)
             .assign(to: &$interlocked)
+    }
+}
+
+extension FanViewModel {
+    private func setDisplayMotor(toSpeed: Int) {
+//        defer {print("out of scope")}
+        guard displayedMotorSpeed != toSpeed else { return }
+        let scaleFactor = 3.0
+        displayedMotorSpeed = toSpeed
+        guard toSpeed != 0 else { displayMotor.send(Just(0.0).eraseToAnyPublisher()); return }
+        let s = Double(toSpeed)
+        displayMotor.send(
+            Timer.publish(every: scaleFactor * 1/s, on: .main, in: .common)
+                .autoconnect()
+            .map { _ in scaleFactor * 1/s }
+            .eraseToAnyPublisher())
     }
 }

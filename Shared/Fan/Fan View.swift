@@ -16,16 +16,17 @@ struct FanView: View {
         GeometryReader { geo in
             ZStack {
                 VStack {
-                    Spacer()
-                    Spacer()
-                    Spacer()
-                    Spacer()
-                    Text("Speed: \(fanViewModel.fanRotationDuration)")
+                    Group {
+                        Spacer()
+                        Spacer()
+                        Spacer()
+                        Spacer()
+                    }
                     Text("Mac: \(fanViewModel.macAddr ?? "Not found")")
                     Text("Name: \(fanViewModel.name)")
-                    Text("Level: \(fanViewModel.speed.description)")
+                    Text("Level: \(fanViewModel.displayedSegmentNumber.description)")
                     SpeedController(viewModel: fanViewModel)
-                    .padding([.leading, .trailing], 20)
+                        .padding([.leading, .trailing], 20)
                     Spacer ()
                 }
                 .zIndex(/*@START_MENU_TOKEN@*/1.0/*@END_MENU_TOKEN@*/)
@@ -44,9 +45,10 @@ struct FanView: View {
             }
         }
         .onReceive(fanViewModel.$fanRotationDuration) { val in
-            withAnimation(.linear(duration: 0)) { self.angle = .zero } //needed to stop previous animation
-            withAnimation(Animation.linear(duration: val).repeatForever(autoreverses: false)) {
-                self.angle += .degrees(360.0/6.0)
+            self.angle = .zero
+//            withAnimation(.linear(duration: 0)) { self.angle = .zero } //needed to stop previous animation
+            withAnimation(Animation.linear(duration: val)) {
+                self.angle = .degrees(179.99)
             }
         }
     }
@@ -63,7 +65,7 @@ struct SpeedController: View {
     
     var body: some View {
         VStack {
-            Picker (selection: $viewModel.speed, label: Text("Picker")) {
+            Picker (selection: $viewModel.displayedSegmentNumber, label: Text("Picker")) {
                 ForEach ((0..<viewModel.controllerSegments.count), id: \.self) { segmentIndex in
                     Text(viewModel.controllerSegments[segmentIndex])
                 }

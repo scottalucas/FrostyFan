@@ -21,6 +21,7 @@ struct NetworkAddress {
                                 (0...255).contains(hostIpArr[2]),
                                 (0...255).contains(hostIpArr[3]) else { return nil }
                             return "\(hostIpArr[0]).\(hostIpArr[1]).\(hostIpArr[2]).\(hostIpArr[3])" })
+//            .append("0.0.0.0:8181")
     }
 
     private static var netInfo: (address: UInt32, mask: UInt32)? {

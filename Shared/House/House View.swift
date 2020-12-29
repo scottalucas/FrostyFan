@@ -11,50 +11,40 @@ struct HouseView: View {
     @ObservedObject var viewModel: HouseViewModel
     @State var currentTab: Int = 0
     @State var info: String = ""
+    @State private var tap: Bool = false
     
     var body: some View {
-        
-//        VStack {
-//
-//                GeometryReader { geo in
-//                    FanViewPageContainer(viewModel: viewModel)
-//                    Text(info)
-//                }
-//                GeometryReader {geo in
-                    TabView (selection: $currentTab)
-                    {
-                        VStack {
-                            FanViewPageContainer(viewModel: viewModel)
-//                                .frame(width: nil, height: nil, alignment: /*@START_MENU_TOKEN@*/.center/*@END_MENU_TOKEN@*/)
-                            Spacer ()
-                        }
-                            .tabItem {
-                                Image.fanIcon
-                                Text("Fan")
-                            }
-                            .tag(1)
-                        
-                        Text("")
-                            .tabItem {
-                                Image.timer
-                                Text("Timer")
-                            }
-                            .tag(2)
-                        
-                        Text("")
-                            .tabItem {
-                                Image.bell
-                                Text("Alarms")
-                            }
-                            .tag(3)
-                    }
-//                    .onAppear(perform: {info = geo.frame(in: .global).debugDescription})
-                    .accentColor(Color.main)
-//                }
-//                .frame(width: nil, height: nil, alignment: .bottom)
-
-//        }
-        
+        TabView (selection: $currentTab)
+        {
+            ZStack {
+                VStack {
+                    RefreshableScrollView(refreshing: $viewModel.scanning) {}
+                        .frame(width: nil, height: /*@START_MENU_TOKEN@*/100/*@END_MENU_TOKEN@*/, alignment: .top)
+                    Spacer()
+                }
+                .zIndex(2)
+                FanViewPageContainer(viewModel: viewModel)
+                    .zIndex(/*@START_MENU_TOKEN@*/1.0/*@END_MENU_TOKEN@*/)
+            }
+            .tabItem {
+                Image.fanIcon
+                Text("Fan")
+            }
+            .tag(1)
+            Text("")
+                .tabItem {
+                    Image.timer
+                    Text("Timer")
+                }
+                .tag(2)
+            Text("")
+                .tabItem {
+                    Image.bell
+                    Text("Alarms")
+                }
+                .tag(3)
+        }
+        .accentColor(Color.main)
     }
     
     init (viewModel: HouseViewModel) {
@@ -75,7 +65,6 @@ struct FanViewPageContainer: View {
                 ForEach (0..<viewModel.fanModels.count, id: \.self) { fanModelIndex in
                     viewModel.fanModels[fanModelIndex]
                         .getView()
-//                        .padding([.bottom], viewModel.fanModels.count == 0 ? 0 : 75)
                         .tag(fanModelIndex)
                 }
             }

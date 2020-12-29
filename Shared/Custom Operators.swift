@@ -10,7 +10,7 @@ import Combine
 
 extension Publisher where Output == FanModel.Action, Failure == Never {
     
-    func adjustFan(at ip: String, retry: Bool = false) -> AnyPublisher<Dictionary<String,String?>, AdjustmentError> {
+    func adjustPhysicalFan(atNetworkAddr ip: String, retry: Bool = false) -> AnyPublisher<Dictionary<String,String?>, AdjustmentError> {
         typealias Output = Dictionary<String,String?>
         typealias Failure = AdjustmentError
         

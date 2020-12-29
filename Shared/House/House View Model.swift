@@ -14,8 +14,18 @@ class HouseViewModel: ObservableObject {
     @State var currentPageTag: Int = 0
     @Published var fanModels = [FanModel]()
     @Published var scanning = false
+    private var userScan = false
+    private var bag = Set<AnyCancellable>()
     
-    init () {       
+    init () {
+        
+        $scanning
+            .filter { $0 }
+            .sink(receiveValue: { _ in
+                    House.shared.scanForFans()
+            })
+            .store(in: &bag)
+        
         House.shared.$fansAt
             .map {
                 $0.map { addr in
@@ -25,6 +35,7 @@ class HouseViewModel: ObservableObject {
             .assign(to: &$fanModels)
         
         House.shared.$scanning
+            .filter { !$0 }
             .assign(to: &$scanning)
         
         print("init house view model with fans \(fanModels.map({ $0.ipAddr }))")

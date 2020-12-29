@@ -12,7 +12,7 @@ import Combine
 class House: ObservableObject {
     static let shared = House.init()
     @Published var fansAt = Set<String>() //IP addresses
-    @Published private ( set ) var scanning: Bool = false
+    @Published var scanning: Bool = false
     private var bag = Set<AnyCancellable>()
     
     private init () {
@@ -20,6 +20,8 @@ class House: ObservableObject {
     }
     
     func scanForFans () {
+        guard !scanning else { return }
+        print("start scanning")
         scanning = true
         fansAt.removeAll()
         TestItems.fans.forEach ({ fansAt.update(with: $0) })
@@ -27,7 +29,7 @@ class House: ObservableObject {
             .sink(receiveCompletion: { [weak self] comp in
                 self?.scanning = false
                 if case .finished = comp {
-                    print ("complete")
+                    print ("scan complete")
                 }
                 if case .failure (let err) = comp {
                     print ("error: \(err)")
@@ -54,7 +56,7 @@ extension House {
             NetworkAddress.hosts.publisher
             .flatMap ({ host -> AnyPublisher<String, Never> in
                 return Just (FanModel.Action.refresh)
-                    .adjustFan(at: host, retry: false)
+                    .adjustPhysicalFan(atNetworkAddr: host, retry: false)
                     .tryMap { dict in
                         let addr = FanModel.FanKey.getValue(forKey: .ipAddress, fromTable: dict)
                         guard let a = addr else { throw AdjustmentError.notFound }
