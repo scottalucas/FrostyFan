@@ -9,44 +9,86 @@ import SwiftUI
 
 struct FanView: View {
     @ObservedObject var fanViewModel: FanViewModel
-//    @State private var displayedSpeed: Int = 0
     @State private var angle: Angle = .zero
+    @State private var indicator: Bool = false
+    @State private var activeSheet: Sheet?
+    @AppStorage(Setting.fans) private var fanSettings = FanSettings()
     
-    var body: some View {
-        GeometryReader { geo in
-            ZStack {
-                VStack {
-                    Group {
-                        Spacer()
-                        Spacer()
-                        Spacer()
-                        Spacer()
-                    }
-                    Text("Mac: \(fanViewModel.macAddr ?? "Not found")")
-                    Text("Name: \(fanViewModel.name)")
-                    Text("Level: \(fanViewModel.displayedSegmentNumber.description)")
-                    SpeedController(viewModel: fanViewModel)
-                        .padding([.leading, .trailing], 20)
-                    Spacer ()
-                }
-                .zIndex(/*@START_MENU_TOKEN@*/1.0/*@END_MENU_TOKEN@*/)
-                VStack {
-                    Image.fanLarge
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .rotationEffect(angle)
-                        .foregroundColor(Color.main)
-                        .opacity(/*@START_MENU_TOKEN@*/0.8/*@END_MENU_TOKEN@*/)
-                        .blur(radius: 10.0)
-                        .scaleEffect(1.5)
-                    Spacer()
-                }
-                .zIndex(0)
+    enum Sheet: Identifiable {
+        var id: Int {
+            hashValue
+        }
+        
+        case fanName
+        case timer
+        case detail
+        
+        func view(viewModel: FanViewModel) -> AnyView {
+            switch self {
+            case .fanName:
+                return NameSheet(fanViewModel: viewModel).eraseToAnyView()
+            case .timer:
+                return TimerSheet(fanViewModel: viewModel).eraseToAnyView()
+            case .detail:
+                return DetailSheet(fanViewModel: viewModel).eraseToAnyView()
             }
         }
+    }
+    
+    var body: some View {
+        ZStack {
+            VStack {
+                Spacer()
+                Text( fanViewModel.testText ?? "No text" )
+                Button(
+                    action: {
+                        activeSheet = .timer
+                }, label: {
+                Image.timer
+                    .resizable()
+                    .foregroundColor(.main)
+                    .scaledToFit()
+                    .frame(width: nil, height: 40)
+                    .padding(.bottom, 15)
+                })
+                SpeedController(viewModel: fanViewModel)
+                    .padding([.leading, .trailing], 20)
+            }
+            .zIndex(/*@START_MENU_TOKEN@*/1.0/*@END_MENU_TOKEN@*/)
+            VStack {
+                Image.fanLarge
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .rotationEffect(angle)
+                    .foregroundColor(Color.main)
+                    .opacity(/*@START_MENU_TOKEN@*/0.8/*@END_MENU_TOKEN@*/)
+                    .blur(radius: 10.0)
+                    .scaleEffect(1.5)
+                    .onTapGesture {
+                        activeSheet = .detail
+                    }
+                    .overlay(
+                        VStack {
+                            HStack {
+                                Text(fanViewModel.name).font(.largeTitle)
+                                    .onLongPressGesture {
+                                        activeSheet = .fanName
+                                    }
+                                Spacer()
+                            }.offset(x: 0, y: 20)
+                            Divider().frame(width: nil, height: 1, alignment: .center).background(Color.main)
+                            Spacer()
+                        }
+                        .padding()
+                    )
+                Spacer()
+            }
+            .zIndex(0)
+        }
+//        .sheet(item: $activeSheet, content: { $0.view(viewModel: fanViewModel) })
+        .sheet(item: $activeSheet, onDismiss: { indicator = true }, content: { $0.view(viewModel: fanViewModel) })
         .onReceive(fanViewModel.$fanRotationDuration) { val in
             self.angle = .zero
-//            withAnimation(.linear(duration: 0)) { self.angle = .zero } //needed to stop previous animation
             withAnimation(Animation.linear(duration: val)) {
                 self.angle = .degrees(179.99)
             }

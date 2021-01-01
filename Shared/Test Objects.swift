@@ -8,7 +8,8 @@
 import Foundation
 
 struct TestItems {
-    static var fans: [String] = ["0.0.0.0:8181"]
+//    static var fans: [String] = ["0.0.0.0:8181"]
+        static var fans: [String] = []
 }
 
 class TestViewModel: ObservableObject {

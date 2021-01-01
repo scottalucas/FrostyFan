@@ -47,8 +47,10 @@ class HouseViewModel: ObservableObject {
 }
 
 class TestHouseViewModel: HouseViewModel {
-    override init () {
+    var testFans: [String]
+    init (testFans: [String]) {
+        self.testFans = testFans
         super.init()
-        House.shared.fansAt.update(with: "0.0.0.0:8181")
+        testFans.forEach({ House.shared.fansAt.update(with: $0) })
     }
 }

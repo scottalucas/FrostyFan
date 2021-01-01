@@ -43,20 +43,6 @@ extension View {
     }
 }
 
-struct UserSettings {
-    private let defaults = UserDefaults.standard
-    var names = [String:String]()
-    init () {
-        guard let n = defaults.object(forKey: "names"), let names = n as? [String:String] else { return }
-        self.names = names
-    }
-    
-    mutating func setName(forMacAddr addr: String, toName name: String) {
-        names[addr] = name
-        defaults.setValue(names, forKey: "names")
-    }
-}
-
 struct Utilities_Previews: PreviewProvider {
     static var previews: some View {
         HStack {

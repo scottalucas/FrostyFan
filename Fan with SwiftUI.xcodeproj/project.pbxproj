@@ -33,6 +33,10 @@
 		930CFFCD258188FF00E8E979 /* House View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFFCB258188FF00E8E979 /* House View.swift */; };
 		930CFFD32581890700E8E979 /* Settings View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFFD22581890700E8E979 /* Settings View.swift */; };
 		930CFFD42581890700E8E979 /* Settings View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFFD22581890700E8E979 /* Settings View.swift */; };
+		936F79D8259FADD500AACA53 /* Timer Sheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 936F79D7259FADD500AACA53 /* Timer Sheet.swift */; };
+		936F79E2259FADFC00AACA53 /* Detail Sheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 936F79E1259FADFC00AACA53 /* Detail Sheet.swift */; };
+		936F79E8259FAE0F00AACA53 /* Name Sheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 936F79E7259FAE0F00AACA53 /* Name Sheet.swift */; };
+		936F79EE259FB59900AACA53 /* Sheet Protocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 936F79ED259FB59900AACA53 /* Sheet Protocol.swift */; };
 		937F7C5025952138009E4754 /* Custom Operators.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937F7C4F25952138009E4754 /* Custom Operators.swift */; };
 		937F7C5125952138009E4754 /* Custom Operators.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937F7C4F25952138009E4754 /* Custom Operators.swift */; };
 		937F7C5725952358009E4754 /* Custom Errors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937F7C5625952358009E4754 /* Custom Errors.swift */; };
@@ -86,6 +90,10 @@
 		930CFFC4258188F400E8E979 /* Fan View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Fan View.swift"; sourceTree = "<group>"; };
 		930CFFCB258188FF00E8E979 /* House View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "House View.swift"; sourceTree = "<group>"; };
 		930CFFD22581890700E8E979 /* Settings View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Settings View.swift"; sourceTree = "<group>"; };
+		936F79D7259FADD500AACA53 /* Timer Sheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Timer Sheet.swift"; sourceTree = "<group>"; };
+		936F79E1259FADFC00AACA53 /* Detail Sheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Detail Sheet.swift"; sourceTree = "<group>"; };
+		936F79E7259FAE0F00AACA53 /* Name Sheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Name Sheet.swift"; sourceTree = "<group>"; };
+		936F79ED259FB59900AACA53 /* Sheet Protocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sheet Protocol.swift"; sourceTree = "<group>"; };
 		937F7C4F25952138009E4754 /* Custom Operators.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Custom Operators.swift"; sourceTree = "<group>"; };
 		937F7C5625952358009E4754 /* Custom Errors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Custom Errors.swift"; sourceTree = "<group>"; };
 		937F7C612595239B009E4754 /* Custom UI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Custom UI.swift"; sourceTree = "<group>"; };
@@ -150,6 +158,7 @@
 				930CFF6D258187F400E8E979 /* Network */,
 				930CFF872581882E00E8E979 /* Fan */,
 				930CFFA12581885A00E8E979 /* House */,
+				93C94E4E259E871F005A3D43 /* Sheets */,
 				930CFFBB258188A300E8E979 /* Settings */,
 			);
 			path = Shared;
@@ -237,6 +246,17 @@
 				930CFFD22581890700E8E979 /* Settings View.swift */,
 			);
 			path = Settings;
+			sourceTree = "<group>";
+		};
+		93C94E4E259E871F005A3D43 /* Sheets */ = {
+			isa = PBXGroup;
+			children = (
+				936F79D7259FADD500AACA53 /* Timer Sheet.swift */,
+				936F79E1259FADFC00AACA53 /* Detail Sheet.swift */,
+				936F79E7259FAE0F00AACA53 /* Name Sheet.swift */,
+				936F79ED259FB59900AACA53 /* Sheet Protocol.swift */,
+			);
+			path = Sheets;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -398,7 +418,9 @@
 			files = (
 				930CFFC5258188F400E8E979 /* Fan View.swift in Sources */,
 				930CFFAE2581889600E8E979 /* Settings View Model.swift in Sources */,
+				936F79EE259FB59900AACA53 /* Sheet Protocol.swift in Sources */,
 				930CFF942581884B00E8E979 /* House View Model.swift in Sources */,
+				936F79E2259FADFC00AACA53 /* Detail Sheet.swift in Sources */,
 				937F7C622595239B009E4754 /* Custom UI.swift in Sources */,
 				937F7C7125952556009E4754 /* Test Objects.swift in Sources */,
 				930CFF8D2581884000E8E979 /* House Model.swift in Sources */,
@@ -409,7 +431,9 @@
 				937F7C5025952138009E4754 /* Custom Operators.swift in Sources */,
 				930CFFB52581889E00E8E979 /* Settings Model.swift in Sources */,
 				930CFF4E2581878D00E8E979 /* Airspace Fan.swift in Sources */,
+				936F79D8259FADD500AACA53 /* Timer Sheet.swift in Sources */,
 				93CF9548258984A1004BBD49 /* Fan View Model.swift in Sources */,
+				936F79E8259FAE0F00AACA53 /* Name Sheet.swift in Sources */,
 				930CFFD32581890700E8E979 /* Settings View.swift in Sources */,
 				930CFF67258187EE00E8E979 /* Network resources.swift in Sources */,
 			);

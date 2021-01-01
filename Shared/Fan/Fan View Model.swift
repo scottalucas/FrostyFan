@@ -14,11 +14,14 @@ class FanViewModel: ObservableObject {
     @Published var fanRotationDuration: Double = 0.0
     @Published var displayedSegmentNumber: Int = -1
     @Published var opening: String = "No"
-    @Published var airspaceFanModel: String = "Model number"
+    @Published var airspaceFanModel: String?
     @Published var macAddr: String?
-    @Published var name = "Fan"
+    @Published var name = "Whole House Fan"
     @Published var controllerSegments: [String] = ["Off", "On"]
     @Published var interlocked: Bool = false
+    @Published var timer: Int = 0
+    @Published var testText: String?
+    @AppStorage(Setting.fans) private var fanSettings = FanSettings()
     private var physicalFanSpeed: Int?
     private var displayedMotorSpeed: Int?
     private var displayMotor = PassthroughSubject<AnyPublisher<Double, Never>, Never>()
@@ -32,6 +35,11 @@ class FanViewModel: ObservableObject {
     
     func setFan(toSpeed finalTarget: Int?) {
         model.setFan(toSpeed: finalTarget)
+    }
+    
+    func setFan(name: String) {
+        guard let addr = macAddr else { return }
+        fanSettings.fans[addr]?.name = name
     }
 
     func getView () -> some View {
@@ -73,8 +81,9 @@ extension FanViewModel {
             .store(in: &bag)
         
         model.$chars
-            .map { FanModel.FanKey.getValue(forKey: .macAddr, fromTable: $0) ?? "Not found" }
-            .map { UserSettings().names[$0] ?? "Fan" }
+            .map { (FanModel.FanKey.getValue(forKey: .macAddr, fromTable: $0), FanModel.FanKey.getValue(forKey: .model, fromTable: $0)) }
+            .map { [weak self] (retrievedMacAddr, retrievedModelNumber) -> String in
+                self?.fanSettings.fans[retrievedMacAddr ?? ""]?.name ?? (retrievedModelNumber != nil ? "Model \(retrievedModelNumber!)" : nil) ?? "Whole House Fan" }
             .receive(on: DispatchQueue.main)
             .assign(to: &$name)
         
@@ -83,6 +92,16 @@ extension FanViewModel {
             .receive(on: DispatchQueue.main)
             .assign(to: &$macAddr)
         
+        model.$chars
+            .map { dict in
+                guard let timerStr = FanModel.FanKey.getValue(forKey: .timer, fromTable: dict) else { return nil }
+                return Int(timerStr)
+                }
+            .filter { $0 != nil }
+            .map { $0! }
+            .receive(on: DispatchQueue.main)
+            .assign(to: &$timer)
+
         model.$chars
             .map { dict -> String? in (FanModel.FanKey.getValue(forKey: .speed, fromTable: dict)) }
             .filter({ $0 != nil })
@@ -98,7 +117,6 @@ extension FanViewModel {
         
         displayMotor
             .switchToLatest()
-            .print("timer")
             .assign(to: &$fanRotationDuration)
         
         model.$chars

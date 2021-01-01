@@ -12,44 +12,46 @@ struct HouseView: View {
     @State var currentTab: Int = 0
     @State var info: String = ""
     @State private var tap: Bool = false
+    @State private var fanLabel: String?
     
     var body: some View {
-        TabView (selection: $currentTab)
-        {
-            ZStack {
-                VStack {
-                    RefreshableScrollView(refreshing: $viewModel.scanning) {}
-                        .frame(width: nil, height: /*@START_MENU_TOKEN@*/100/*@END_MENU_TOKEN@*/, alignment: .top)
-                    Spacer()
-                }
-                .zIndex(2)
+
+        ZStack {
+            VStack {
+                RefreshableScrollView(height: 40, refreshing: $viewModel.scanning) {}
+                    .frame(width: nil, height: 75, alignment: .top)
+                Spacer()
+            }
+            .ignoresSafeArea(.container, edges: .top)
+            .zIndex(3)
+            TabView (selection: $currentTab)
+            {
                 FanViewPageContainer(viewModel: viewModel)
-                    .zIndex(/*@START_MENU_TOKEN@*/1.0/*@END_MENU_TOKEN@*/)
+                    .tabItem {
+                        Image.fanIcon
+                        Text(viewModel.scanning ? "Scanning" : "Fan")
+                    }
+                    .tag(1)
+                Text("")
+                    .tabItem {
+                        Image.timer
+                        Text("Timer")
+                    }
+                    .tag(2)
+                Text("")
+                    .tabItem {
+                        Image.bell
+                        Text("Alarms")
+                    }
+                    .tag(3)
             }
-            .tabItem {
-                Image.fanIcon
-                Text("Fan")
-            }
-            .tag(1)
-            Text("")
-                .tabItem {
-                    Image.timer
-                    Text("Timer")
-                }
-                .tag(2)
-            Text("")
-                .tabItem {
-                    Image.bell
-                    Text("Alarms")
-                }
-                .tag(3)
+            .zIndex(2)
         }
         .accentColor(Color.main)
     }
     
     init (viewModel: HouseViewModel) {
         self.viewModel = viewModel
-        //        viewModel.fanModels.forEach({ $0.update() })
     }
 }
 
@@ -65,6 +67,7 @@ struct FanViewPageContainer: View {
                 ForEach (0..<viewModel.fanModels.count, id: \.self) { fanModelIndex in
                     viewModel.fanModels[fanModelIndex]
                         .getView()
+                        .padding(.bottom, viewModel.fanModels.count > 1 ? 100 : 65)
                         .tag(fanModelIndex)
                 }
             }
@@ -77,7 +80,6 @@ struct FanViewPageContainer: View {
 
 struct HouseViewPreviews: PreviewProvider {
     static var previews: some View {
-        //        FanViewPageContainer(viewModel: TestHouseViewModel(withHouse: TestHouse()))
-        HouseView(viewModel: TestHouseViewModel())
+        HouseView(viewModel: TestHouseViewModel(testFans: ["0.0.0.0:8181"]))
     }
 }
