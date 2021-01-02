@@ -25,20 +25,20 @@ class House: ObservableObject {
         scanning = true
         fansAt.removeAll()
         TestItems.fans.forEach ({ fansAt.update(with: $0) })
-//        scanner
-//            .sink(receiveCompletion: { [weak self] comp in
-//                self?.scanning = false
-//                if case .finished = comp {
-//                    print ("scan complete")
-//                }
-//                if case .failure (let err) = comp {
-//                    print ("error: \(err)")
-//                }
-//            }, receiveValue: { [weak self] addr in
-//                print ("Got address: \(addr)")
-//                self?.fansAt.update(with: addr)
-//            })
-//            .store(in: &bag)
+        scanner
+            .sink(receiveCompletion: { [weak self] comp in
+                self?.scanning = false
+                if case .finished = comp {
+                    print ("scan complete")
+                }
+                if case .failure (let err) = comp {
+                    print ("error: \(err)")
+                }
+            }, receiveValue: { [weak self] addr in
+                print ("Got address: \(addr)")
+                self?.fansAt.update(with: addr)
+            })
+            .store(in: &bag)
     }
     
     func getView (usingHouse house: House? = nil) -> some View {

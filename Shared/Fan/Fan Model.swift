@@ -28,6 +28,7 @@ class FanModel: ObservableObject {
         let connectableEmitter = fanEmitter.makeConnectable()
         startSpeedManager(publisher: connectableEmitter.eraseToAnyPublisher())
         startTimerManager(publisher: connectableEmitter.eraseToAnyPublisher())
+        startMonitor(publisher: connectableEmitter.eraseToAnyPublisher())
         connectableEmitter.connect().store(in: &bag)
         timing.send(.now)
         print("init fan model \(ipAddr)")
@@ -43,8 +44,9 @@ class FanModel: ObservableObject {
         timing.send(.now)
     }
     
-    func setFan(toTimer finalTarget: Int? = nil) {
-        self.targetTimer = finalTarget
+    func setFan(addHours hours: Int) {
+        let baseTime = lastReportedTimer ?? 0 > (60 * 12) - 10 ? (60 * 12) : (hours * 60) - 10 //allow a 10 minutes buffer unless current time's already within 10 minutes of 12 hours
+        self.targetTimer = lastReportedTimer ?? 0 + baseTime
         action.send(.refresh)
         timing.send(.now)
     }
@@ -136,6 +138,11 @@ extension FanModel {
             .filter { !$0.isEmpty }
             .share()
             .eraseToAnyPublisher()
+    }
+    
+    private func startMonitor (publisher: AnyPublisher<Dictionary<String, String?>, Never>) {
+        publisher
+            .assign(to: &$chars)
     }
     
     private func startSpeedManager (publisher: AnyPublisher<Dictionary<String, String?>, Never>) {

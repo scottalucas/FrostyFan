@@ -41,6 +41,10 @@ class FanViewModel: ObservableObject {
         guard let addr = macAddr else { return }
         fanSettings.fans[addr]?.name = name
     }
+    
+    func setFan(addTimerHours hoursToAdd: Int) {
+        model.setFan(addHours: hoursToAdd)
+    }
 
     func getView () -> some View {
         FanView(fanViewModel: self)

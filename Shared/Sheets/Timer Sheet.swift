@@ -49,6 +49,11 @@ struct TimerSheet: View {
             .padding()
             .shadow(radius: /*@START_MENU_TOKEN@*/10/*@END_MENU_TOKEN@*/)
         }
+        .onDisappear(perform: {
+            if hoursToAdd > 0 {
+                fanViewModel.setFan(addTimerHours: hoursToAdd)
+            }
+        })
     }
 }
 
