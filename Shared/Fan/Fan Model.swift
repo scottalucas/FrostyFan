@@ -17,13 +17,18 @@ class FanModel: ObservableObject {
     private let timing = PassthroughSubject<FanConnectionTimers, Never>()
     private let action = CurrentValueSubject<FanModel.Action, Never>(.refresh)
     private var targetSpeed: Int?
+    private var targetTimer: Int?
     private var lastReportedSpeed: Int?
+    private var lastReportedTimer: Int?
     private var bag = Set<AnyCancellable>()
 
     
     init(forAddress address: String) {
         ipAddr = address
-        emitOrderToFan()
+        let connectableEmitter = fanEmitter.makeConnectable()
+        startSpeedManager(publisher: connectableEmitter.eraseToAnyPublisher())
+        startTimerManager(publisher: connectableEmitter.eraseToAnyPublisher())
+        connectableEmitter.connect().store(in: &bag)
         timing.send(.now)
         print("init fan model \(ipAddr)")
     }
@@ -38,6 +43,12 @@ class FanModel: ObservableObject {
         timing.send(.now)
     }
     
+    func setFan(toTimer finalTarget: Int? = nil) {
+        self.targetTimer = finalTarget
+        action.send(.refresh)
+        timing.send(.now)
+    }
+
     func getView () -> some View {
         FanViewModel(forModel: self).getView()
     }
@@ -100,42 +111,41 @@ extension FanModel {
 }
 
 extension FanModel {
-    private func emitOrderToFan () {
+//    private var fanEmitter: ConnectablePublisher {
+    private var fanEmitter: AnyPublisher<Dictionary<String, String?>, Never> {
         timing
             .removeDuplicates()
             .map { timerType in
                 timerType.publisher
             }
             .switchToLatest()
-            .combineLatest(action.removeDuplicates())
-            .map { [weak self] (_, action) -> AnyPublisher<Int, AdjustmentError> in
+            .combineLatest(action
+                            .removeDuplicates())
+            .flatMap { [weak self] (_, action) -> AnyPublisher<Dictionary<String,String?>, AdjustmentError> in
                 guard let self = self else {
-                    return AdjustmentError.parentOutOfScope.publisher(valueType: Int.self) }
+                    return AdjustmentError.parentOutOfScope.publisher(valueType: Dictionary<String, String?>.self) }
                 return Just (action)
                     .adjustPhysicalFan(atNetworkAddr: self.ipAddr)
                     .receive(on: DispatchQueue.main)
-                    .flatMap { [weak self] chars -> AnyPublisher<Int, AdjustmentError> in //publishes the speed reported back by the fan
-                        guard let self = self else { return AdjustmentError.parentOutOfScope.publisher(valueType: Int.self) }
-                        self.chars = chars
-                        guard let nSpd = FanModel.FanKey.getValue(forKey: .speed, fromTable: chars), let newSpeed = Int(nSpd) else { return AdjustmentError.retrievalError(ConnectionError.decodeError("Bad values returned.")).publisher(valueType: Int.self) }
-                        return Just(newSpeed).setFailureType(to: AdjustmentError.self).eraseToAnyPublisher()
-                    }
                     .eraseToAnyPublisher()
             }
-            .flatMap { $0 }
-            .sink(receiveCompletion: { [weak self] comp in
-                if case .failure(let err) = comp {
-                    print("Failed timer source, error: \(err.localizedDescription)")
-                    self?.fanCommFailed(withError: err)
-                }
-                if case .finished = comp {
-                    self?.fanCommFailed(withError: AdjustmentError.retrievalError(.networkError("Communication with fan failed.")))
-                    print ("Unexpected completion.")
-                }
-                
-            }, receiveValue: { [weak self] currentSpeed in
-                defer { self?.lastReportedSpeed = currentSpeed }
-                guard let self = self else { return }
+            .catch({ [weak self] err -> Just<Dictionary<String, String?>> in
+                self?.fanCommFailed(withError: err)
+                return Just ([:])
+            })
+            .filter { !$0.isEmpty }
+            .share()
+            .eraseToAnyPublisher()
+    }
+    
+    private func startSpeedManager (publisher: AnyPublisher<Dictionary<String, String?>, Never>) {
+        publisher
+            .map({ dict -> Int? in
+                Int(FanModel.FanKey.getValue(forKey: .speed, fromTable: dict) ?? "")
+            })
+            .sink(receiveValue: { [weak self] currentSpeed in
+                guard let self = self, let currentSpeed = currentSpeed else { return }
+                defer { self.lastReportedSpeed = currentSpeed }
                 guard let target = self.targetSpeed else { //target == nil if user has never set speed
                     self.action.send(.refresh)
                     self.timing.send(.maintenance)
@@ -149,12 +159,12 @@ extension FanModel {
                 // we have a target speed, target speed != current speed
                 if currentSpeed == 0 { //fan starting up
                     self.timing.send(.slow)
-                } else if currentSpeed == self.lastReportedSpeed! { //unresponsive fan
+                } else if currentSpeed == self.lastReportedSpeed { //unresponsive fan
                     self.timing.send(.slow)
                 } else {
                     self.timing.send(.fast)
                 }
-                
+
                 switch (target, currentSpeed) {
                 case (let t, _) where t == 0:
                     self.action.send(.off)
@@ -162,6 +172,46 @@ extension FanModel {
                     self.action.send(.faster)
                 case (let t, let c) where t < c:
                     self.action.send(.slower)
+                default:
+                    self.action.send(.refresh)
+                }
+            })
+            .store(in: &bag)
+    }
+    
+    private func startTimerManager (publisher: AnyPublisher<Dictionary<String, String?>, Never>) {
+        publisher
+            .map({ dict -> Int? in
+                Int(FanModel.FanKey.getValue(forKey: .timer, fromTable: dict) ?? "")
+            })
+            .sink(receiveValue: { [weak self] currentTimer in
+                guard let self = self, let currentTimer = currentTimer else { return }
+                defer { self.lastReportedTimer = currentTimer }
+                guard let target = self.targetTimer else { //target == nil if user has never set timer
+                    self.action.send(.refresh)
+                    self.timing.send(.maintenance)
+                    return
+                }
+                
+                guard target != currentTimer else { // complete
+                    self.action.send(.refresh)
+                    self.timing.send(.maintenance)
+                    return
+                }
+                // we have a target speed, target speed != current speed
+                if currentTimer == 0 { //fan starting up
+                    self.timing.send(.slow)
+                } else if currentTimer == self.lastReportedTimer { //unresponsive fan
+                    self.timing.send(.slow)
+                } else {
+                    self.timing.send(.fast)
+                }
+
+                switch (target, currentTimer) {
+                case (let t, _) where t == 0:
+                    self.setFan(toSpeed: 0)
+                case (let t, let c) where t > c:
+                    self.action.send(.timer)
                 default:
                     self.action.send(.refresh)
                 }

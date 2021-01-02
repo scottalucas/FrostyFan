@@ -7,7 +7,3 @@
 
 import Foundation
 import SwiftUI
-
-protocol FanSheet: View {
-    var fanViewModel: FanViewModel { get set }
-}

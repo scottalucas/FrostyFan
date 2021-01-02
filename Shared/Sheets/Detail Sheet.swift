@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct DetailSheet: FanSheet {
+struct DetailSheet: View {
     @ObservedObject var fanViewModel: FanViewModel
     
     var body: some View {

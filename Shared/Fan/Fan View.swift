@@ -68,14 +68,14 @@ struct FanView: View {
                         activeSheet = .detail
                     }
                     .overlay(
-                        VStack {
+                        VStack (alignment: /*@START_MENU_TOKEN@*/.center/*@END_MENU_TOKEN@*/, spacing: 0) {
                             HStack {
                                 Text(fanViewModel.name).font(.largeTitle)
                                     .onLongPressGesture {
                                         activeSheet = .fanName
                                     }
                                 Spacer()
-                            }.offset(x: 0, y: 20)
+                            }
                             Divider().frame(width: nil, height: 1, alignment: .center).background(Color.main)
                             Spacer()
                         }
