@@ -83,7 +83,7 @@ struct FanView: View {
                     )
                 Spacer()
             }
-            .zIndex(0)
+            .zIndex(2)
         }
 //        .sheet(item: $activeSheet, content: { $0.view(viewModel: fanViewModel) })
         .sheet(item: $activeSheet, onDismiss: { indicator = true }, content: { $0.view(viewModel: fanViewModel) })
@@ -109,7 +109,7 @@ struct SpeedController: View {
         VStack {
             Picker (selection: $viewModel.displayedSegmentNumber, label: Text("Picker")) {
                 ForEach ((0..<viewModel.controllerSegments.count), id: \.self) { segmentIndex in
-                    Text(viewModel.controllerSegments[segmentIndex])
+                    Text(viewModel.controllerSegments[segmentIndex]).tag(segmentIndex)
                 }
             }
             .pickerStyle(SegmentedPickerStyle())

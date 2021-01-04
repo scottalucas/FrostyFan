@@ -24,7 +24,7 @@ class House: ObservableObject {
         print("start scanning")
         scanning = true
         fansAt.removeAll()
-        TestItems.fans.forEach ({ fansAt.update(with: $0) })
+//        TestItems.fans.forEach ({ fansAt.update(with: $0) })
         scanner
             .sink(receiveCompletion: { [weak self] comp in
                 self?.scanning = false
@@ -34,9 +34,9 @@ class House: ObservableObject {
                 if case .failure (let err) = comp {
                     print ("error: \(err)")
                 }
-            }, receiveValue: { [weak self] addr in
-                print ("Got address: \(addr)")
-                self?.fansAt.update(with: addr)
+            }, receiveValue: { [weak self] ipAddr in
+                print ("Got fan addr: \(ipAddr)")
+                self?.fansAt.update(with: ipAddr)
             })
             .store(in: &bag)
     }
@@ -51,21 +51,33 @@ class House: ObservableObject {
 }
 
 extension House {
-    var scanner: AnyPublisher<String, Never> {
+//    var scanner: AnyPublisher<String, Never> {
+//        return
+//            NetworkAddress.hosts.publisher
+//            .flatMap ({ host -> AnyPublisher<String, Never> in
+//                return Just (FanModel.Action.refresh)
+//                    .adjustPhysicalFan(atNetworkAddr: host, retry: false)
+//                    .tryMap { dict in
+//                        let addr = FanModel.FanKey.getValue(forKey: .ipAddress, fromTable: dict)
+//                        guard let a = addr else { throw AdjustmentError.notFound }
+//                        return a }
+//                    .replaceError(with: "Not found")
+//                    .filter({ $0 != "Not found" })
+//                    .timeout(.seconds(2), scheduler: DispatchQueue.main)
+//                    .eraseToAnyPublisher()
+//            })
+//            .eraseToAnyPublisher()
+//    }
+    var scanner: AnyPublisher<String, ConnectionError> {
         return
             NetworkAddress.hosts.publisher
-            .flatMap ({ host -> AnyPublisher<String, Never> in
-                return Just (FanModel.Action.refresh)
-                    .adjustPhysicalFan(atNetworkAddr: host, retry: false)
-                    .tryMap { dict in
-                        let addr = FanModel.FanKey.getValue(forKey: .ipAddress, fromTable: dict)
-                        guard let a = addr else { throw AdjustmentError.notFound }
-                        return a }
-                    .replaceError(with: "Not found")
-                    .filter({ $0 != "Not found" })
+            .setFailureType(to: ConnectionError.self)
+            .flatMap ({ host -> AnyPublisher<String, ConnectionError> in
+                guard let loader = FanStatusLoader(addr: host, action: .refresh) else { return Empty.init(completeImmediately: false, outputType: String.self, failureType: ConnectionError.self).eraseToAnyPublisher() }
+                return loader.loadResults
+                    .map { [host] _ in host }
                     .timeout(.seconds(2), scheduler: DispatchQueue.main)
                     .eraseToAnyPublisher()
             })
             .eraseToAnyPublisher()
-    }
-}
+    }}

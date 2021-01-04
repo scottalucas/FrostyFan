@@ -10,18 +10,18 @@ import Combine
 
 struct NetworkAddress {
     static var hosts: [String] {
-        (firstHost...lastHost)
-            .map ({ hostIpInt in
-                    [3, 2, 1, 0].map({ index in (UInt8(hostIpInt >> (index * 8) & UInt32(0xFF))) }) })
-            .compactMap ({ hostIpArr in
-                            guard
-                                hostIpArr.count == 4,
-                                (0...255).contains(hostIpArr[0]),
-                                (0...255).contains(hostIpArr[1]),
-                                (0...255).contains(hostIpArr[2]),
-                                (0...255).contains(hostIpArr[3]) else { return nil }
-                            return "\(hostIpArr[0]).\(hostIpArr[1]).\(hostIpArr[2]).\(hostIpArr[3])" })
-//            .append("0.0.0.0:8181")
+//        (firstHost...lastHost)
+//            .map ({ hostIpInt in
+//                    [3, 2, 1, 0].map({ index in (UInt8(hostIpInt >> (index * 8) & UInt32(0xFF))) }) })
+//            .compactMap ({ hostIpArr in
+//                            guard
+//                                hostIpArr.count == 4,
+//                                (0...255).contains(hostIpArr[0]),
+//                                (0...255).contains(hostIpArr[1]),
+//                                (0...255).contains(hostIpArr[2]),
+//                                (0...255).contains(hostIpArr[3]) else { return nil }
+//                            return "\(hostIpArr[0]).\(hostIpArr[1]).\(hostIpArr[2]).\(hostIpArr[3])" })
+            ["0.0.0.0:8181"] //testing only
     }
 
     private static var netInfo: (address: UInt32, mask: UInt32)? {

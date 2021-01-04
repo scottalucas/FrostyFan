@@ -49,3 +49,13 @@ extension FanSettings: Codable, RawRepresentable {
         return result
     }
 }
+
+extension Array where Element == (String, String?) {
+    var jsonData: Data? {
+        let newDict = Dictionary(self, uniquingKeysWith: { (first, _) in first })
+        guard let data = try? JSONSerialization.data(withJSONObject: newDict) else {
+            return nil
+        }
+        return data
+    }
+}

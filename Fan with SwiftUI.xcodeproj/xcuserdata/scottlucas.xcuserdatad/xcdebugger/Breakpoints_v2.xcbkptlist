@@ -78,8 +78,8 @@
             filePath = "Shared/Fan/Fan View Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "83"
-            endingLineNumber = "83"
+            startingLineNumber = "82"
+            endingLineNumber = "82"
             landmarkName = "startSubscribers()"
             landmarkType = "7">
          </BreakpointContent>
@@ -94,8 +94,8 @@
             filePath = "Shared/Fan/Fan View Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "118"
-            endingLineNumber = "118"
+            startingLineNumber = "109"
+            endingLineNumber = "109"
             landmarkName = "startSubscribers()"
             landmarkType = "7">
             <Locations>
@@ -190,8 +190,8 @@
             filePath = "Shared/Fan/Fan View Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "148"
-            endingLineNumber = "148"
+            startingLineNumber = "139"
+            endingLineNumber = "139"
             landmarkName = "setDisplayMotor(toSpeed:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -215,33 +215,111 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "FBAB4DD7-8F2F-4588-BD7C-B8056CE27D16"
+            uuid = "A5B834F1-D2C4-4F0D-B1CE-52CB1FD9DB83"
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Shared/Fan/Fan Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "157"
-            endingLineNumber = "157"
-            landmarkName = "startSpeedManager(publisher:)"
+            startingLineNumber = "105"
+            endingLineNumber = "105"
+            landmarkName = "setFan(toSpeed:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "E9FFB665-7348-4072-B883-1EAC146D2438"
+            uuid = "69B80F30-B321-4639-BD0C-A5EDC244F17F"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Shared/Fan/Fan Model.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "80"
+            endingLineNumber = "80"
+            landmarkName = "startFanTasks()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "4D9C69E9-9C88-4BC3-ABF4-ABE4C7773D9E"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Shared/Fan/Fan Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "162"
-            endingLineNumber = "162"
-            landmarkName = "startSpeedManager(publisher:)"
+            startingLineNumber = "95"
+            endingLineNumber = "95"
+            landmarkName = "startFanTasks()"
             landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "4D9C69E9-9C88-4BC3-ABF4-ABE4C7773D9E - 13f0117ae5bd40ad"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #15 (Fan_with_SwiftUI.FanModel.Action) -&gt; () in Fan_with_SwiftUI.FanModel.(startFanTasks in _318C955506509128F6EF1DBDC8F26FC1)() -&gt; ()"
+                  moduleName = "Fan with SwiftUI"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/scottlucas/Dropbox/Personal%20files/Mad%20Scientist/Swift%20Development/Fan/Airscape%20Fan%20SwiftUI/whf001/Shared/Fan/Fan%20Model.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "95"
+                  endingLineNumber = "95"
+                  offsetFromSymbolStart = "96">
+               </Location>
+               <Location
+                  uuid = "4D9C69E9-9C88-4BC3-ABF4-ABE4C7773D9E - 20448d1e481302a7"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(extension in Fan_with_SwiftUI_PreviewReplacement_Fan_Model_6):Fan_with_SwiftUI.FanModel.(__preview__startFanTasks in _DA9EA1B13DF668A217C100767A84BE46)() -&gt; ()"
+                  moduleName = "Fan Model.6.preview-thunk.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/scottlucas/Dropbox/Personal%20files/Mad%20Scientist/Swift%20Development/Fan/Airscape%20Fan%20SwiftUI/whf001/Shared/Fan/Fan%20Model.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "96"
+                  endingLineNumber = "96"
+                  offsetFromSymbolStart = "5656">
+               </Location>
+               <Location
+                  uuid = "4D9C69E9-9C88-4BC3-ABF4-ABE4C7773D9E - ef76caadd328b748"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #14 (Combine.Subscribers.Completion&lt;Fan_with_SwiftUI.ConnectionError&gt;) -&gt; () in (extension in Fan_with_SwiftUI_PreviewReplacement_Fan_Model_6):Fan_with_SwiftUI.FanModel.(__preview__startFanTasks in _DA9EA1B13DF668A217C100767A84BE46)() -&gt; ()"
+                  moduleName = "Fan Model.6.preview-thunk.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/scottlucas/Dropbox/Personal%20files/Mad%20Scientist/Swift%20Development/Fan/Airscape%20Fan%20SwiftUI/whf001/Shared/Fan/Fan%20Model.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "96"
+                  endingLineNumber = "96"
+                  offsetFromSymbolStart = "26">
+               </Location>
+               <Location
+                  uuid = "4D9C69E9-9C88-4BC3-ABF4-ABE4C7773D9E - 31d8e2d15ec2d39c"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #15 (Fan_with_SwiftUI.FanModel.Action) -&gt; () in (extension in Fan_with_SwiftUI_PreviewReplacement_Fan_Model_6):Fan_with_SwiftUI.FanModel.(__preview__startFanTasks in _DA9EA1B13DF668A217C100767A84BE46)() -&gt; ()"
+                  moduleName = "Fan Model.6.preview-thunk.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/scottlucas/Dropbox/Personal%20files/Mad%20Scientist/Swift%20Development/Fan/Airscape%20Fan%20SwiftUI/whf001/Shared/Fan/Fan%20Model.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "96"
+                  endingLineNumber = "96"
+                  offsetFromSymbolStart = "85">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

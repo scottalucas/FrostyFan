@@ -15,7 +15,7 @@ class FanViewModel: ObservableObject {
     @Published var displayedSegmentNumber: Int = -1
     @Published var opening: String = "No"
     @Published var airspaceFanModel: String?
-    @Published var macAddr: String?
+    @Published var macAddr: String = "BEEF"
     @Published var name = "Whole House Fan"
     @Published var controllerSegments: [String] = ["Off", "On"]
     @Published var interlocked: Bool = false
@@ -38,8 +38,7 @@ class FanViewModel: ObservableObject {
     }
     
     func setFan(name: String) {
-        guard let addr = macAddr else { return }
-        fanSettings.fans[addr]?.name = name
+        fanSettings.fans[macAddr]?.name = name
     }
     
     func setFan(addTimerHours hoursToAdd: Int) {
@@ -84,38 +83,30 @@ extension FanViewModel {
             })
             .store(in: &bag)
         
-        model.$chars
-            .map { (FanModel.FanKey.getValue(forKey: .macAddr, fromTable: $0), FanModel.FanKey.getValue(forKey: .model, fromTable: $0)) }
+        model.$fanCharacteristics
+            .map { ($0.macAddr, $0.airspaceFanModel) }
             .map { [weak self] (retrievedMacAddr, retrievedModelNumber) -> String in
-                self?.fanSettings.fans[retrievedMacAddr ?? ""]?.name ?? (retrievedModelNumber != nil ? "Model \(retrievedModelNumber!)" : nil) ?? "Whole House Fan" }
+                self?.fanSettings.fans[retrievedMacAddr]?.name ?? retrievedModelNumber }
             .receive(on: DispatchQueue.main)
             .assign(to: &$name)
         
-        model.$chars
-            .map { FanModel.FanKey.getValue(forKey: .macAddr, fromTable: $0) ?? "Not found" }
+        model.$fanCharacteristics
+            .map { $0.macAddr }
             .receive(on: DispatchQueue.main)
             .assign(to: &$macAddr)
         
-        model.$chars
-            .map { dict in
-                guard let timerStr = FanModel.FanKey.getValue(forKey: .timer, fromTable: dict) else { return nil }
-                return Int(timerStr)
-                }
-            .filter { $0 != nil }
-            .map { $0! }
+        model.$fanCharacteristics
+            .map { $0.timer }
             .receive(on: DispatchQueue.main)
             .assign(to: &$timer)
 
-        model.$chars
-            .map { dict -> String? in (FanModel.FanKey.getValue(forKey: .speed, fromTable: dict)) }
-            .filter({ $0 != nil })
-            .map { Int($0!) }
-            .filter { $0 != nil }
+        model.$fanCharacteristics
+            .map { $0.speed }
             .receive(on: DispatchQueue.main)
             .sink(receiveValue: { [weak self] actualSpeed in
-                if self?.physicalFanSpeed == nil { self?.displayedSegmentNumber = actualSpeed! } //should only happen first time through
-                self?.physicalFanSpeed = actualSpeed!
-                self?.setDisplayMotor(toSpeed: actualSpeed!)
+                if self?.physicalFanSpeed == nil { self?.displayedSegmentNumber = actualSpeed } //should only happen first time through
+                self?.physicalFanSpeed = actualSpeed
+                self?.setDisplayMotor(toSpeed: actualSpeed)
             })
             .store(in: &bag)
         
@@ -123,8 +114,8 @@ extension FanViewModel {
             .switchToLatest()
             .assign(to: &$fanRotationDuration)
         
-        model.$chars
-            .map { (FanModel.FanKey.getValue(forKey: .model, fromTable: $0) ?? "") }
+        model.$fanCharacteristics
+            .map { $0.airspaceFanModel }
             .map { FanViewModel.speedTable[String($0.prefix(4))] ?? 1 }
             .map { count -> [String] in Range(0...count).map { String($0) } }
             .map {
@@ -135,9 +126,9 @@ extension FanViewModel {
             }
             .assign(to: &$controllerSegments)
         
-        model.$chars
-            .map { ((FanModel.FanKey.getValue(forKey: .interlock1, fromTable: $0) ?? "0", FanModel.FanKey.getValue(forKey: .interlock2, fromTable: $0) ?? "0")) }
-            .map { (Int($0) ?? 0) == 1 || (Int($1) ?? 0) == 1 }
+        model.$fanCharacteristics
+            .map { ($0.interlock1, $0.interlock2) }
+            .map { $0.0 || $0.1 }
             .receive(on: DispatchQueue.main)
             .assign(to: &$interlocked)
     }
