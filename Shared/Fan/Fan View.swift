@@ -87,6 +87,7 @@ struct FanView: View {
         }
 //        .sheet(item: $activeSheet, content: { $0.view(viewModel: fanViewModel) })
         .sheet(item: $activeSheet, onDismiss: { indicator = true }, content: { $0.view(viewModel: fanViewModel) })
+
         .onReceive(fanViewModel.$fanRotationDuration) { val in
             self.angle = .zero
             withAnimation(Animation.linear(duration: val)) {
@@ -108,7 +109,7 @@ struct SpeedController: View {
     var body: some View {
         VStack {
             Picker (selection: $viewModel.displayedSegmentNumber, label: Text("Picker")) {
-                ForEach ((0..<viewModel.controllerSegments.count), id: \.self) { segmentIndex in
+                ForEach (0..<viewModel.controllerSegments.count) { segmentIndex in
                     Text(viewModel.controllerSegments[segmentIndex]).tag(segmentIndex)
                 }
             }

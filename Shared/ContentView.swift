@@ -18,7 +18,7 @@ struct ContentView: View {
         app.selectedSegmentTintColor = .main
         app.setTitleTextAttributes([.foregroundColor: UIColor.main], for: .normal)
         app.setTitleTextAttributes([.foregroundColor: UIColor.background], for: .selected)
-        House.shared.fansAt.insert("0.0.0.0:8181")
+//        House.shared.fansAt.insert(FanModel())
 //        Timer.scheduledTimer(withTimeInterval: 5, repeats: false) { _ in
 //            House.shared.lostFan(atIp: "0.0.0.0:8181")
 //        }

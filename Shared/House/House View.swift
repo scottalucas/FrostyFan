@@ -64,15 +64,14 @@ struct FanViewPageContainer: View {
             Text("No fans connected")
         } else {
             TabView (selection: $selectedFan) {
-                ForEach (0..<viewModel.fanModels.count, id: \.self) { fanModelIndex in
-                    viewModel.fanModels[fanModelIndex]
+                ForEach (viewModel.fanModels) { fanModel in
+                    fanModel
                         .getView()
                         .padding(.bottom, viewModel.fanModels.count > 1 ? 100 : 65)
-                        .tag(fanModelIndex)
                 }
             }
             .tabViewStyle(PageTabViewStyle())
-            .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .always))
+            .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .automatic))
             .ignoresSafeArea(.container, edges: [.top])
         }
     }
@@ -80,6 +79,6 @@ struct FanViewPageContainer: View {
 
 struct HouseViewPreviews: PreviewProvider {
     static var previews: some View {
-        HouseView(viewModel: TestHouseViewModel(testFans: ["0.0.0.0:8181"]))
+        HouseView(viewModel: TestHouseViewModel(testFans: [FanModel()]))
     }
 }

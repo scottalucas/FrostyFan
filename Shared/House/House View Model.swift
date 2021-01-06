@@ -12,7 +12,7 @@ import Combine
 class HouseViewModel: ObservableObject {
 //    private var model = House.shared
     @State var currentPageTag: Int = 0
-    @Published var fanModels = [FanModel]()
+    @Published var fanModels = Array<FanModel>()
     @Published var scanning = false
     private var userScan = false
     private var bag = Set<AnyCancellable>()
@@ -27,11 +27,7 @@ class HouseViewModel: ObservableObject {
             .store(in: &bag)
         
         House.shared.$fansAt
-            .map {
-                $0.map { addr in
-                    FanModel(forAddress: addr)
-                }
-            }
+            .map { Array.init($0) }
             .assign(to: &$fanModels)
         
         House.shared.$scanning
@@ -47,8 +43,8 @@ class HouseViewModel: ObservableObject {
 }
 
 class TestHouseViewModel: HouseViewModel {
-    var testFans: [String]
-    init (testFans: [String]) {
+    var testFans: [FanModel]
+    init (testFans: [FanModel]) {
         self.testFans = testFans
         super.init()
         testFans.forEach({ House.shared.fansAt.update(with: $0) })
