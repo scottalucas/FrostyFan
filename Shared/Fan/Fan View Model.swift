@@ -16,13 +16,15 @@ class FanViewModel: ObservableObject {
     @Published var opening: String = "No"
     @Published var airspaceFanModel: String?
     @Published var macAddr: String = "BEEF"
-    @Published var name = "Whole House Fan"
+    @Published var name = ""
     @Published var controllerSegments: [String] = ["Off", "On"]
     @Published var interlocked: Bool = false
-    @Published var timer: Int = 0
+    @Published var timer = 0
+    @Published var offDateTxt = ""
     @Published var testText: String?
-    @AppStorage(Setting.fans) private var fanSettings = FanSettings()
-    private var physicalFanSpeed: Int?
+//    @AppStorage(FanSettings.Key) private var fanSettings = FanSettings()
+    @Published var physicalFanSpeed: Int?
+    @Published var showPhysicalSpeedIndicator: Bool = false
     private var displayedMotorSpeed: Int?
     private var displayMotor = PassthroughSubject<AnyPublisher<Double, Never>, Never>()
     
@@ -30,6 +32,7 @@ class FanViewModel: ObservableObject {
     
     init (forModel model: FanModel) {
         self.model = model
+        self.name = FanSettings.retreive().fans[macAddr]?.name ?? ""
         startSubscribers()
     }
     
@@ -38,7 +41,10 @@ class FanViewModel: ObservableObject {
     }
     
     func setFan(name: String) {
-        fanSettings.fans[macAddr]?.name = name
+        var globalSettings = FanSettings.retreive()
+        globalSettings.fans[macAddr] = FanSettings.Fan.init(lastIp: model.ipAddr, name: name)
+        FanSettings.store(sets: globalSettings)
+        self.name = name
     }
     
     func setFan(addTimerHours hoursToAdd: Int) {
@@ -84,9 +90,13 @@ extension FanViewModel {
             .store(in: &bag)
         
         model.$fanCharacteristics
-            .map { ($0.macAddr, $0.airspaceFanModel) }
-            .map { [weak self] (retrievedMacAddr, retrievedModelNumber) -> String in
-                self?.fanSettings.fans[retrievedMacAddr]?.name ?? retrievedModelNumber }
+            .filter { [weak self] _ in
+                self?.name.count == 0
+            }
+            .map { $0.airspaceFanModel }
+            .map { retrievedModelNumber -> String in
+                return retrievedModelNumber.count == 0 ? "Whole House Fan" : retrievedModelNumber
+            }
             .receive(on: DispatchQueue.main)
             .assign(to: &$name)
         
@@ -95,6 +105,17 @@ extension FanViewModel {
             .receive(on: DispatchQueue.main)
             .assign(to: &$macAddr)
         
+        model.$fanCharacteristics
+            .map { $0.timer }
+            .map { timeTillOff in
+                guard timeTillOff > 0 else { return "" }
+                let formatter = DateFormatter()
+                formatter.dateFormat = "h:mm a"
+                return "Off at \(formatter.string(from: Date(timeIntervalSinceNow: TimeInterval(timeTillOff * 60))))"
+            }
+            .receive(on: DispatchQueue.main)
+            .assign(to: &$offDateTxt)
+
         model.$fanCharacteristics
             .map { $0.timer }
             .receive(on: DispatchQueue.main)
@@ -116,7 +137,8 @@ extension FanViewModel {
         
         model.$fanCharacteristics
             .map { $0.airspaceFanModel }
-            .map { FanViewModel.speedTable[String($0.prefix(4))] ?? 1 }
+            .map {
+                FanViewModel.speedTable[String($0.prefix(4))] ?? 1 }
             .map { count -> [String] in Range(0...count).map { String($0) } }
             .map {
                 var newArr = $0
@@ -131,6 +153,11 @@ extension FanViewModel {
             .map { $0.0 || $0.1 }
             .receive(on: DispatchQueue.main)
             .assign(to: &$interlocked)
+        
+        model.$targetSpeed
+            .receive(on: DispatchQueue.main)
+            .map { $0 == nil ? false : true }
+            .assign(to: &$showPhysicalSpeedIndicator)
     }
 }
 

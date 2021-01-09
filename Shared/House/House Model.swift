@@ -35,7 +35,8 @@ class House: ObservableObject {
                 }
             }, receiveValue: { [weak self] (ipAddr, chars) in
                 print ("Found fan addr: \(ipAddr)")
-                self?.fansAt.update(with: FanModel.init(forAddress: ipAddr, usingChars: chars))
+                let newFan = FanModel.init(forAddress: ipAddr, usingChars: chars)
+                self?.fansAt.update(with: newFan)
             })
             .store(in: &bag)
     }
@@ -53,14 +54,18 @@ extension House {
     var scanner: AnyPublisher<(String, FanCharacteristics), ConnectionError> {
         return
             NetworkAddress.hosts.publisher
-//            .prepend("0.0.0.0:8181") //testing
+            .prepend("0.0.0.0:8181") //testing
             .setFailureType(to: ConnectionError.self)
                 .flatMap ({ host -> AnyPublisher<(String, FanCharacteristics), ConnectionError> in
                 guard let loader = FanStatusLoader(addr: host, action: .refresh) else { return Empty.init(completeImmediately: false).eraseToAnyPublisher() }
                 return loader.loadResults
+                    .catch({ _ in
+                        Empty.init(completeImmediately: false)
+                    })
                     .map { [host] chars in (host, chars) }
                     .timeout(.seconds(5), scheduler: DispatchQueue.main)
                     .eraseToAnyPublisher()
             })
+//            .collect()
             .eraseToAnyPublisher()
     }}

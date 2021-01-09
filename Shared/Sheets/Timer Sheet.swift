@@ -8,27 +8,27 @@
 import SwiftUI
 
 struct TimerSheet: View {
-    @ObservedObject var fanViewModel: FanViewModel
-    @State private var hoursToAdd: Int = 0
-    private var minutes: String {
-        String(format: "%02i", timeTester%60)
+    @Binding var hoursToAdd: Int
+    var fanViewModel: FanViewModel
+    var maxKeypresses: Int {
+        13 - (Int(fanViewModel.timer/60) + (fanViewModel.timer%60 != 0 ? 1 : 0)) + 1
     }
-    private var hours: String {
-        Int(timeTester/60) == 0 ? String("00") : String(Int(timeTester/60))
+    var offTimeMinutes: Int {
+        fanViewModel.timer
     }
-    @State var timeTester: Int = 601
-    private var maxKeypresses: Int { 13 - (Int(timeTester/60) + (timeTester%60 != 0 ? 1 : 0)) + 1 }
-//    private var maxTime: Int { 13 - (Int(fanViewModel.timer/60) + (fanViewModel.timer%60 != 0 ? 1 : 0)) }
+    var offDateText: String {
+        fanViewModel.offDateTxt
+    }
     
     var body: some View {
         ZStack {
-            TimerSheetBackground(timeRemaining: $timeTester)
+            TimerSheetBackground(timeText: offDateText)
             VStack {
-                if (timeTester >= ( 12 * 60 )) {
+                if (maxKeypresses == 0) {
                     Color.background
                         .overlay(Text("Timer at maximum").font(.largeTitle).foregroundColor(Color.main))
                         .frame(width: nil, height: 60)
-                } else if timeTester > (11 * 60) {
+                } else if maxKeypresses == 1 {
                     Color.background
                         .overlay(Button(action: { hoursToAdd = 1 }) {
                             Text("Set to 12 hours").font(.largeTitle).foregroundColor(Color.main)
@@ -50,9 +50,7 @@ struct TimerSheet: View {
             .shadow(radius: /*@START_MENU_TOKEN@*/10/*@END_MENU_TOKEN@*/)
         }
         .onDisappear(perform: {
-            if hoursToAdd > 0 {
-                fanViewModel.setFan(addTimerHours: hoursToAdd)
-            }
+            fanViewModel.setFan(addTimerHours: hoursToAdd) 
         })
     }
 }
@@ -80,14 +78,7 @@ struct TimerPickerDataSource {
 }
 
 struct TimerSheetBackground: View {
-    @Binding var timeRemaining: Int
-    private var minutes: String {
-        String(format: "%02i", timeRemaining%60)
-    }
-    private var hours: String {
-        Int(timeRemaining/60) == 0 ? String("00") : String(Int(timeRemaining/60))
-    }
-    
+    var timeText: String
     var body: some View {
         ZStack {
             Color.main
@@ -97,8 +88,7 @@ struct TimerSheetBackground: View {
                     Text("Timer").font(.largeTitle)
                         .foregroundColor(Color.background)
                     Spacer()
-                    Text (timeRemaining > 0 ? "\(hours):\(minutes) remaining" : "")
-                        .foregroundColor(Color.background)
+                    Text (timeText).foregroundColor(Color.background)
                 }
                 Divider()
                     .frame(width: nil, height: 1, alignment: .center)
@@ -113,8 +103,8 @@ struct TimerSheetBackground: View {
 struct Timer_View_Previews: PreviewProvider {
     static var previews: some View {
         VStack {
-            TimerSheet(fanViewModel: FanViewModel())
-//            TimerSheetBackground()
+//            TimerSheet(fanViewModel: FanViewModel())
+            TimerSheetBackground(timeText: "10:03 PM")
         }
     }
 }

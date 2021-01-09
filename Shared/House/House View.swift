@@ -15,41 +15,38 @@ struct HouseView: View {
     @State private var fanLabel: String?
     
     var body: some View {
-
-        ZStack {
-            VStack {
-                RefreshableScrollView(height: 40, refreshing: $viewModel.scanning) {}
-                    .frame(width: nil, height: 75, alignment: .top)
-                Spacer()
+        
+        TabView (selection: $currentTab) {
+            ZStack {
+                VStack {
+                    RefreshableScrollView(height: 40, refreshing: $viewModel.scanning) {}
+                        .frame(width: nil, height: 75, alignment: .top)
+                    Spacer()
+                }
+                VStack {
+                    FanViewPageContainer(viewModel: viewModel)
+                        .ignoresSafeArea(.container, edges: .top)
+                    Spacer()
+                }
             }
-            .ignoresSafeArea(.container, edges: .top)
-            .zIndex(3)
-            TabView (selection: $currentTab)
-            {
-                FanViewPageContainer(viewModel: viewModel)
-                    .tabItem {
-                        Image.fanIcon
-                        Text(viewModel.scanning ? "Scanning" : "Fan")
-                    }
-                    .tag(1)
-                Text("")
-                    .tabItem {
-                        Image.timer
-                        Text("Timer")
-                    }
-                    .tag(2)
-                Text("")
-                    .tabItem {
-                        Image.bell
-                        Text("Alarms")
-                    }
-                    .tag(3)
+//            .fixedSize(horizontal: false, vertical: true)
+            .tabItem {
+                Image.fanIcon
+                Text(viewModel.scanning ? "Scanning" : "Fan")
             }
-            .zIndex(2)
+            .tag(1)
+//            .accentColor(Color.main)
+            
+            Text("")
+                .tabItem {
+                    Image.bell
+                    Text("Alarms")
+                }
+                .tag(2)
+//                .accentColor(Color.main)
         }
-        .accentColor(Color.main)
+        .accentColor(.main)
     }
-    
     init (viewModel: HouseViewModel) {
         self.viewModel = viewModel
     }
@@ -62,17 +59,20 @@ struct FanViewPageContainer: View {
     var body: some View {
         if viewModel.fanModels.count == 0 {
             Text("No fans connected")
+        } else if viewModel.fanModels.count == 1 {
+            viewModel.fanModels.first!
+                .getView()
+                .padding(.bottom, 35)
         } else {
             TabView (selection: $selectedFan) {
                 ForEach (viewModel.fanModels) { fanModel in
                     fanModel
                         .getView()
-                        .padding(.bottom, viewModel.fanModels.count > 1 ? 100 : 65)
+                        .padding(.bottom, 100)
                 }
             }
-            .tabViewStyle(PageTabViewStyle())
-            .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .automatic))
-            .ignoresSafeArea(.container, edges: [.top])
+            .tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))
+            .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .always))
         }
     }
 }

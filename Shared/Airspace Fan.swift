@@ -12,41 +12,31 @@ struct AirspaceFanApp: App {
 
     var body: some Scene {
         WindowGroup {
-            
             ContentView()
         }
     }
 }
 
-enum Setting {
-    static let fans = "fans"
-}
-
-struct FanSettings {
+struct FanSettings: Codable {
+    static var Key = "fans"
     var fans = [String: Fan]()
-    struct Fan {
+    struct Fan: Codable {
         var lastIp = String()
-        var name: String?
+        var name = String()
     }
-}
-
-extension FanSettings: Codable, RawRepresentable {
-    public init?(rawValue: String) {
-        guard let data = rawValue.data(using: .utf8),
-            let result = try? JSONDecoder().decode(FanSettings.self, from: data)
-        else {
-            return nil
-        }
-        self = result
+    static func store (sets: FanSettings) {
+        let encoder = JSONEncoder()
+        let data = (try? encoder.encode(sets)) ?? Data()
+        UserDefaults.standard.setValue(data, forKey: FanSettings.Key)
     }
-
-    public var rawValue: String {
-        guard let data = try? JSONEncoder().encode(self),
-            let result = String(data: data, encoding: .utf8)
-        else {
-            return "[]"
-        }
-        return result
+    
+    static func retreive () -> FanSettings {
+        let decoder = JSONDecoder()
+        guard
+            let data = UserDefaults.standard.data(forKey: FanSettings.Key),
+            let retValue = try? decoder.decode(FanSettings.self, from: data)
+        else { return FanSettings() }
+        return retValue
     }
 }
 

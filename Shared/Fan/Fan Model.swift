@@ -13,32 +13,31 @@ import SwiftUI
 class FanModel: ObservableObject {
     var ipAddr: String
     @Published var fanCharacteristics = FanCharacteristics()
-//    private let timing = PassthroughSubject<FanConnectionTimers, Never>()
-//    private let action = PassthroughSubject<FanModel.Action, Never>()
-    private var targetSpeed: Int?
+    @Published var targetSpeed: Int?
     private var targetTimer: Int?
     private var lastReportedSpeed: Int?
     private var lastReportedTimer: Int?
     private var loaderPublisher = PassthroughSubject<AnyPublisher<FanCharacteristics, ConnectionError>, Never>()
+    private var fanContactTimer = Timer()
     private var bag = Set<AnyCancellable>()
-
-
 
     init(forAddress address: String, usingChars chars: FanCharacteristics? = nil) {
         ipAddr = address
         connectFanSubscribers()
-        chars.map { fanCharacteristics = $0 } ?? self.getFanStatus(sendingCommand: .refresh, withDelay: 0.5)
+        chars.map { fanCharacteristics = $0 } ?? self.getFanStatus(sendingCommand: .refresh)
         print("init fan model \(ipAddr)")
     }
     
     func setFan(toSpeed finalTarget: Int? = nil) {
-        self.targetSpeed = finalTarget
+        targetSpeed = finalTarget
+        lastReportedSpeed = nil
         getFanStatus(sendingCommand: .refresh)
     }
     
     func setFan(addHours hours: Int) {
+        guard hours > 0 else { return }
         let baseTime = lastReportedTimer ?? 0 > (60 * 12) - 10 ? (60 * 12) : (hours * 60) - 10 //allow a 10 minutes buffer unless current time's already within 10 minutes of 12 hours
-        self.targetTimer = lastReportedTimer ?? 0 + baseTime
+        self.targetTimer = (lastReportedTimer ?? 0) + baseTime
         getFanStatus(sendingCommand: .refresh)
     }
 
@@ -67,6 +66,7 @@ struct FanCharacteristics: Decodable, Hashable {
     var dipSwitch: String?
     var remoteSwitch: String?
     var setpoint: Int?
+    var labelValueDictionary: [String: String] = [:]
     
     func hash(into hasher: inout Hasher) {
         hasher.combine(macAddr)
@@ -102,6 +102,7 @@ struct FanCharacteristics: Decodable, Hashable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let speedStr = try container.decode(String.self, forKey: .fanspd)
+        labelValueDictionary["Speed"] = speedStr
         let timerStr = try container.decode(String.self, forKey: .timeremaining)
         guard let intSpeed = Int(speedStr) else {throw DecodeError.noValue(.fanspd)}
         guard let intTimer = Int(timerStr) else {throw DecodeError.noValue(.timeremaining)}
@@ -133,6 +134,26 @@ struct FanCharacteristics: Decodable, Hashable {
         atticTemp = atticTempStr.map { Int($0) } ?? nil
         outsideTemp = outsideTempStr.map { Int($0) } ?? nil
         setpoint = setpointStr.map { Int($0) } ?? nil
+        labelValueDictionary["Speed"] = speedStr
+        labelValueDictionary["Timer"] = timerStr
+        labelValueDictionary["Damper"] = damperStr == "1" ? "Opening" : "Not operating"
+        labelValueDictionary["Interlock 1"] = i1Str == "1" ? "Active" : "Not active"
+        labelValueDictionary["Interlock 2"] = i2Str == "1" ? "Active" : "Not active"
+        labelValueDictionary["MAC Address"] = macAddr
+        labelValueDictionary["Model"] = airspaceFanModel
+        labelValueDictionary["IP Address"] = ipAddr ?? "Not reported"
+        labelValueDictionary["Airflow"] = cfmStr.map { "\($0) cfm" } ?? "Not reported"
+        labelValueDictionary["Software version"] = softwareVersion ?? "Not reported"
+        labelValueDictionary["DNS"] = dns ?? "Not reported"
+        labelValueDictionary["DIP Switch"] = dipSwitch ?? "Not reported"
+        labelValueDictionary["Remote Switch"] = remoteSwitch ?? "Not reported"
+        labelValueDictionary["Power"] = powerStr ?? "Not reported"
+        labelValueDictionary["Inside Temp"] = insideTempStr.map { "\($0)˚" } ?? "Not reported"
+        labelValueDictionary["Attic Temp"] = atticTempStr.map { "\($0)˚" } ?? "Not reported"
+        labelValueDictionary["Outside Temp"] = outsideTempStr.map { "\($0)˚" } ?? "Not reported"
+        labelValueDictionary["Setpoint"] = setpointStr ?? "Not reported"
+        labelValueDictionary["Speed"] = speedStr
+//        print(serverResponse)
     }
     
     init () {
@@ -162,7 +183,6 @@ struct FanStatusLoader {
                 }) }
             .map { $0.jsonData ?? Data() }
             .decode(type: FanCharacteristics.self, decoder: decoder)
-//            .print("loader")
             .mapError({ err in
                 ConnectionError.cast(err)
             })
@@ -225,31 +245,18 @@ extension FanModel {
             }
         }
     }
-    enum FanConnectionTimers {
-        case maintenance, fast, slow, now
-        var publisher: AnyPublisher<Date, Never> {
-            switch self {
-            case .fast:
-                return Timer.publish(every: 0.5, on: .main, in: .common).autoconnect().eraseToAnyPublisher()
-            case .slow:
-                return Timer.publish(every: 5.0, on: .main, in: .common).autoconnect().eraseToAnyPublisher()
-            case .maintenance:
-                return Timer.publish(every: 30, on: .main, in: .common).autoconnect().eraseToAnyPublisher()
-            case .now:
-                return Just(Date()).eraseToAnyPublisher()
-            }
-        }
-    }
 }
 
 extension FanModel {
-    private func getFanStatus(sendingCommand command: FanModel.Action, withDelay delay: TimeInterval = 0.0) {
+    private func getFanStatus(sendingCommand command: FanModel.Action, withDelay delay: Double = 0) {
+        let delayMSec = Int(delay * 1000)
+        print("action \(command)")
         if let loader = FanStatusLoader(addr: ipAddr, action: command)?
             .loadResults
             .share()
             .eraseToAnyPublisher() {
-            Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
-                self?.loaderPublisher.send (loader)
+            DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(delayMSec)) { [loaderPublisher] in
+                loaderPublisher.send (loader)
             }
         }
     }
@@ -263,7 +270,7 @@ extension FanModel {
         //char loader
         loaderPublisher
             .switchToLatest()
-            .print("publisher")
+//            .print("char loader")
             .sink(receiveCompletion: { [weak self] (comp) in
                 if case .failure(let err) = comp {
                     self?.fanCommFailed(withError: err)
@@ -278,14 +285,14 @@ extension FanModel {
         loaderPublisher
             .switchToLatest()
             .map { _ in "query"}
-            .merge(with: Timer.publish(every: 10, on: .main, in: .common)
+            .merge(with: Timer.publish(every: 15, on: .main, in: .common)
                     .autoconnect()
                     .map { _ in "watchdog"}
                     .setFailureType(to: ConnectionError.self)
                     .eraseToAnyPublisher())
-            .collect(.byTime(DispatchQueue.main, .seconds(30)))
+//            .print("watchdog")
+            .collect(.byTime(DispatchQueue.main, .seconds(60)))
             .filter({ !$0.contains("query") })
-            .print("watchdog")
             .sink(receiveCompletion: {_ in}, receiveValue: { [weak self] _ in
                 self?.getFanStatus(sendingCommand: .refresh)
             })
@@ -295,7 +302,7 @@ extension FanModel {
         loaderPublisher
             .switchToLatest()
             .map { $0.speed }
-            .print("speed controller")
+//            .print("speed controller")
             .sink(receiveCompletion: { comp in
             }, receiveValue: { [weak self] speed in
                 defer { self?.lastReportedSpeed = speed }
@@ -305,10 +312,25 @@ extension FanModel {
                 }
                 guard target != 0 else { self?.getFanStatus(sendingCommand: .off); return}
                 let action: FanModel.Action = (target < speed) ? .slower : .faster
-                let delay = self?.lastReportedSpeed.map { $0 == speed } ?? false ? 5.0 : 0.8
+                let delay = self?.lastReportedSpeed.map { $0 == speed } ?? false ? 5.0 : 0.5
                 self?.getFanStatus(sendingCommand: action, withDelay: delay)
             })
             .store(in: &bag)
+        
+        //timer setter
+        loaderPublisher
+            .switchToLatest()
+            .map { $0.timer }
+            .print("timer controller")
+            .sink(receiveCompletion: { comp in
+            }, receiveValue: { [weak self] timer in
+                defer { self?.lastReportedTimer = timer }
+                guard let target = self?.targetTimer, timer < target else {
+                    self?.targetTimer = nil
+                    return
+                }
+                self?.getFanStatus(sendingCommand: .timer, withDelay: 0.5)
+            })
+            .store(in: &bag)
     }
-
 }

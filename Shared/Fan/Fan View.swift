@@ -12,7 +12,10 @@ struct FanView: View {
     @State private var angle: Angle = .zero
     @State private var indicator: Bool = false
     @State private var activeSheet: Sheet?
-    @AppStorage(Setting.fans) private var fanSettings = FanSettings()
+    @State private var hoursToAdd: Int = 0
+    private var maxKeypresses: Int {
+        13 - (Int(fanViewModel.timer/60) + (fanViewModel.timer%60 != 0 ? 1 : 0)) + 1
+    }
     
     enum Sheet: Identifiable {
         var id: Int {
@@ -23,14 +26,14 @@ struct FanView: View {
         case timer
         case detail
         
-        func view(viewModel: FanViewModel) -> AnyView {
+        func view(view: FanView) -> AnyView {
             switch self {
             case .fanName:
-                return NameSheet(fanViewModel: viewModel).eraseToAnyView()
+                return NameSheet(viewModel: view.fanViewModel).eraseToAnyView()
             case .timer:
-                return TimerSheet(fanViewModel: viewModel).eraseToAnyView()
+                return TimerSheet(hoursToAdd: view.$hoursToAdd, fanViewModel: view.fanViewModel) .eraseToAnyView()
             case .detail:
-                return DetailSheet(fanViewModel: viewModel).eraseToAnyView()
+                return DetailSheet(fanViewModel: view.fanViewModel).eraseToAnyView()
             }
         }
     }
@@ -39,23 +42,26 @@ struct FanView: View {
         ZStack {
             VStack {
                 Spacer()
-                Text( fanViewModel.testText ?? "No text" )
                 Button(
                     action: {
                         activeSheet = .timer
-                }, label: {
-                Image.timer
-                    .resizable()
-                    .foregroundColor(.main)
-                    .scaledToFit()
-                    .frame(width: nil, height: 40)
-                    .padding(.bottom, 15)
-                })
+                    }, label: {
+                        VStack {
+                            Image.timer
+                                .resizable()
+                                .foregroundColor(.main)
+                                .scaledToFit()
+                                .frame(width: nil, height: 40)
+                            if fanViewModel.offDateTxt.count > 0 {
+                                Text(fanViewModel.offDateTxt).font(.subheadline).foregroundColor(.main)
+                            }
+                        }
+                        .padding(.bottom, 15)
+                    })
                 SpeedController(viewModel: fanViewModel)
                     .padding([.leading, .trailing], 20)
             }
-            .zIndex(/*@START_MENU_TOKEN@*/1.0/*@END_MENU_TOKEN@*/)
-            VStack {
+            VStack() {
                 Image.fanLarge
                     .resizable()
                     .aspectRatio(contentMode: .fit)
@@ -64,30 +70,34 @@ struct FanView: View {
                     .opacity(/*@START_MENU_TOKEN@*/0.8/*@END_MENU_TOKEN@*/)
                     .blur(radius: 10.0)
                     .scaleEffect(1.5)
-                    .onTapGesture {
-                        activeSheet = .detail
-                    }
                     .overlay(
-                        VStack (alignment: /*@START_MENU_TOKEN@*/.center/*@END_MENU_TOKEN@*/, spacing: 0) {
-                            HStack {
-                                Text(fanViewModel.name).font(.largeTitle)
-                                    .onLongPressGesture {
-                                        activeSheet = .fanName
-                                    }
-                                Spacer()
-                            }
-                            Divider().frame(width: nil, height: 1, alignment: .center).background(Color.main)
-                            Spacer()
-                        }
-                        .padding()
+                        Button(action: {
+                            activeSheet = .detail
+                        }, label: {
+                            Color.clear
+                        })
+                        .frame(width: 75, height: 75, alignment: .center)
                     )
+                    .padding(.top, 100)
+                    .ignoresSafeArea(.container, edges: .top)
+
+//                    .onTapGesture { activeSheet = .detail }
                 Spacer()
             }
-            .zIndex(2)
+            VStack (alignment: /*@START_MENU_TOKEN@*/.center/*@END_MENU_TOKEN@*/, spacing: 0) {
+                HStack (alignment: .firstTextBaseline) {
+                    Text(fanViewModel.name).font(.largeTitle).foregroundColor(.main)
+                        .onLongPressGesture {
+                            activeSheet = .fanName
+                        }
+                    Spacer()
+                }
+                Divider().frame(width: nil, height: 1, alignment: .center).background(Color.main)
+                Spacer()
+            }
+            .padding([.leading, .trailing], 20.0)
         }
-//        .sheet(item: $activeSheet, content: { $0.view(viewModel: fanViewModel) })
-        .sheet(item: $activeSheet, onDismiss: { indicator = true }, content: { $0.view(viewModel: fanViewModel) })
-
+        .sheet(item: $activeSheet, onDismiss: { indicator = true }, content: { $0.view(view: self) })
         .onReceive(fanViewModel.$fanRotationDuration) { val in
             self.angle = .zero
             withAnimation(Animation.linear(duration: val)) {
@@ -103,22 +113,59 @@ struct FanView: View {
 
 struct SpeedController: View {
     @ObservedObject private var viewModel: FanViewModel
-    @State private var userSelected: Bool = true
-    @State private var pickerSelection: Int = -1
     
     var body: some View {
-        VStack {
             Picker (selection: $viewModel.displayedSegmentNumber, label: Text("Picker")) {
                 ForEach (0..<viewModel.controllerSegments.count) { segmentIndex in
                     Text(viewModel.controllerSegments[segmentIndex]).tag(segmentIndex)
                 }
             }
             .pickerStyle(SegmentedPickerStyle())
-        }
+            .modifier(PhysicalSpeedIndicator(viewModel: viewModel))
     }
     
     init(viewModel: FanViewModel) {
         self.viewModel = viewModel
+    }
+}
+
+struct Title: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .font(.largeTitle)
+            .foregroundColor(.white)
+            .padding()
+            .background(Color.blue)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+}
+
+struct PhysicalSpeedIndicator: ViewModifier {
+    
+    @ObservedObject var viewModel: FanViewModel
+    
+    func body(content: Content) -> some View {
+        content
+            .overlay (
+                viewModel.showPhysicalSpeedIndicator ?
+                GeometryReader { geo2 in
+                    Image(systemName: "arrowtriangle.up.fill")
+                        .resizable()
+                        .foregroundColor(.main)
+                        .alignmentGuide(.top, computeValue: { dimension in
+                            -geo2.size.height + dimension.height/CGFloat(2)
+                        })
+                        .alignmentGuide(HorizontalAlignment.center, computeValue: { dimension in
+                            let oneSegW = geo2.size.width/CGFloat(viewModel.controllerSegments.count)
+                            let offs = oneSegW/2.0 + (oneSegW * CGFloat(viewModel.physicalFanSpeed ?? 0)) - dimension.width
+                            return -offs
+                        })
+                        .animation(.easeInOut)
+                        .frame(width: 20, height: 10, alignment: .top)
+                }
+                    .eraseToAnyView() :
+                    Color.clear.eraseToAnyView()
+            )
     }
 }
 
