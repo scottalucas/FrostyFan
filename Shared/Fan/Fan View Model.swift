@@ -24,7 +24,7 @@ class FanViewModel: ObservableObject {
     @Published var testText: String?
     @Published var physicalFanSpeed: Int?
     @Published var showPhysicalSpeedIndicator: Bool = false
-    @Published var mainColor: UIColor = .main
+    @Published var bladeColor: UIColor = .main
     @Published var alarmCondition = Alarm(rawValue: 0)
     private var displayedMotorSpeed: Int?
     private var displayMotor = PassthroughSubject<AnyPublisher<Double, Never>, Never>()
@@ -58,12 +58,20 @@ class FanViewModel: ObservableObject {
     
     func raiseAlarm (forCondition condition: Alarm) {
         alarmCondition.update(with: condition)
-        mainColor = .alarm
+        bladeColor = alarmCondition.intersection(Alarm.redColorAlarms).isEmpty ? .main : .alarm
+        showPhysicalSpeedIndicator = !alarmCondition.intersection(Alarm.displaySpeedIndicator).isEmpty
     }
 
-    func clearAlarm (forCondition condition: Alarm) {
-        alarmCondition.remove(condition)
-        if alarmCondition.isEmpty {mainColor = .main}
+    func clearAlarm (forCondition cond: Alarm? = nil) {
+        if let condition = cond {
+            alarmCondition.remove(condition)
+            bladeColor = alarmCondition.intersection(Alarm.redColorAlarms).isEmpty ? .main : .alarm
+            showPhysicalSpeedIndicator = !alarmCondition.intersection(Alarm.displaySpeedIndicator).isEmpty
+        } else {
+            alarmCondition = []
+            bladeColor = .main
+            showPhysicalSpeedIndicator = false
+        }
     }
 
     func getView () -> some View {
@@ -89,22 +97,6 @@ extension FanViewModel {
         "5300" : 10
     ]
     
-    struct Alarm: OptionSet {
-        let rawValue: UInt8
-        
-        static let interlock = Alarm(rawValue: 1 << 0)
-        static let tooCold = Alarm(rawValue: 1 << 1)
-        static let tooHot = Alarm(rawValue: 1 << 2)
-        
-        static func labels (forOptions options: Alarm) -> [String] {
-            var retVal = Array<String>()
-            if options.contains(interlock) {retVal.append("Interlock Active")}
-            if options.contains(tooHot) {retVal.append("Outside Temperature High")}
-            if options.contains(tooCold) {retVal.append("Outside Temperature Low")}
-            return retVal
-        }
-        
-    }
     
 }
 
@@ -161,6 +153,7 @@ extension FanViewModel {
                 if self?.physicalFanSpeed == nil { self?.displayedSegmentNumber = actualSpeed } //should only happen first time through
                 self?.physicalFanSpeed = actualSpeed
                 self?.setDisplayMotor(toSpeed: actualSpeed)
+                if actualSpeed == 0 { self?.clearAlarm() }
             })
             .store(in: &bag)
         
@@ -197,9 +190,25 @@ extension FanViewModel {
         model.$targetSpeed
             .receive(on: DispatchQueue.main)
             .map { $0 == nil ? false : true }
-            .assign(to: &$showPhysicalSpeedIndicator)
+            .sink(receiveValue: { [weak self] adjusting in
+                if adjusting {
+                    self?.raiseAlarm(forCondition: .adjustingSpeed)
+                } else {
+                    self?.clearAlarm(forCondition: .adjustingSpeed)
+                }
+            })
+            .store(in: &bag)
+        
+        House.shared.$alarm
+            .receive(on: DispatchQueue.main)
+            .map { $0.intersection(Alarm.houseAlarms) }
+            .sink(receiveValue: { [weak self] alarm in
+                self?.alarmCondition.remove(Alarm.houseAlarms)
+                self?.raiseAlarm(forCondition: alarm)
+            })
+            .store(in: &bag)
+        }
     }
-}
 
 extension FanViewModel {
     private func setDisplayMotor(toSpeed: Int) {

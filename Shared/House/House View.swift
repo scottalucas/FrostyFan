@@ -36,8 +36,9 @@ struct HouseView: View {
             }
             .tag(1)
 //            .accentColor(Color.main)
-            
-            Text("")
+            VStack {
+                Text("Current temp: \(viewModel.weather?.current.temp.debugDescription ?? "not found")")
+            }
                 .tabItem {
                     Image.bell
                     Text("Alarms")
@@ -69,6 +70,9 @@ struct FanViewPageContainer: View {
                     fanModel
                         .getView()
                         .padding(.bottom, 100)
+                        .onAppear(perform: {
+                            fanModel.setFan()
+                        })
                 }
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))

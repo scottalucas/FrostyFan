@@ -285,7 +285,7 @@ extension FanModel {
         loaderPublisher
             .switchToLatest()
             .map { _ in "query"}
-            .merge(with: Timer.publish(every: 15, on: .main, in: .common)
+            .merge(with: Timer.publish(every: 20, on: .main, in: .common)
                     .autoconnect()
                     .map { _ in "watchdog"}
                     .setFailureType(to: ConnectionError.self)

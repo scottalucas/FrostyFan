@@ -54,7 +54,9 @@ struct FanView: View {
                                 .scaledToFit()
                                 .frame(width: nil, height: 40)
                             if fanViewModel.offDateTxt.count > 0 {
-                                Text(fanViewModel.offDateTxt).font(.subheadline).foregroundColor(.main)
+                                Text(fanViewModel.offDateTxt)
+                                    .font(.subheadline)
+                                    .foregroundColor(.main)
                             }
                         }
                         .padding(.bottom, 15)
@@ -67,19 +69,21 @@ struct FanView: View {
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .rotationEffect(angle)
-                    .foregroundColor(Color(fanViewModel.mainColor))
+                    .foregroundColor(Color(fanViewModel.bladeColor))
                     .opacity(/*@START_MENU_TOKEN@*/0.8/*@END_MENU_TOKEN@*/)
                     .blur(radius: 10.0)
                     .scaleEffect(1.5)
                     .overlay(
-                        Button(action: {
+                        Button(
+                            action: {
                             fanViewModel.refresh()
                             activeSheet = .detail
-                        }, label: {
+                        },
+                            label: {
                             if fanViewModel.alarmCondition.isEmpty {
                                 Color.clear.eraseToAnyView()
                             } else {
-                                ForEach (FanViewModel.Alarm.labels(forOptions: fanViewModel.alarmCondition), id: \.self) { item in
+                                ForEach (Alarm.labels(forOptions: fanViewModel.alarmCondition), id: \.self) { item in
                                     Text(item).foregroundColor(.alarm)
                                 }
                                 .frame(width: nil, height: nil, alignment: .center)
@@ -113,6 +117,9 @@ struct FanView: View {
                 self.angle = .degrees(179.99)
             }
         }
+//        .onAppear(perform: {
+//            fanViewModel.refresh()
+//        })
     }
     
     init(fanViewModel: FanViewModel) {
@@ -160,7 +167,7 @@ struct PhysicalSpeedIndicator: ViewModifier {
                 GeometryReader { geo2 in
                     Image(systemName: "arrowtriangle.up.fill")
                         .resizable()
-                        .foregroundColor(Color(viewModel.mainColor))
+                        .foregroundColor(Color(viewModel.bladeColor))
                         .alignmentGuide(.top, computeValue: { dimension in
                             -geo2.size.height + dimension.height/CGFloat(2)
                         })

@@ -13,6 +13,7 @@ class House: ObservableObject {
     static let shared = House.init()
     @Published var fansAt = Set<FanModel>() //IP addresses
     @Published var scanning: Bool = false
+    @Published var alarm = Alarm()
     private var bag = Set<AnyCancellable>()
     
     private init () {
@@ -47,6 +48,18 @@ class House: ObservableObject {
     
     func lostFan(fanModel: FanModel) {
         fansAt.remove(fanModel)
+    }
+    
+    func raiseAlarm(forCondition condition: Alarm) {
+        alarm.update(with: condition)
+    }
+    
+    func clearAlarm(forCondition condition: Alarm? = nil) {
+        if let cond = condition {
+            alarm.remove(cond)
+        } else {
+            alarm = []
+        }
     }
 }
 

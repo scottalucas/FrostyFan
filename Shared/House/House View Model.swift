@@ -14,6 +14,7 @@ class HouseViewModel: ObservableObject {
     @State var currentPageTag: Int = 0
     @Published var fanModels = Array<FanModel>()
     @Published var scanning = false
+    @Published var weather: WeatherObject?
     private var userScan = false
     private var bag = Set<AnyCancellable>()
     
@@ -34,12 +35,27 @@ class HouseViewModel: ObservableObject {
             .filter { !$0 }
             .assign(to: &$scanning)
         
+        WeatherManager.shared.$weather
+            .receive(on: DispatchQueue.main)
+            .assign(to: &$weather)
+        
         print("init house view model with fans \(fanModels.map({ $0.ipAddr }))")
     }
     
     func getView (viewModel: HouseViewModel? = nil) -> some View {
         HouseView(viewModel: self)
     }
+    
+//    func getWeather () {
+//        WeatherManager()
+//            .load()?
+//            .sink(receiveCompletion: { comp in
+//                print("\(comp)")
+//            }, receiveValue: { [weak self] weatherObj in
+//                self?.weather = weatherObj
+//            })
+//            .store(in: &bag)
+//    }
 }
 
 class TestHouseViewModel: HouseViewModel {

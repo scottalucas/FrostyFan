@@ -8,7 +8,7 @@
 import Foundation
 import Combine
 
-enum AdjustmentError: Error, FallbackSafe {
+enum AdjustmentError: Error {
     
     typealias E = Self
     
@@ -30,7 +30,7 @@ enum AdjustmentError: Error, FallbackSafe {
     }
 }
 
-enum ConnectionError: Error, FallbackSafe {
+enum ConnectionError: Error {
     typealias E = Self
     static func cast(_ error: Error) -> ConnectionError {
         return .upstream(error)
@@ -51,10 +51,4 @@ enum ConnectionError: Error, FallbackSafe {
         let err: ConnectionError = error as? ConnectionError ?? .upstream(error)
         return Fail<T, ConnectionError>.init(error: err).eraseToAnyPublisher()
     }
-}
-
-protocol FallbackSafe {
-    associatedtype E: Error
-    static func cast (_ error: Error) -> E
-    func publisher<V> (valueType value: V.Type) -> AnyPublisher<V, E>
 }
