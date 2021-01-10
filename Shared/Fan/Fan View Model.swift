@@ -22,9 +22,10 @@ class FanViewModel: ObservableObject {
     @Published var timer = 0
     @Published var offDateTxt = ""
     @Published var testText: String?
-//    @AppStorage(FanSettings.Key) private var fanSettings = FanSettings()
     @Published var physicalFanSpeed: Int?
     @Published var showPhysicalSpeedIndicator: Bool = false
+    @Published var mainColor: UIColor = .main
+    @Published var alarmCondition = Alarm(rawValue: 0)
     private var displayedMotorSpeed: Int?
     private var displayMotor = PassthroughSubject<AnyPublisher<Double, Never>, Never>()
     
@@ -50,6 +51,20 @@ class FanViewModel: ObservableObject {
     func setFan(addTimerHours hoursToAdd: Int) {
         model.setFan(addHours: hoursToAdd)
     }
+    
+    func refresh () {
+        model.setFan()
+    }
+    
+    func raiseAlarm (forCondition condition: Alarm) {
+        alarmCondition.update(with: condition)
+        mainColor = .alarm
+    }
+
+    func clearAlarm (forCondition condition: Alarm) {
+        alarmCondition.remove(condition)
+        if alarmCondition.isEmpty {mainColor = .main}
+    }
 
     func getView () -> some View {
         FanView(fanViewModel: self)
@@ -73,6 +88,24 @@ extension FanViewModel {
         "4300" : 10,
         "5300" : 10
     ]
+    
+    struct Alarm: OptionSet {
+        let rawValue: UInt8
+        
+        static let interlock = Alarm(rawValue: 1 << 0)
+        static let tooCold = Alarm(rawValue: 1 << 1)
+        static let tooHot = Alarm(rawValue: 1 << 2)
+        
+        static func labels (forOptions options: Alarm) -> [String] {
+            var retVal = Array<String>()
+            if options.contains(interlock) {retVal.append("Interlock Active")}
+            if options.contains(tooHot) {retVal.append("Outside Temperature High")}
+            if options.contains(tooCold) {retVal.append("Outside Temperature Low")}
+            return retVal
+        }
+        
+    }
+    
 }
 
 extension FanViewModel {
@@ -152,7 +185,14 @@ extension FanViewModel {
             .map { ($0.interlock1, $0.interlock2) }
             .map { $0.0 || $0.1 }
             .receive(on: DispatchQueue.main)
-            .assign(to: &$interlocked)
+            .sink(receiveValue: { [weak self] alarm in
+                if alarm {
+                    self?.raiseAlarm(forCondition: .interlock)
+                } else {
+                    self?.clearAlarm(forCondition: .interlock)
+                }
+            })
+            .store(in: &bag)
         
         model.$targetSpeed
             .receive(on: DispatchQueue.main)
@@ -165,7 +205,7 @@ extension FanViewModel {
     private func setDisplayMotor(toSpeed: Int) {
 //        defer {print("out of scope")}
         guard displayedMotorSpeed != toSpeed else { return }
-        let scaleFactor = 3.0
+        let scaleFactor = 3.5
         displayedMotorSpeed = toSpeed
         guard toSpeed != 0 else { displayMotor.send(Just(0.0).eraseToAnyPublisher()); return }
         let s = Double(toSpeed)

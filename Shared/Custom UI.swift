@@ -27,7 +27,7 @@ extension Image {
 
 extension UIColor {
     static var main = #colorLiteral(red: 0.2745098174, green: 0.4862745106, blue: 0.1411764771, alpha: 1)
-    static var alarm = #colorLiteral(red: 0.5725490451, green: 0, blue: 0.2313725501, alpha: 1)
+    static var alarm = #colorLiteral(red: 0.6840745905, green: 0.0425841135, blue: 0.1318473293, alpha: 0.7751843718)
     static var background = #colorLiteral(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
 }
 

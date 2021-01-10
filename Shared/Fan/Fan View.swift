@@ -44,6 +44,7 @@ struct FanView: View {
                 Spacer()
                 Button(
                     action: {
+                        fanViewModel.refresh()
                         activeSheet = .timer
                     }, label: {
                         VStack {
@@ -66,22 +67,30 @@ struct FanView: View {
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .rotationEffect(angle)
-                    .foregroundColor(Color.main)
+                    .foregroundColor(Color(fanViewModel.mainColor))
                     .opacity(/*@START_MENU_TOKEN@*/0.8/*@END_MENU_TOKEN@*/)
                     .blur(radius: 10.0)
                     .scaleEffect(1.5)
                     .overlay(
                         Button(action: {
+                            fanViewModel.refresh()
                             activeSheet = .detail
                         }, label: {
-                            Color.clear
+                            if fanViewModel.alarmCondition.isEmpty {
+                                Color.clear.eraseToAnyView()
+                            } else {
+                                ForEach (FanViewModel.Alarm.labels(forOptions: fanViewModel.alarmCondition), id: \.self) { item in
+                                    Text(item).foregroundColor(.alarm)
+                                }
+                                .frame(width: nil, height: nil, alignment: .center)
+                            }
                         })
-                        .frame(width: 75, height: 75, alignment: .center)
+                        .buttonStyle(BorderlessButtonStyle())
+                        .frame(width: nil, height: 75, alignment: .center)
+                        .padding(.horizontal)
                     )
                     .padding(.top, 100)
                     .ignoresSafeArea(.container, edges: .top)
-
-//                    .onTapGesture { activeSheet = .detail }
                 Spacer()
             }
             VStack (alignment: /*@START_MENU_TOKEN@*/.center/*@END_MENU_TOKEN@*/, spacing: 0) {
@@ -151,7 +160,7 @@ struct PhysicalSpeedIndicator: ViewModifier {
                 GeometryReader { geo2 in
                     Image(systemName: "arrowtriangle.up.fill")
                         .resizable()
-                        .foregroundColor(.main)
+                        .foregroundColor(Color(viewModel.mainColor))
                         .alignmentGuide(.top, computeValue: { dimension in
                             -geo2.size.height + dimension.height/CGFloat(2)
                         })
