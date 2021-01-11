@@ -35,6 +35,11 @@
 		930CFFD42581890700E8E979 /* Settings View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFFD22581890700E8E979 /* Settings View.swift */; };
 		933A987E25AAA9240084C535 /* Weather Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 933A987D25AAA9240084C535 /* Weather Model.swift */; };
 		933A988425AAE47B0084C535 /* Server.plist in Resources */ = {isa = PBXBuildFile; fileRef = 933A988325AAE47B0084C535 /* Server.plist */; };
+		934C8ABA25AB92380037906C /* Location Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 934C8AB925AB92380037906C /* Location Model.swift */; };
+		934C8AC925AB926F0037906C /* Alarm Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 934C8AC825AB926F0037906C /* Alarm Model.swift */; };
+		934C8ACA25AB926F0037906C /* Alarm Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 934C8AC825AB926F0037906C /* Alarm Model.swift */; };
+		934C8AD025AB92AB0037906C /* Storage Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 934C8ACF25AB92AB0037906C /* Storage Model.swift */; };
+		934C8AD125AB92AB0037906C /* Storage Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 934C8ACF25AB92AB0037906C /* Storage Model.swift */; };
 		936F79D8259FADD500AACA53 /* Timer Sheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 936F79D7259FADD500AACA53 /* Timer Sheet.swift */; };
 		936F79E2259FADFC00AACA53 /* Detail Sheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 936F79E1259FADFC00AACA53 /* Detail Sheet.swift */; };
 		936F79E8259FAE0F00AACA53 /* Name Sheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 936F79E7259FAE0F00AACA53 /* Name Sheet.swift */; };
@@ -94,6 +99,9 @@
 		930CFFD22581890700E8E979 /* Settings View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Settings View.swift"; sourceTree = "<group>"; };
 		933A987D25AAA9240084C535 /* Weather Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Weather Model.swift"; sourceTree = "<group>"; };
 		933A988325AAE47B0084C535 /* Server.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Server.plist; sourceTree = "<group>"; };
+		934C8AB925AB92380037906C /* Location Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Location Model.swift"; sourceTree = "<group>"; };
+		934C8AC825AB926F0037906C /* Alarm Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Alarm Model.swift"; sourceTree = "<group>"; };
+		934C8ACF25AB92AB0037906C /* Storage Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Storage Model.swift"; sourceTree = "<group>"; };
 		936F79D7259FADD500AACA53 /* Timer Sheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Timer Sheet.swift"; sourceTree = "<group>"; };
 		936F79E1259FADFC00AACA53 /* Detail Sheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Detail Sheet.swift"; sourceTree = "<group>"; };
 		936F79E7259FAE0F00AACA53 /* Name Sheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Name Sheet.swift"; sourceTree = "<group>"; };
@@ -163,7 +171,7 @@
 				930CFF872581882E00E8E979 /* Fan */,
 				930CFFA12581885A00E8E979 /* House */,
 				93C94E4E259E871F005A3D43 /* Sheets */,
-				933A987C25AAA9060084C535 /* Weather */,
+				933A987C25AAA9060084C535 /* Support */,
 				930CFFBB258188A300E8E979 /* Settings */,
 			);
 			path = Shared;
@@ -246,12 +254,15 @@
 			path = Settings;
 			sourceTree = "<group>";
 		};
-		933A987C25AAA9060084C535 /* Weather */ = {
+		933A987C25AAA9060084C535 /* Support */ = {
 			isa = PBXGroup;
 			children = (
 				933A987D25AAA9240084C535 /* Weather Model.swift */,
+				934C8AB925AB92380037906C /* Location Model.swift */,
+				934C8AC825AB926F0037906C /* Alarm Model.swift */,
+				934C8ACF25AB92AB0037906C /* Storage Model.swift */,
 			);
-			path = Weather;
+			path = Support;
 			sourceTree = "<group>";
 		};
 		93C94E4E259E871F005A3D43 /* Sheets */ = {
@@ -423,6 +434,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				934C8AC925AB926F0037906C /* Alarm Model.swift in Sources */,
 				930CFFC5258188F400E8E979 /* Fan View.swift in Sources */,
 				930CFFAE2581889600E8E979 /* Settings View Model.swift in Sources */,
 				936F79EE259FB59900AACA53 /* Sheet Protocol.swift in Sources */,
@@ -434,12 +446,14 @@
 				930CFFCC258188FF00E8E979 /* House View.swift in Sources */,
 				937F7C5725952358009E4754 /* Custom Errors.swift in Sources */,
 				930CFF732581881000E8E979 /* Fan Model.swift in Sources */,
+				934C8AD025AB92AB0037906C /* Storage Model.swift in Sources */,
 				930CFF502581878D00E8E979 /* ContentView.swift in Sources */,
 				937F7C5025952138009E4754 /* Custom Operators.swift in Sources */,
 				930CFFB52581889E00E8E979 /* Settings Model.swift in Sources */,
 				930CFF4E2581878D00E8E979 /* Airspace Fan.swift in Sources */,
 				936F79D8259FADD500AACA53 /* Timer Sheet.swift in Sources */,
 				933A987E25AAA9240084C535 /* Weather Model.swift in Sources */,
+				934C8ABA25AB92380037906C /* Location Model.swift in Sources */,
 				93CF9548258984A1004BBD49 /* Fan View Model.swift in Sources */,
 				936F79E8259FAE0F00AACA53 /* Name Sheet.swift in Sources */,
 				930CFFD32581890700E8E979 /* Settings View.swift in Sources */,
@@ -454,6 +468,7 @@
 				930CFFC6258188F400E8E979 /* Fan View.swift in Sources */,
 				930CFFAF2581889600E8E979 /* Settings View Model.swift in Sources */,
 				930CFF952581884B00E8E979 /* House View Model.swift in Sources */,
+				934C8ACA25AB926F0037906C /* Alarm Model.swift in Sources */,
 				937F7C632595239B009E4754 /* Custom UI.swift in Sources */,
 				937F7C7225952556009E4754 /* Test Objects.swift in Sources */,
 				930CFF8E2581884000E8E979 /* House Model.swift in Sources */,
@@ -462,6 +477,7 @@
 				930CFF742581881000E8E979 /* Fan Model.swift in Sources */,
 				930CFF512581878D00E8E979 /* ContentView.swift in Sources */,
 				937F7C5125952138009E4754 /* Custom Operators.swift in Sources */,
+				934C8AD125AB92AB0037906C /* Storage Model.swift in Sources */,
 				930CFFB62581889E00E8E979 /* Settings Model.swift in Sources */,
 				930CFF4F2581878D00E8E979 /* Airspace Fan.swift in Sources */,
 				93CF9549258984A1004BBD49 /* Fan View Model.swift in Sources */,

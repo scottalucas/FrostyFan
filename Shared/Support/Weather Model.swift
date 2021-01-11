@@ -8,43 +8,34 @@
 import Foundation
 import CoreLocation
 import Combine
+import SwiftUI
 
 class WeatherManager: ObservableObject {
-    static let shared = WeatherManager.init()
-
-    @Published var weather: WeatherObject?
-    private var location: CLLocation?
+    @EnvironmentObject var houseSettings: HouseSettings
+    @EnvironmentObject var weatherSettings: WeatherSettings
+    
+    private var lat: Double? {
+        houseSettings.fanLocation?.coordinate.latitude
+    }
+    private var lon: Double? {
+        houseSettings.fanLocation?.coordinate.longitude
+    }
+    
     private var bag = Set<AnyCancellable>()
+    
     fileprivate var queryElements:[URLQueryItem]? {
         get {
-            guard let location = location else { return nil }
+            guard let lat = lat, let lon = lon else { return nil }
             var accumElements:[URLQueryItem] = []
-            accumElements.append(URLQueryItem(name: "lat", value: String(format: "%f", location.coordinate.latitude)))
-            accumElements.append(URLQueryItem(name: "lon", value: String(format: "%f", location.coordinate.longitude)))
+            accumElements.append(URLQueryItem(name: "lat", value: String(format: "%f", lat)))
+            accumElements.append(URLQueryItem(name: "lon", value: String(format: "%f", lon)))
             accumElements.append(URLQueryItem(name: "units", value: "imperial"))
             accumElements.append(URLQueryItem(name: "APPID", value: ENV.WEATHER_API_KEY))
             return accumElements
         }
     }
     
-    init () {
-        location = CLLocation()
-        HouseSettings.retrieve()
-        HouseSettings.location
-//            .flatMap { loc in
-//                Just(loc)
-//            }
-            .eraseToAnyPublisher()
-            .sink(receiveValue: { [weak self] loc in
-                guard let loc = loc else {
-                    LocationManager.shared.update()
-                    return
-                }
-                self?.location = loc
-                self?.load()
-            })
-            .store(in: &bag)
-    }
+    init () { }
 
     func load () {
         var components = URLComponents()
@@ -58,11 +49,11 @@ class WeatherManager: ObservableObject {
         WeatherLoader(components: components)?
             .loadResults
             .sink(receiveCompletion: { [weak self] comp in
-                if case .failure(let err) = comp {
-                    self?.weather = nil
+                if case .failure = comp {
+                    self?.weatherSettings.updatedWeather = nil
                 }
             }, receiveValue: { [weak self] weatherObj in
-                self?.weather = weatherObj
+                self?.weatherSettings.updatedWeather = (Date(), weatherObj)
             })
             .store(in: &bag)
         return
@@ -86,13 +77,13 @@ class WeatherManager: ObservableObject {
 }
 
 class WeatherObject: Codable {
-    var current: Current = Current()
-    var hourly = Array<Hourly>()
+    var current: Current?
+    var hourly: Array<Hourly>?
     struct Current: Codable {
-        var temp: Double = 0.0
+        var temp: Double?
     }
     struct Hourly: Codable {
-        var dt: Int = 0
-        var temp: Double = 0
+        var dt: Int?
+        var temp: Double?
     }
 }
