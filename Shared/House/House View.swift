@@ -37,7 +37,9 @@ struct HouseView: View {
             .tag(1)
 //            .accentColor(Color.main)
             VStack {
-                Text("Current temp: \(viewModel.weather?.current.temp.debugDescription ?? "not found")")
+                if viewModel.weatherString != nil {
+                    Text(viewModel.weatherString!)
+                }
             }
                 .tabItem {
                     Image.bell

@@ -11,10 +11,12 @@ import Combine
 
 class HouseViewModel: ObservableObject {
 //    private var model = House.shared
+    @EnvironmentObject var weather: WeatherSettings
     @State var currentPageTag: Int = 0
     @Published var fanModels = Array<FanModel>()
     @Published var scanning = false
-    @Published var weather: WeatherObject?
+    @Published var weatherString: String?
+//    @Published var weather: WeatherObject?
     private var userScan = false
     private var bag = Set<AnyCancellable>()
     
@@ -35,9 +37,13 @@ class HouseViewModel: ObservableObject {
             .filter { !$0 }
             .assign(to: &$scanning)
         
-        WeatherManager.shared.$weather
+        weather.$currentTemperature
             .receive(on: DispatchQueue.main)
-            .assign(to: &$weather)
+            .map { temp -> String? in
+                guard let temp = temp else { return nil }
+                return "Current temp: \(Int(temp + 0.5))"
+            }
+            .assign(to: &$weatherString)
         
         print("init house view model with fans \(fanModels.map({ $0.ipAddr }))")
     }

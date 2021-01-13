@@ -10,6 +10,7 @@ import SwiftUI
 import Combine
 
 class FanViewModel: ObservableObject {
+    @EnvironmentObject var fanSettings: FanSettings
     @ObservedObject var model: FanModel
     @Published var fanRotationDuration: Double = 0.0
     @Published var displayedSegmentNumber: Int = -1
@@ -33,7 +34,7 @@ class FanViewModel: ObservableObject {
     
     init (forModel model: FanModel) {
         self.model = model
-        self.name = FanSettings.retreive().fans[macAddr]?.name ?? ""
+        self.name = fanSettings.fans?[model.fanCharacteristics.macAddr]?.name ?? ""
         startSubscribers()
     }
     
@@ -42,10 +43,8 @@ class FanViewModel: ObservableObject {
     }
     
     func setFan(name: String) {
-        var globalSettings = FanSettings.retreive()
-        globalSettings.fans[macAddr] = FanSettings.Fan.init(lastIp: model.ipAddr, name: name)
-        FanSettings.store(sets: globalSettings)
         self.name = name
+        fanSettings.update(self)
     }
     
     func setFan(addTimerHours hoursToAdd: Int) {

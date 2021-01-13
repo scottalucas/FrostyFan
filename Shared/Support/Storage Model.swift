@@ -12,11 +12,7 @@ import CoreLocation
 class FanSettings: ObservableObject {
     typealias MacAddr = String
     static var Key = "fanSettings"
-    @Published var fans: Dictionary<MacAddr, FanStorageValue.Fan>? {
-        willSet {
-            store(sets: FanStorageValue(fans: newValue))
-        }
-    }
+    @Published private (set) var fans: Dictionary<MacAddr, FanStorageValue.Fan>?
     
     struct FanStorageValue: Codable {
         var fans: Dictionary<MacAddr, Fan>?
@@ -28,6 +24,18 @@ class FanSettings: ObservableObject {
     
     init () {
         retreive()
+    }
+    
+    func update (_ fanViewModel: FanViewModel) {
+        let addr = fanViewModel.macAddr
+        let fan = FanStorageValue.Fan(lastIp: fanViewModel.model.ipAddr, name: fanViewModel.name)
+        let fanStorageValue = fans.map { oldFans in
+            var updatedFans = oldFans
+            updatedFans[addr] = fan
+            return FanStorageValue(fans: updatedFans)
+        }
+        ?? FanStorageValue(fans: [addr: fan])
+        store(sets: fanStorageValue)
     }
     
     private func store (sets: FanStorageValue) {
@@ -93,6 +101,7 @@ class HouseSettings: ObservableObject {
 
 class WeatherSettings: ObservableObject {
     static var Key = "weatherSettings"
+    @Published var currentTemperature: Double?
     @Published var updatedWeather: (Date, WeatherObject)? {
         willSet {
             newValue.map { store(date: $0.0, weather: $0.1) } ?? UserDefaults.standard.removeObject(forKey: WeatherSettings.Key)
@@ -125,6 +134,7 @@ class WeatherSettings: ObservableObject {
             let weather = decodeVal.weather
         else { return }
         updatedWeather = (date, weather)
+        currentTemperature = weather.current?.temp
     }
 }
 
