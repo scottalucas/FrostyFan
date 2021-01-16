@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct HouseView: View {
+    @EnvironmentObject var weather: WeatherSettings
     @ObservedObject var viewModel: HouseViewModel
     @State var currentTab: Int = 0
     @State var info: String = ""
@@ -37,9 +38,7 @@ struct HouseView: View {
             .tag(1)
 //            .accentColor(Color.main)
             VStack {
-                if viewModel.weatherString != nil {
-                    Text(viewModel.weatherString!)
-                }
+                SettingsView()
             }
                 .tabItem {
                     Image.bell
@@ -52,6 +51,13 @@ struct HouseView: View {
     }
     init (viewModel: HouseViewModel) {
         self.viewModel = viewModel
+//        weather.$currentTemperature
+//            .receive(on: DispatchQueue.main)
+//            .map { temp -> String? in
+//                guard let temp = temp else { return nil }
+//                return "Current temp: \(Int(temp + 0.5))"
+//            }
+//            .assign(to: &$weatherString)
     }
 }
 

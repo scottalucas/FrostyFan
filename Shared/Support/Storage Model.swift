@@ -9,17 +9,38 @@ import Foundation
 import Combine
 import CoreLocation
 
-class FanSettings: ObservableObject {
+class Settings: ObservableObject {
     typealias MacAddr = String
-    static var Key = "fanSettings"
     @Published private (set) var fans: Dictionary<MacAddr, FanStorageValue.Fan>?
     
     struct FanStorageValue: Codable {
+        static var Key = "fanSettings"
         var fans: Dictionary<MacAddr, Fan>?
         struct Fan: Codable {
             var lastIp: String?
             var name: String?
         }
+    }
+    
+    struct HouseStorageValue: Codable {
+        static var Key = "houseSettings"
+        var fanLocation: FanLocation?
+        var fanCLLocation: CLLocation? {
+            return fanLocation.map {CLLocation(latitude: $0.lat, longitude: $0.lon) } ?? nil
+        }
+        struct FanLocation: Codable {
+            var lat: Double
+            var lon: Double
+        }
+        init (fromLoc loc: CLLocation?) {
+            fanLocation = loc.map { FanLocation(lat: $0.coordinate.latitude, lon: $0.coordinate.longitude) } ?? nil
+        }
+    }
+    
+    struct WeatherStorageValue: Codable {
+        static var Key = "weatherSettings"
+        var lastUpdate: Date?
+        var weather: WeatherObject?
     }
     
     init () {
@@ -55,7 +76,6 @@ class FanSettings: ObservableObject {
 }
 
 class HouseSettings: ObservableObject {
-    static var Key = "houseSettings"
     
     @Published var fanLocation: CLLocation? {
         willSet {
@@ -63,19 +83,7 @@ class HouseSettings: ObservableObject {
         }
     }
 
-    struct HouseStorageValue: Codable {
-        var fanLocation: FanLocation?
-        var fanCLLocation: CLLocation? {
-            return fanLocation.map {CLLocation(latitude: $0.lat, longitude: $0.lon) } ?? nil
-        }
-        struct FanLocation: Codable {
-            var lat: Double
-            var lon: Double
-        }
-        init (fromLoc loc: CLLocation?) {
-            fanLocation = loc.map { FanLocation(lat: $0.coordinate.latitude, lon: $0.coordinate.longitude) } ?? nil
-        }
-    }
+
     
     init () {
         retrieve()
@@ -100,7 +108,7 @@ class HouseSettings: ObservableObject {
 }
 
 class WeatherSettings: ObservableObject {
-    static var Key = "weatherSettings"
+    @Published var lastUpdate: Date?
     @Published var currentTemperature: Double?
     @Published var updatedWeather: (Date, WeatherObject)? {
         willSet {
@@ -109,10 +117,7 @@ class WeatherSettings: ObservableObject {
     }
     private var bag = Set<AnyCancellable>()
 
-    struct WeatherStorageValue: Codable {
-        var lastUpdate: Date?
-        var weather: WeatherObject?
-    }
+
     
     init () {
         retrieve ()

@@ -8,8 +8,21 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @ObservedObject var slider: CustomSlider
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        VStack {
+            Text("Value: " + slider.valueBetween)
+            Text("Percentages: " + slider.percentagesBetween)
+            
+            Text("High Value: \(slider.highHandle.currentValue)")
+            Text("Low Value: \(slider.lowHandle.currentValue)")
+
+            SliderView(slider: slider)
+        }
+    }
+    init() {
+        slider = CustomSlider(start: 0, end: 100, initHigh: 80, initLow: 10)
     }
 }
 
