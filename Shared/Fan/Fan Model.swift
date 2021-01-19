@@ -305,15 +305,21 @@ extension FanModel {
 //            .print("speed controller")
             .sink(receiveCompletion: { comp in
             }, receiveValue: { [weak self] speed in
-                defer { self?.lastReportedSpeed = speed }
-                guard let target = self?.targetSpeed, speed != target else {
-                    self?.targetSpeed = nil
+                guard let self = self else { return }
+                defer { self.lastReportedSpeed = speed }
+                if speed > 0 {
+                    House.shared.runningFans.update(with: self)
+                } else {
+                    House.shared.runningFans.remove(self)
+                }
+                guard let target = self.targetSpeed, speed != target else {
+                    self.targetSpeed = nil
                     return
                 }
-                guard target != 0 else { self?.getFanStatus(sendingCommand: .off); return}
+                guard target != 0 else { self.getFanStatus(sendingCommand: .off); return}
                 let action: FanModel.Action = (target < speed) ? .slower : .faster
-                let delay = self?.lastReportedSpeed.map { $0 == speed } ?? false ? 5.0 : 0.5
-                self?.getFanStatus(sendingCommand: action, withDelay: delay)
+                let delay = self.lastReportedSpeed.map { $0 == speed } ?? false ? 5.0 : 0.5
+                self.getFanStatus(sendingCommand: action, withDelay: delay)
             })
             .store(in: &bag)
         

@@ -11,8 +11,7 @@ import Combine
 import SwiftUI
 
 class LocationManager: CLLocationManager, CLLocationManagerDelegate {
-    @EnvironmentObject var houseSettings: HouseSettings
-    
+    private var settings = Settings.shared
     override init () {
         super.init()
         delegate = self
@@ -26,7 +25,7 @@ class LocationManager: CLLocationManager, CLLocationManagerDelegate {
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         print(locations.last.debugDescription)
-        houseSettings.fanLocation = locations.last.map { $0 } ?? nil
+        settings.houseLocation = locations.last.map { $0 }
         manager.stopUpdatingLocation()
     }
     

@@ -8,21 +8,21 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @ObservedObject var slider: CustomSlider
+//    @ObservedObject var slider: CustomSlider
     
     var body: some View {
         VStack {
-            Text("Value: " + slider.valueBetween)
-            Text("Percentages: " + slider.percentagesBetween)
-            
-            Text("High Value: \(slider.highHandle.currentValue)")
-            Text("Low Value: \(slider.lowHandle.currentValue)")
+//            Text("Value: " + slider.valueBetween)
+//            Text("Percentages: " + slider.percentagesBetween)
+//            
+//            Text("High Value: \(slider.highHandle.currentValue)")
+//            Text("Low Value: \(slider.lowHandle.currentValue)")
 
-            SliderView(slider: slider)
+//            SliderView(slider: slider)
         }
     }
     init() {
-        slider = CustomSlider(start: 0, end: 100, initHigh: 80, initLow: 10)
+//        slider = CustomSlider(start: 0, end: 100, initHigh: 80, initLow: 10)
     }
 }
 

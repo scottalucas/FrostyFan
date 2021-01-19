@@ -8,12 +8,12 @@
 import SwiftUI
 
 struct HouseView: View {
-    @EnvironmentObject var weather: WeatherSettings
     @ObservedObject var viewModel: HouseViewModel
     @State var currentTab: Int = 0
     @State var info: String = ""
     @State private var tap: Bool = false
     @State private var fanLabel: String?
+    var weather = WeatherManager()
     
     var body: some View {
         

@@ -74,20 +74,19 @@ struct FanView: View {
                     .blur(radius: 10.0)
                     .scaleEffect(1.5)
                     .overlay(
-                        Button(
-                            action: {
+                        Button(action: {
                             fanViewModel.refresh()
                             activeSheet = .detail
-                        },
-                            label: {
-                            if fanViewModel.alarmCondition.isEmpty {
-                                Color.clear.eraseToAnyView()
-                            } else {
-                                ForEach (Alarm.labels(forOptions: fanViewModel.alarmCondition), id: \.self) { item in
-                                    Text(item).foregroundColor(.alarm)
+                        }, label: {
+                                if fanViewModel.displayedAlarms.isEmpty {
+                                    AnyView(Color.clear)
                                 }
-                                .frame(width: nil, height: nil, alignment: .center)
-                            }
+                                else {
+                                    ForEach (Alarm.labels(forOptions: fanViewModel.displayedAlarms), id: \.self) { item in
+                                        AnyView(Text(item).foregroundColor(.alarm))
+                                    }
+                                    .frame(width: nil, height: nil, alignment: .center)
+                                }
                         })
                         .buttonStyle(BorderlessButtonStyle())
                         .frame(width: nil, height: 75, alignment: .center)
@@ -109,6 +108,7 @@ struct FanView: View {
                 Spacer()
             }
             .padding([.leading, .trailing], 20.0)
+            .padding(.top, 40.0)
         }
         .sheet(item: $activeSheet, onDismiss: { indicator = true }, content: { $0.view(view: self) })
         .onReceive(fanViewModel.$fanRotationDuration) { val in

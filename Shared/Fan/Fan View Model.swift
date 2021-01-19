@@ -26,7 +26,7 @@ class FanViewModel: ObservableObject {
     @Published var physicalFanSpeed: Int?
     @Published var showPhysicalSpeedIndicator: Bool = false
     @Published var bladeColor: UIColor = .main
-    @Published var alarmCondition = Alarm(rawValue: 0)
+    @Published var displayedAlarms = Alarm(rawValue: 0)
     private var displayedMotorSpeed: Int?
     private var displayMotor = PassthroughSubject<AnyPublisher<Double, Never>, Never>()
     
@@ -56,18 +56,22 @@ class FanViewModel: ObservableObject {
     }
     
     func raiseAlarm (forCondition condition: Alarm) {
-        alarmCondition.update(with: condition)
-        bladeColor = alarmCondition.intersection(Alarm.redColorAlarms).isEmpty ? .main : .alarm
-        showPhysicalSpeedIndicator = !alarmCondition.intersection(Alarm.displaySpeedIndicator).isEmpty
+        guard !condition.isDisjoint(with: Settings.shared.configuredAlarms) else {
+            clearAlarm(forCondition: condition)
+            return
+        }
+        displayedAlarms.update(with: condition)
+        bladeColor = displayedAlarms.isDisjoint(with: Alarm.redColorAlarms) ? .main : .alarm
+        showPhysicalSpeedIndicator = !displayedAlarms.isDisjoint(with: Alarm.displaySpeedIndicator)
     }
 
     func clearAlarm (forCondition cond: Alarm? = nil) {
         if let condition = cond {
-            alarmCondition.remove(condition)
-            bladeColor = alarmCondition.intersection(Alarm.redColorAlarms).isEmpty ? .main : .alarm
-            showPhysicalSpeedIndicator = !alarmCondition.intersection(Alarm.displaySpeedIndicator).isEmpty
+            displayedAlarms.remove(condition)
+            bladeColor = displayedAlarms.isDisjoint(with: Alarm.redColorAlarms) ? .main : .alarm
+            showPhysicalSpeedIndicator = !displayedAlarms.isDisjoint(with: Alarm.displaySpeedIndicator)
         } else {
-            alarmCondition = []
+            displayedAlarms = []
             bladeColor = .main
             showPhysicalSpeedIndicator = false
         }
@@ -198,11 +202,11 @@ extension FanViewModel {
             })
             .store(in: &bag)
         
-        House.shared.$alarm
+        House.shared.$displayedAlarms
             .receive(on: DispatchQueue.main)
             .map { $0.intersection(Alarm.houseAlarms) }
             .sink(receiveValue: { [weak self] alarm in
-                self?.alarmCondition.remove(Alarm.houseAlarms)
+                self?.displayedAlarms.remove(Alarm.houseAlarms)
                 self?.raiseAlarm(forCondition: alarm)
             })
             .store(in: &bag)

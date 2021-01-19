@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Alarm: OptionSet {
+struct Alarm: OptionSet, Codable {
     let rawValue: UInt8
     
     static let interlock = Alarm(rawValue: 1 << 0)
@@ -17,6 +17,7 @@ struct Alarm: OptionSet {
     
     static let redColorAlarms: Alarm = [.interlock, .tooCold, .tooHot]
     static let displaySpeedIndicator: Alarm = [.adjustingSpeed, .interlock]
+    static let weatherRequired: Alarm = [.tooHot, .tooCold]
     static let houseAlarms: Alarm = [.tooHot, .tooCold] //alarms raised by the house
     static let fanAlarms: Alarm = [.interlock, .adjustingSpeed] //alarms specific to a fan
 

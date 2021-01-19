@@ -12,8 +12,9 @@ import Combine
 class House: ObservableObject {
     static let shared = House.init()
     @Published var fansAt = Set<FanModel>() //IP addresses
+    @Published var runningFans = Set<FanModel>()
     @Published var scanning: Bool = false
-    @Published var alarm = Alarm()
+    @Published var displayedAlarms = Alarm()
     private var bag = Set<AnyCancellable>()
     
     private init () {
@@ -51,14 +52,18 @@ class House: ObservableObject {
     }
     
     func raiseAlarm(forCondition condition: Alarm) {
-        alarm.update(with: condition)
+        guard !condition.isDisjoint(with: Settings.shared.configuredAlarms) else {
+            clearAlarm(forCondition: condition)
+            return
+        }
+        displayedAlarms.update(with: condition)
     }
     
     func clearAlarm(forCondition condition: Alarm? = nil) {
         if let cond = condition {
-            alarm.remove(cond)
+            displayedAlarms.remove(cond)
         } else {
-            alarm = []
+            displayedAlarms = []
         }
     }
 }

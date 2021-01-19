@@ -203,242 +203,69 @@ struct ActivityRep: UIViewRepresentable {
     }
 }
 
-//SliderValue to restrict double range: 0.0 to 1.0
-@propertyWrapper
-struct SliderValue {
-    var value: Double
-    
-    init(wrappedValue: Double) {
-        self.value = wrappedValue
-    }
-    
-    var wrappedValue: Double {
-        get { value }
-        set { value = min(max(0.0, newValue), 1.0) }
-    }
-}
-
-class SliderHandle: ObservableObject {
-    
-    //Slider Size
-    let sliderWidth: CGFloat
-    let sliderHeight: CGFloat
-    
-    //Slider Range
-    let sliderValueStart: Double
-    let sliderValueRange: Double
-    
-    //Slider Handle
-    var diameter: CGFloat = 30
-    var startLocation: CGPoint
-    
-    //Current Value
-    @Published var currentPercentage: SliderValue
-    
-    //Slider Button Location
-    @Published var onDrag: Bool
-    @Published var currentLocation: CGPoint
-        
-    init(sliderWidth: CGFloat, sliderHeight: CGFloat, sliderValueStart: Double, sliderValueEnd: Double, startPercentage: SliderValue) {
-        self.sliderWidth = sliderWidth
-        self.sliderHeight = sliderHeight
-        
-        self.sliderValueStart = sliderValueStart
-        self.sliderValueRange = sliderValueEnd - sliderValueStart
-        
-        let startLocation = CGPoint(x: (CGFloat(startPercentage.wrappedValue)/1.0)*sliderWidth, y: sliderHeight/2)
-        
-        self.startLocation = startLocation
-        self.currentLocation = startLocation
-        self.currentPercentage = startPercentage
-        
-        self.onDrag = false
-    }
-    
-    lazy var sliderDragGesture: _EndedGesture<_ChangedGesture<DragGesture>>  = DragGesture()
-        .onChanged { value in
-            self.onDrag = true
-            
-            let dragLocation = value.location
-            
-            //Restrict possible drag area
-            self.restrictSliderBtnLocation(dragLocation)
-            
-            //Get current value
-            self.currentPercentage.wrappedValue = Double(self.currentLocation.x / self.sliderWidth)
-            
-        }.onEnded { _ in
-            self.onDrag = false
-        }
-    
-    private func restrictSliderBtnLocation(_ dragLocation: CGPoint) {
-        //On Slider Width
-        if dragLocation.x > CGPoint.zero.x && dragLocation.x < sliderWidth {
-            calcSliderBtnLocation(dragLocation)
-        }
-    }
-    
-    private func calcSliderBtnLocation(_ dragLocation: CGPoint) {
-        if dragLocation.y != sliderHeight/2 {
-            currentLocation = CGPoint(x: dragLocation.x, y: sliderHeight/2)
-        } else {
-            currentLocation = dragLocation
-        }
-    }
-    
-    //Current Value
-    var currentValue: Double {
-        return sliderValueStart + currentPercentage.wrappedValue * sliderValueRange
-    }
-}
-
-class CustomSlider: ObservableObject {
-    
-    //Slider Size
-    final let width: CGFloat = 300
-    final let lineWidth: CGFloat = 8
-    
-    //Slider value range from valueStart to valueEnd
-    final let valueStart: Double
-    final let valueEnd: Double
-    
-    //Slider Handle
-    @Published var highHandle: SliderHandle
-    @Published var lowHandle: SliderHandle
-    
-    //Handle start percentage (also for starting point)
-    @SliderValue var highHandleStartPercentage = 1.0
-    @SliderValue var lowHandleStartPercentage = 0.0
-
-    final var anyCancellableHigh: AnyCancellable?
-    final var anyCancellableLow: AnyCancellable?
-    private var bag = Set<AnyCancellable>()
-    
-    init(start: Double, end: Double, initHigh: Double, initLow: Double) {
-        valueStart = start
-        valueEnd = end
-        highHandleStartPercentage = initHigh / (end - start)
-        lowHandleStartPercentage = initLow / (end - start)
-        
-        highHandle = SliderHandle(sliderWidth: width,
-                                  sliderHeight: lineWidth,
-                                  sliderValueStart: valueStart,
-                                  sliderValueEnd: valueEnd,
-                                  startPercentage: _highHandleStartPercentage
-                                )
-        
-        lowHandle = SliderHandle(sliderWidth: width,
-                                  sliderHeight: lineWidth,
-                                  sliderValueStart: valueStart,
-                                  sliderValueEnd: valueEnd,
-                                  startPercentage: _lowHandleStartPercentage
-                                )
-        
-        anyCancellableHigh = highHandle.objectWillChange.sink { [lowHandle, highHandle] _ in
-            guard highHandle.currentPercentage.wrappedValue - lowHandle.currentPercentage.wrappedValue > 0.15 else {
-                print ("range high")
-                
-                return
-            }
-            self.objectWillChange.send()
-        }
-        
-        anyCancellableLow = lowHandle.objectWillChange.sink { [lowHandle, highHandle] _ in
-            guard highHandle.currentPercentage.wrappedValue - lowHandle.currentPercentage.wrappedValue > 0.15 else {
-                print ("range low")
-                return
-            }
-            self.objectWillChange.send()
-        }
-        
-//        $highHandle
-//            .map { $0.currentPercentage }
-//            .combineLatest($lowHandle.map { $0.currentPercentage })
-//            .sink(receiveValue: { [highHandle] (highP, lowP) in
-//                if highP.wrappedValue < lowP.wrappedValue {
-//                    highHandle.currentPercentage = SliderValue(wrappedValue: lowP.wrappedValue + 0.1)
-//                }
-//
-//            })
-//            .store(in: &bag)
-        
-    }
-    
-    //Percentages between high and low handle
-    var percentagesBetween: String {
-        return String(format: "%.2f", highHandle.currentPercentage.wrappedValue - lowHandle.currentPercentage.wrappedValue)
-    }
-    
-    //Value between high and low handle
-    var valueBetween: String {
-        return String(format: "%.2f", highHandle.currentValue - lowHandle.currentValue)
-    }
-}
-//
-//struct ContentView: View {
-//    @ObservedObject var slider = CustomSlider(start: 10, end: 100)
-//
-//    var body: some View {
-//        VStack {
-//            Text("Value: " + slider.valueBetween)
-//            Text("Percentages: " + slider.percentagesBetween)
-//
-//            Text("High Value: \(slider.highHandle.currentValue)")
-//            Text("Low Value: \(slider.lowHandle.currentValue)")
-//
-//            //Slider
-//            SliderView(slider: slider)
-//        }
-//    }
-//}
-
-struct SliderView: View {
-    @ObservedObject var slider: CustomSlider
+struct RangeSliderHandle: View {
+    @Binding var handleSize: CGSize
+    @State var fill: Color
+    @State var strokeColor: Color
+    @State var strokeLineWidth: CGFloat
     
     var body: some View {
-        RoundedRectangle(cornerRadius: slider.lineWidth)
-            .fill(Color.gray.opacity(0.2))
-            .frame(width: slider.width, height: slider.lineWidth)
-            .overlay(
-                ZStack {
-                    //Path between both handles
-                    SliderPathBetweenView(slider: slider)
-                    
-                    //Low Handle
-                    SliderHandleView(handle: slider.lowHandle)
-                        .highPriorityGesture(slider.lowHandle.sliderDragGesture)
-                    
-                    //High Handle
-                    SliderHandleView(handle: slider.highHandle)
-                        .highPriorityGesture(slider.highHandle.sliderDragGesture)
+        Circle ()
+            .size(handleSize)
+            .fill(fill)
+            .overlay(Circle().size(handleSize).stroke(lineWidth: strokeLineWidth).foregroundColor(strokeColor))
+            .frame(width: handleSize.width, height: handleSize.height, alignment: .center)
+    }
+}
+
+struct RangeSlider: View {
+    @State var lowSelected: CGFloat = 0
+    @State var highSelected: CGFloat = 1
+    @State var handleSize: CGSize = CGSize(width: 20.0, height: 20.0)
+    @State var barHeight: CGFloat = 9.0
+    var minTemp = 40
+    var maxTemp = 85
+    
+    var body: some View {
+        GeometryReader { geo in
+            ZStack (alignment: Alignment(horizontal: .leading, vertical: .center)) {
+                Group {
+                    Rectangle()
+                        .size(width: geo.size.width, height: barHeight)
+                        .fill(Color.gray)
+                    Rectangle ()
+                        .size(width: geo.size.width * (highSelected - lowSelected), height: barHeight)
+                        .fill(Color.main)
+                        .offset(x: geo.size.width * lowSelected, y: 0)
                 }
-            )
-    }
-}
-
-struct SliderHandleView: View {
-    @ObservedObject var handle: SliderHandle
-    
-    var body: some View {
-        Circle()
-            .frame(width: handle.diameter, height: handle.diameter)
-            .foregroundColor(.white)
-            .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 0)
-            .scaleEffect(handle.onDrag ? 1.3 : 1)
-            .contentShape(Rectangle())
-            .position(x: handle.currentLocation.x, y: handle.currentLocation.y)
-    }
-}
-
-struct SliderPathBetweenView: View {
-    @ObservedObject var slider: CustomSlider
-    
-    var body: some View {
-        Path { path in
-            path.move(to: slider.lowHandle.currentLocation)
-            path.addLine(to: slider.highHandle.currentLocation)
+                .frame(width: nil, height: barHeight, alignment: .center)
+                HStack (alignment: .center, spacing: geo.size.width * (highSelected - lowSelected) - handleSize.width)
+                {
+                    RangeSliderHandle(handleSize: $handleSize, fill: .clear, strokeColor: .blue, strokeLineWidth: 1.0)
+                        .gesture(
+                            DragGesture (minimumDistance: 0.0, coordinateSpace: .global)
+                                .onChanged { drag in
+                                    let width = geo.frame(in: .local).width
+                                    self.lowSelected = max(0, min(drag.location.x / width, 0.85))
+                                    if self.highSelected < (lowSelected + 0.15) { self.highSelected = drag.location.x / width + 0.15 }
+                                })
+                    RangeSliderHandle(handleSize: $handleSize, fill: .clear, strokeColor: .red, strokeLineWidth: 1.0)
+                        .gesture (
+                            DragGesture (minimumDistance: 0.0, coordinateSpace: .global)
+                                .onChanged { drag in
+                                    let width = geo.frame(in: .local).width
+                                    self.highSelected = min(max(drag.location.x / width, 0.15), 1)
+                                    if self.lowSelected > (highSelected - 0.15) { lowSelected = drag.location.x / width - 0.15}
+                                })
+                }
+                .frame(width: geo.size.width * (highSelected - lowSelected) + handleSize.height, height: nil, alignment: .center)
+                .offset(x: geo.size.width * lowSelected - handleSize.width / 2, y: 0)
+            }
+            .frame(width: nil, height: handleSize.width)
+            Text("\(lowSelected)")
+                .offset(x: 0, y: 60)
         }
-        .stroke(Color.main, lineWidth: slider.lineWidth)
+        .padding([.leading, .trailing], handleSize.width / 2)
     }
 }
 
@@ -449,11 +276,10 @@ struct Utilities_Previews: PreviewProvider {
     static var previews: some View {
         HStack {
             Spacer()
-//            SliderView(slider: slider)
             VStack {
                 Image.fanLarge
+                RangeSlider()
                 Spacer()
-//                SliderView(slider: slider)
                 Spacer()
                 Image.fanIcon
                 Image.interlock
