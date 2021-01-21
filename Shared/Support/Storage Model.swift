@@ -34,7 +34,7 @@ class Settings: ObservableObject {
             let encoder = JSONEncoder()
             let data = (try? encoder.encode(fanSettings)) ?? Data()
             UserDefaults.standard.setValue(data, forKey: FanStorageValue.Key)
-            }
+        }
     }
     @Published var fanIpAddrs = Dictionary<MacAddr, IpAddress?>() {
         willSet {

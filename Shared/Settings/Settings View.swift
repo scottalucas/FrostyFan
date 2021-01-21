@@ -13,7 +13,7 @@ struct SettingsView: View {
     @State var highVal: Double = 85
     var body: some View {
         VStack {
-RangeSlider(lowValue: $lowVal, highValue: $highVal, minValue: 45, maxValue: 85)
+            RangeSlider(lowBinding: $lowVal, highBinding: $highVal, minValue: 45, maxValue: 85)
     .padding()
         }
     }

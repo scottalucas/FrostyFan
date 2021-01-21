@@ -62,14 +62,14 @@ class FanViewModel: ObservableObject {
         }
         displayedAlarms.update(with: condition)
         bladeColor = displayedAlarms.isDisjoint(with: Alarm.redColorAlarms) ? .main : .alarm
-        showPhysicalSpeedIndicator = !displayedAlarms.isDisjoint(with: Alarm.displaySpeedIndicator)
+        showPhysicalSpeedIndicator = displayedAlarms.isDisjoint(with: Alarm.displaySpeedIndicator) ? false : true
     }
 
     func clearAlarm (forCondition cond: Alarm? = nil) {
         if let condition = cond {
             displayedAlarms.remove(condition)
             bladeColor = displayedAlarms.isDisjoint(with: Alarm.redColorAlarms) ? .main : .alarm
-            showPhysicalSpeedIndicator = !displayedAlarms.isDisjoint(with: Alarm.displaySpeedIndicator)
+            showPhysicalSpeedIndicator = displayedAlarms.isDisjoint(with: Alarm.displaySpeedIndicator) ? false : true
         } else {
             displayedAlarms = []
             bladeColor = .main

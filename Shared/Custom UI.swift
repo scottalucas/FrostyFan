@@ -241,7 +241,7 @@ struct RangeSliderStyle {
     var highHandleFill: Color = .white
     var highHandleStrokeColor: Color = .black
     var highHandleStrokeWeight: CGFloat = 0.5
-    var minHandleSeparation: CGFloat {
+    var minHandleSeparation: Double { //percent
         set {
             if newValue < 0.01 { _minHandleSeparation = 0.01
             } else if newValue > 0.99 {
@@ -255,45 +255,63 @@ struct RangeSliderStyle {
             return _minHandleSeparation
         }
     }
-    private var _minHandleSeparation: CGFloat = 0.2
+    private var _minHandleSeparation: Double = 0.2
 }
 
 struct RangeSlider: View {
-    @Binding var lowValue: Double
+    @Binding var lowValue: Double //actual value
+    {
+        willSet {
+            offsetLow = maxWidth.map { $0 * CGFloat((newValue - minValue) / (maxValue - minValue)) } ?? 0
+            print("Offset Low:\t\(offsetLow)")
+        }
+    }
     @Binding var highValue: Double
-    @State private var lowSelected: CGFloat = 0 {
-        didSet {
-            lowValue = Double(lowSelected) * (maxValue - minValue) + minValue
+    {
+        willSet {
+//            let lowPct = lowValue > minValue ? (lowValue - minValue) / (maxValue - minValue) : 0
+//            let highPct = newValue < maxValue ? (newValue - minValue) / (maxValue - minValue) : 1
+//            let handlePosPct = max(highPct, lowPct + style.minHandleSeparation)
+            offsetHigh = maxWidth.map { $0 * CGFloat((newValue - minValue) / (maxValue - minValue)) } ?? .infinity
+            print("Offset high:\t\(offsetHigh.debugDescription)")
         }
     }
-    @State private var highSelected: CGFloat = 1 {
-        didSet {
-            highValue = Double(highSelected) * (maxValue - minValue) + minValue
-        }
-    }
-//    @State var style.handleSize: CGSize = CGSize(width: 20.0, height: 20.0)
-//    @State var style.barHeight: CGFloat = 9.0
-    var style = RangeSliderStyle()
     var minValue: Double
     var maxValue: Double
-    @State var fingerLowPositionBookmark: CGFloat = .zero
-    @State var fingerHighPositionBookmark: CGFloat = .infinity
-    @State private var fingerLowPosition: CGFloat = .zero
-    @State private var fingerHighPosition: CGFloat = .infinity
+    var style = RangeSliderStyle()
+    @State private var offsetLowBookmark: CGFloat = .zero //pixels
+    @State private var offsetHighBookmark: CGFloat? //pixels
+    @State private var offsetLow: CGFloat = .zero //pixels
+    @State private var offsetHigh: CGFloat? //pixels
+    @State private var maxWidth: CGFloat? //pixels
+    private var lowerHandleLowerBound: Double = .zero //percent
+    private var lowerHandleUpperBound: Double { //percent
+        maxWidth.map { Double((offsetHigh ?? $0) / $0) - style.minHandleSeparation } ?? 0.0
+    }
+    private var upperHandleLowerBound: Double { //percent
+        maxWidth.map { Double(offsetLow / $0) + style.minHandleSeparation } ?? 1.0
+    }
+    private var upperHandleUpperBound: Double  = 1.0
     
     var body: some View {
         //max width = geo.size.width - style.handleSize.width
         VStack {
             GeometryReader { geo in
                 ZStack (alignment: Alignment(horizontal: .leading, vertical: .center)) {
+                    Color.clear
+                        .onAppear(perform: {
+                            maxWidth = geo.size.width - style.handleSize.width
+                            offsetHigh = offsetHigh ?? maxWidth
+                            offsetHighBookmark = offsetHighBookmark ?? maxWidth
+                        })
                     Group {
                         RoundedRectangle(cornerRadius: style.barHeight / 2)
                             .fill(style.barBackgroundColor)
                             .padding([.leading, .trailing], 5)
                         Rectangle ()
-                            .size(width: min(geo.size.width - style.handleSize.width, (min(geo.size.width - style.handleSize.width, fingerHighPosition) - fingerLowPosition)), height: style.barHeight)
+                            .size(width: ((offsetHigh ?? .infinity) - offsetLow), height: style.barHeight)
                             .fill(style.barSelectedColor)
-                            .offset(x: max (0, fingerLowPosition), y: 0)
+                            .offset(x: offsetLow, y: 0)
                     }
                     .frame(width: geo.size.width, height: style.barHeight, alignment: .center)
                     Group {
@@ -301,37 +319,37 @@ struct RangeSlider: View {
                             .gesture(
                                 DragGesture (minimumDistance: 0.0, coordinateSpace: .global)
                                     .onChanged { drag in
-                                        let maxWidth = geo.size.width - style.handleSize.width
-                                        let fingerPos = max(0, fingerLowPositionBookmark + drag.translation.width)
-                                        fingerLowPosition = min (fingerPos, min( maxWidth, fingerHighPosition) - style.minHandleSeparation * maxWidth)
-                                        lowSelected = fingerLowPosition / maxWidth
-                                        print("Selection low:\t\(lowValue)\tSelection high:\t\(highValue)")
+                                        let fingerPosFinalPercent = Double(maxWidth.map { (offsetLowBookmark + drag.translation.width) / $0 } ?? .zero).clamped(to: lowerHandleLowerBound...lowerHandleUpperBound)
+                                        lowValue = fingerPosFinalPercent * (maxValue - minValue) + minValue
                                     }
                                     .onEnded({ drag in
-                                        fingerLowPositionBookmark = fingerLowPosition
+                                        offsetLowBookmark = offsetLow
                                     }))
-                            .offset(x: max(0, fingerLowPosition), y: 0)
+                            .offset(x: offsetLow, y: 0)
                         RangeSliderHandle() //high
                             .gesture (
                                 DragGesture (minimumDistance: 0.0, coordinateSpace: .global)
                                     .onChanged { drag in
-                                        let maxWidth = geo.size.width - style.handleSize.width
-                                        if fingerHighPositionBookmark == .infinity { fingerHighPositionBookmark = maxWidth}
-                                        let fingerPos = min(maxWidth, fingerHighPositionBookmark + drag.translation.width)
-                                        fingerHighPosition = max (fingerPos, fingerLowPosition + style.minHandleSeparation * maxWidth)
-                                        highSelected = fingerHighPosition / maxWidth
-                                        print("Selection low:\t\(lowValue)\tSelection high:\t\(highValue)")
+                                        let fingerPosFinalPercent = Double(maxWidth.map { ((offsetHighBookmark ?? .infinity) + drag.translation.width) / $0 } ?? .infinity).clamped(to: upperHandleLowerBound...upperHandleUpperBound)
+                                        highValue = fingerPosFinalPercent * (maxValue - minValue) + minValue
                                     }
                                     .onEnded({ drag in
-                                        let maxWidth = geo.size.width - style.handleSize.width
-                                        fingerHighPositionBookmark = min (maxWidth, fingerHighPosition)
+                                        offsetHighBookmark = min (maxWidth ?? .infinity, offsetHigh ?? .infinity)
                                     }))
-                            .offset(x: min(geo.size.width - style.handleSize.width, fingerHighPosition), y: 0)
+                            .offset(x: offsetHigh ?? .infinity, y: 0)
                     }
                 }
             }
             .frame(width: nil, height: style.handleSize.height, alignment: .center)
         }
+    }
+    
+    init? (lowBinding lVal: Binding<Double>, highBinding hVal: Binding<Double>, minValue min: Double, maxValue max: Double) {
+        guard lVal.wrappedValue < hVal.wrappedValue, min < max else { return nil }
+        _lowValue = lVal
+        _highValue = hVal
+        minValue = min
+        maxValue = max
     }
 }
 
@@ -354,7 +372,7 @@ struct Utilities_Previews: PreviewProvider {
             Spacer()
             VStack {
 //                Image.fanLarge
-                RangeSlider(lowValue: $lowVal, highValue: $highVal, minValue: 40, maxValue: 85)
+                RangeSlider(lowBinding: $lowVal, highBinding: $highVal, minValue: 40, maxValue: 85)
 //                    .frame(width: nil, height: nil, alignment: /*@START_MENU_TOKEN@*/.center/*@END_MENU_TOKEN@*/)
                 SliderTest(sliderValue: $sliderVal)
                 Text("Low: \(lowVal)")

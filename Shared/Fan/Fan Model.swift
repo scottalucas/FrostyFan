@@ -164,12 +164,12 @@ struct FanCharacteristics: Decodable, Hashable {
 }
 
 struct FanStatusLoader {
-    var urlSession = URLSession.shared
-    let decoder = JSONDecoder()
     let loadResults: AnyPublisher<FanCharacteristics, ConnectionError>
     init? (addr ip: String, action: FanModel.Action) {
         guard let url = URL(string: "http://\(ip)/fanspd.cgi?dir=\(action.rawValue)") else { return nil }
-        loadResults = urlSession.dataTaskPublisher(for: url)
+        let decoder = JSONDecoder()
+        let session = URLSession.shared
+        loadResults = session.dataTaskPublisher(for: url)
             .map(\.data)
             .map { String(data: $0, encoding: .ascii) ?? "" }
             .map {
@@ -181,7 +181,7 @@ struct FanStatusLoader {
                     let newTuple = (String(arr[0]), arr.count == 2 ? String(arr[1]) : nil)
                     return newTuple
                 }) }
-            .map { $0.jsonData ?? Data() }
+            .map { $0.jsonData }
             .decode(type: FanCharacteristics.self, decoder: decoder)
             .mapError({ err in
                 ConnectionError.cast(err)
