@@ -8,17 +8,25 @@
 import SwiftUI
 
 struct SettingsView: View {
-    //    @ObservedObject var slider: CustomSlider
     @State var lowVal: Double = 55
     @State var highVal: Double = 75
+//    var slider: RangeSlider
     var body: some View {
         VStack {
-            RangeSlider(lowValue: $lowVal, highValue: $highVal, minValue: 45, maxValue: 85)
-                .padding(40)
+            RangeSlider(selectedLow: $lowVal, selectedHigh: $highVal, minimum: 45, maximum: 85)
+            {
+                var config = RangeSlider.Style()
+                config.barSelectedColor = Color.main
+                config.handleShadowColor = Color.black.opacity(0.15)
+                config.lowHandleStrokeColor = Color.blue
+                config.highHandleStrokeColor = Color.red
+                return config
+            }
+            .padding()
             Text(Int(lowVal).description)
             Text(Int(highVal).description)
         }
-        .frame(width: 200, height: nil, alignment: .center)
+//        .frame(width: 200, height: nil, alignment: .center)
     }
 }
 
