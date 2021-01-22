@@ -74,7 +74,7 @@ struct FanViewPageContainer: View {
                 .padding(.bottom, 35)
         } else {
             TabView (selection: $selectedFan) {
-                ForEach (viewModel.fanModels) { fanModel in
+                ForEach (viewModel.fanModels, id: \.self) { fanModel in
                     fanModel
                         .getView()
                         .padding(.bottom, 100)

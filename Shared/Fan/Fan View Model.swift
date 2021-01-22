@@ -107,6 +107,7 @@ extension FanViewModel {
     func startSubscribers () {
         
         $displayedSegmentNumber
+            .receive(on: DispatchQueue.main)
             .filter { [weak self] dSpeed in
                 guard let self = self, let pSpeed = self.physicalFanSpeed else { return false }
                 return dSpeed != pSpeed
@@ -118,6 +119,7 @@ extension FanViewModel {
             .store(in: &bag)
         
         model.$fanCharacteristics
+            .receive(on: DispatchQueue.main)
             .filter { [weak self] _ in
                 self?.name.count == 0
             }
@@ -125,15 +127,15 @@ extension FanViewModel {
             .map { retrievedModelNumber -> String in
                 return retrievedModelNumber.count == 0 ? "Whole House Fan" : retrievedModelNumber
             }
-            .receive(on: DispatchQueue.main)
             .assign(to: &$name)
         
         model.$fanCharacteristics
-            .map { $0.macAddr }
             .receive(on: DispatchQueue.main)
+            .map { $0.macAddr }
             .assign(to: &$macAddr)
         
         model.$fanCharacteristics
+            .receive(on: DispatchQueue.main)
             .map { $0.timer }
             .map { timeTillOff in
                 guard timeTillOff > 0 else { return "" }
@@ -141,17 +143,16 @@ extension FanViewModel {
                 formatter.dateFormat = "h:mm a"
                 return "Off at \(formatter.string(from: Date(timeIntervalSinceNow: TimeInterval(timeTillOff * 60))))"
             }
-            .receive(on: DispatchQueue.main)
             .assign(to: &$offDateTxt)
 
         model.$fanCharacteristics
-            .map { $0.timer }
             .receive(on: DispatchQueue.main)
+            .map { $0.timer }
             .assign(to: &$timer)
 
         model.$fanCharacteristics
-            .map { $0.speed }
             .receive(on: DispatchQueue.main)
+            .map { $0.speed }
             .sink(receiveValue: { [weak self] actualSpeed in
                 if self?.physicalFanSpeed == nil { self?.displayedSegmentNumber = actualSpeed } //should only happen first time through
                 self?.physicalFanSpeed = actualSpeed
@@ -161,10 +162,12 @@ extension FanViewModel {
             .store(in: &bag)
         
         displayMotor
+            .receive(on: DispatchQueue.main)
             .switchToLatest()
             .assign(to: &$fanRotationDuration)
         
         model.$fanCharacteristics
+            .receive(on: DispatchQueue.main)
             .map { $0.airspaceFanModel }
             .map {
                 FanViewModel.speedTable[String($0.prefix(4))] ?? 1 }
@@ -178,9 +181,9 @@ extension FanViewModel {
             .assign(to: &$controllerSegments)
         
         model.$fanCharacteristics
+            .receive(on: DispatchQueue.main)
             .map { ($0.interlock1, $0.interlock2) }
             .map { $0.0 || $0.1 }
-            .receive(on: DispatchQueue.main)
             .sink(receiveValue: { [weak self] alarm in
                 if alarm {
                     self?.raiseAlarm(forCondition: .interlock)

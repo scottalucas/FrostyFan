@@ -22,7 +22,7 @@ struct DetailSheet: View {
             VStack {
                 Spacer()
                 LazyVGrid(columns: columns, alignment: .leading, spacing: 20, pinnedViews: []) {
-                        ForEach(data) { item in
+                    ForEach(data, id: \.self) { item in
                             item
                                 .foregroundColor(.background)
                         }

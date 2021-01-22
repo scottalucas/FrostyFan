@@ -132,7 +132,7 @@ struct SpeedController: View {
     
     var body: some View {
             Picker (selection: $viewModel.displayedSegmentNumber, label: Text("Picker")) {
-                ForEach (0..<viewModel.controllerSegments.count) { segmentIndex in
+                ForEach (0..<viewModel.controllerSegments.count, id: \.self) { segmentIndex in
                     Text(viewModel.controllerSegments[segmentIndex]).tag(segmentIndex)
                 }
             }

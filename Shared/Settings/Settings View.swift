@@ -9,12 +9,14 @@ import SwiftUI
 
 struct SettingsView: View {
 //    @ObservedObject var slider: CustomSlider
-    @State var lowVal: Double = 45
-    @State var highVal: Double = 85
+    @State var lowVal: Double = 55
+    @State var highVal: Double = 75
     var body: some View {
         VStack {
-            RangeSlider(lowBinding: $lowVal, highBinding: $highVal, minValue: 45, maxValue: 85)
+            RangeSlider(lowValue: $lowVal, highValue: $highVal, minValue: 45, maxValue: 85)
     .padding()
+            Text(Int(lowVal).description)
+            Text(Int(highVal).description)
         }
     }
     init() {
