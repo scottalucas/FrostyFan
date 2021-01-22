@@ -302,73 +302,54 @@ struct RangeSlider: View {
     //unit = pixel
     @State private var offsetLowBookmark: CGFloat = .zero
     @State private var offsetHighBookmark: CGFloat = .infinity
-    @State private var offsetLow: CGFloat = .zero {
-        didSet {
-            print("Old value:\t\(oldValue)\tNew value:\t\(offsetLow)\tLow value:\t\(lowValue)\tDelta:\t\(maxValue - minValue)")
-        }
-    }
-    
-    @State private var offsetHigh: CGFloat = .infinity {
-        didSet {
-            print("Old value:\t\(oldValue)\tNew value:\t\(offsetHigh)\tHigh value:\t\(highValue)\tDelta:\t\(maxValue - minValue)")
-        }
-    }
-    @State private var maxWidth: CGFloat = .infinity {
-        didSet {
-            print("Old value:\t\(oldValue)\tNew value:\t\(maxWidth)")
-        }
-    }
+    @State private var offsetLow: CGFloat = .zero
+    @State private var offsetHigh: CGFloat = .infinity
+    @State private var maxWidth: CGFloat = .infinity
     
     //unit = percent
     private var lowerHandleUpperBound: Double {
-//        maxWidth.map { Double((offsetHigh ?? $0) / $0) - style.minHandleSeparation } ?? 0.0
         Double(offsetHigh / maxWidth) - style.minHandleSeparation
     }
     private var upperHandleLowerBound: Double {
-//        maxWidth.map { Double(offsetLow / $0) + style.minHandleSeparation } ?? 1.0
         Double(offsetLow / maxWidth) + style.minHandleSeparation
     }
     
     var body: some View {
-        VStack {
-                ZStack (alignment: Alignment(horizontal: .leading, vertical: .center)) {
-                    Group {
-                        RoundedRectangle(cornerRadius: style.barHeight / 2)
-                            .fill(style.barBackgroundColor)
-                            .padding([.leading, .trailing], 5)
-                        Rectangle ()
-                            .size(width: (offsetHigh - offsetLow), height: style.barHeight)
-                            .fill(style.barSelectedColor)
-                            .offset(x: offsetLow, y: 0)
-                    }
-                    .frame(width: nil, height: style.barHeight, alignment: .center) //fix
-                    Group {
-                        //low handle
-                        RangeSliderHandle()
-                            .gesture(
-                                DragGesture (minimumDistance: 0.0, coordinateSpace: .global)
-                                    .onChanged { drag in
-                                        let positionPercent = Double((offsetLowBookmark + drag.translation.width) / maxWidth).clamped(to: .zero...lowerHandleUpperBound)
-                                        lowValue = positionPercent * (maxValue - minValue) + minValue
-                                    }
-                                    .onEnded({ drag in
-                                        offsetLowBookmark = offsetLow
-                                    }))
-                            .offset(x: offsetLow, y: 0)
-                        //high handle
-                        RangeSliderHandle()
-                            .gesture (
-                                DragGesture (minimumDistance: 0.0, coordinateSpace: .global)
-                                    .onChanged { drag in
-                                        let positionPercent = Double((offsetHighBookmark + drag.translation.width) / maxWidth).clamped(to: upperHandleLowerBound...1.0)
-                                        highValue = positionPercent * (maxValue - minValue) + minValue
-                                    }
-                                    .onEnded({ drag in
-                                        offsetHighBookmark = min (maxWidth, offsetHigh)
-                                    }))
-                            .offset(x: offsetHigh, y: 0)
-                    }
-                }
+        ZStack (alignment: Alignment(horizontal: .leading, vertical: .center)) {
+            Group {
+                RoundedRectangle(cornerRadius: style.barHeight / 2)
+                    .fill(style.barBackgroundColor)
+                    .padding([.leading, .trailing], 5)
+                Rectangle ()
+                    .size(width: (offsetHigh - offsetLow), height: style.barHeight)
+                    .fill(style.barSelectedColor)
+                    .offset(x: offsetLow, y: 0)
+            }
+            .frame(width: nil, height: style.barHeight, alignment: .center)
+            //low handle
+            RangeSliderHandle()
+                .gesture(
+                    DragGesture (minimumDistance: 0.0, coordinateSpace: .global)
+                        .onChanged { drag in
+                            let positionPercent = Double((offsetLowBookmark + drag.translation.width) / maxWidth).clamped(to: .zero...lowerHandleUpperBound)
+                            lowValue = positionPercent * (maxValue - minValue) + minValue
+                        }
+                        .onEnded({ drag in
+                            offsetLowBookmark = offsetLow
+                        }))
+                .offset(x: offsetLow, y: 0)
+            //high handle
+            RangeSliderHandle()
+                .gesture (
+                    DragGesture (minimumDistance: 0.0, coordinateSpace: .global)
+                        .onChanged { drag in
+                            let positionPercent = Double((offsetHighBookmark + drag.translation.width) / maxWidth).clamped(to: upperHandleLowerBound...1.0)
+                            highValue = positionPercent * (maxValue - minValue) + minValue
+                        }
+                        .onEnded({ drag in
+                            offsetHighBookmark = min (maxWidth, offsetHigh)
+                        }))
+                .offset(x: offsetHigh, y: 0)
         }
         .modifier(SizeModifier())
         .onPreferenceChange(SizePreferenceKey.self) { size in
@@ -378,13 +359,6 @@ struct RangeSlider: View {
             offsetLow = CGFloat( ( lowValue - minValue) / (maxValue - minValue) ) * (maxWidth)
             offsetLowBookmark = offsetLow
         }
-    }
-    
-    init (lowValue lVal: Binding<Double>, highValue hVal: Binding<Double>, minValue min: Double, maxValue max: Double) {
-        _lowValue = lVal
-        _highValue = hVal
-        minValue = min
-        maxValue = max
     }
 }
 
@@ -403,28 +377,28 @@ struct Utilities_Previews: PreviewProvider {
     @State static var lowVal: Double = 45
     @State static var highVal: Double = 85
     static var previews: some View {
-        HStack {
-            Spacer()
-            VStack {
-//                Image.fanLarge
+//        HStack {
+//            Spacer()
+//            VStack {
+////                Image.fanLarge
                 RangeSlider(lowValue: $lowVal, highValue: $highVal, minValue: 40, maxValue: 85)
-//                    .frame(width: nil, height: nil, alignment: /*@START_MENU_TOKEN@*/.center/*@END_MENU_TOKEN@*/)
-                SliderTest(sliderValue: $sliderVal)
-                Text("Low: \(lowVal)")
-                Text("High: \(highVal)")
-            }
-            Spacer ()
-            VStack {
-                Spacer ()
-                Image.settings
-                Image.speed
-                Image.thermometer
-                Image.timer
-                Image.rainDrops
-                Color.main
-                    .frame(width: 25, height: 25, alignment: .center)
-            }
-            Spacer()
-        }
+                    .padding(50)
+////                    .frame(width: nil, height: nil, alignment: /*@START_MENU_TOKEN@*/.center/*@END_MENU_TOKEN@*/)
+//                Text("Low: \(lowVal)")
+//                Text("High: \(highVal)")
+//            }
+//            Spacer ()
+//            VStack {
+//                Spacer ()
+//                Image.settings
+//                Image.speed
+//                Image.thermometer
+//                Image.timer
+//                Image.rainDrops
+//                Color.main
+//                    .frame(width: 25, height: 25, alignment: .center)
+//            }
+//            Spacer()
+//        }
     }
 }

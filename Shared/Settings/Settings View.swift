@@ -8,19 +8,17 @@
 import SwiftUI
 
 struct SettingsView: View {
-//    @ObservedObject var slider: CustomSlider
+    //    @ObservedObject var slider: CustomSlider
     @State var lowVal: Double = 55
     @State var highVal: Double = 75
     var body: some View {
         VStack {
             RangeSlider(lowValue: $lowVal, highValue: $highVal, minValue: 45, maxValue: 85)
-    .padding()
+                .padding(40)
             Text(Int(lowVal).description)
             Text(Int(highVal).description)
         }
-    }
-    init() {
-//        slider = CustomSlider(start: 0, end: 100, initHigh: 80, initLow: 10)
+        .frame(width: 200, height: nil, alignment: .center)
     }
 }
 

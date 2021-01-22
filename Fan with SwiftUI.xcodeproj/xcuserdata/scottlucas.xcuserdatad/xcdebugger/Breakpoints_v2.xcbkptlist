@@ -55,10 +55,10 @@
             filePath = "Shared/Custom UI.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "378"
-            endingLineNumber = "378"
-            landmarkName = "body"
-            landmarkType = "24">
+            startingLineNumber = "359"
+            endingLineNumber = "359"
+            landmarkName = "RangeSlider"
+            landmarkType = "14">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>
