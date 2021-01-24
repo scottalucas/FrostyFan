@@ -7,12 +7,58 @@
 
 import Foundation
 import Combine
+import SwiftUI
 
 extension Comparable {
     func clamped(to limits: ClosedRange<Self>) -> Self {
         return min(max(self, limits.lowerBound), limits.upperBound)
     }
 }
+
+//
+//extension View {
+//    @ViewBuilder
+//    func ifLet<V, Transform: View>(
+//        _ value: V?,
+//        transform: (Self, V) -> Transform
+//    ) -> some View {
+//        if let value = value {
+//            transform(self, value)
+//        } else {
+//            self
+//        }
+//    }
+//}
+
+/* CALL SITE
+ var body: some view {
+   myView
+     .ifLet(optionalColor) { $0.foregroundColor($1) }
+ }
+ */
+ 
+// extension View {
+//   @ViewBuilder
+//   func `if`<Transform: View>(
+//     _ condition: Bool,
+//     transform: (Self) -> Transform
+//   ) -> some View {
+//     if condition {
+//       transform(self)
+//     } else {
+//       self
+//     }
+//   }
+// }
+
+/* CALL SITE
+ var body: some view {
+   myView
+     .if(X) { $0.padding(8) }
+     .if(Y) { $0.background(Color.blue) }
+ }
+ */
+
 //
 //extension Publisher where Output == FanModel.Action, Failure == Never {
 //    

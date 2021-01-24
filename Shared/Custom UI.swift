@@ -203,107 +203,65 @@ struct ActivityRep: UIViewRepresentable {
     }
 }
 
-struct RangeSliderHandle: View {
-    enum HandlePosition { case lower, upper }
-    @Binding var value: Double
-    var handleSize: CGSize = CGSize(width: 27.0, height: 27.0)
-    var shadowColor: Color = Color.black.opacity(0.2)
-    var shadowRadius: CGFloat
-    var shadowOffset: CGSize
-    var fill: Color = .white
-    var strokeColor: Color = .gray
-    var strokeLineWidth: CGFloat = 0.0
-//    var style: RangeSliderStyle
-    
-    var body: some View {
-        Circle ()
-            .size(handleSize)
-            .fill(fill)
-            .overlay(Circle()
-                        .size(handleSize)
-                        .stroke(lineWidth: strokeLineWidth)
-                        .foregroundColor(strokeColor))
-            .overlay(Text(String(format: "%3.0f\u{00B0}", value))
-                        .offset(x: 0, y: -handleSize.height * 1.5)
-                        .frame(width: 50, height: nil, alignment: .center))
-            .shadow(color: shadowColor, radius: shadowRadius, x: shadowOffset.width, y: shadowOffset.height)
-            .frame(width: handleSize.width, height: handleSize.height, alignment: .center)
-    }
-    
-    init(_ value: Binding<Double>, position pos: HandlePosition = .lower, style: RangeSlider.Style = RangeSlider.Style()) {
-        _value = value
-        handleSize = CGSize(width: style.handleSize, height: style.handleSize)
-        shadowColor = style.handleShadowColor
-        shadowRadius = style.handleShadowRadius
-        shadowOffset = style.handleShadowOffset
-        if pos == .lower {
-            fill = style.lowHandleFill
-            strokeColor = style.lowHandleStrokeColor
-            strokeLineWidth = style.lowHandleStrokeWeight
-        } else {
-            fill = style.highHandleFill
-            strokeColor = style.highHandleStrokeColor
-            strokeLineWidth = style.highHandleStrokeWeight
-        }
-    }
-}
-
 struct WidthPreferenceKey: PreferenceKey {
     static var defaultValue: CGFloat = .zero
-
+    
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value = nextValue()
     }
 }
 
-struct SizeModifier: ViewModifier {
+struct WidthReader: ViewModifier {
     private var sizeView: some View {
         GeometryReader { geometry in
             Color.clear.preference(key: WidthPreferenceKey.self, value: geometry.size.width)
         }
     }
-
+    
     func body(content: Content) -> some View {
         content.background(sizeView)
     }
 }
 
-extension RangeSlider {
-    struct Style {
-        var lowActualValue: Double = 0
-        var highActualValue: Double = 1
-        var barBackgroundColor = Color.black.opacity(0.15)
-        var barStrokeColor: Color = .clear
-        var barStrokeWeight: CGFloat = 0.0
-        var barSelectedColor: Color = Color(UIColor.systemBlue)
-        var barSelectedStrokeColor = Color(UIColor.clear)
-        var barSelectedStrokeWeight: CGFloat = 0.0
-        var handleSize: CGFloat = 27.0
-        var handleShadowColor: Color = Color.black.opacity(0.15)
-        var handleShadowRadius: CGFloat = 2.0
-        var handleShadowOffset: CGSize = CGSize(width: 1, height: 1)
-        var barHeight: CGFloat = 4.0
-        var lowHandleFill: Color = .white
-        var lowHandleStrokeColor: Color = .clear
-        var lowHandleStrokeWeight: CGFloat = 0.5
-        var highHandleFill: Color = .white
-        var highHandleStrokeColor: Color = .clear
-        var highHandleStrokeWeight: CGFloat = 0.5
-        var minHandleSeparation: Double { //percent
-            set {
-                if newValue < 0.01 { _minHandleSeparation = 0.01
-                } else if newValue > 0.99 {
-                    _minHandleSeparation = 0.99
-                } else {
-                    _minHandleSeparation = newValue
-                }
-                
-            }
-            get {
-                return _minHandleSeparation
+struct RangeSliderHandle: View {
+    @Binding var value: Double
+    var style = RangeSlider.HandleStyle()
+    private var handleLabel: HandleLabel?
+
+    struct HandleLabel: View {
+        @Binding var value: Double
+        var style: RangeSlider.LabelStyle
+        var body: some View {
+            Text(style.numberFormat.string(from: NSNumber(value: value)) ?? "")
+                .font(style.isItalic ? style.labelFont.italic() : style.labelFont)
+                .fontWeight(style.labelWeight)
+                .foregroundColor(style.color)
+                .background(style.background)
+        }
+    }
+    
+    var body: some View {
+        ZStack {
+            Circle ()
+                .size(CGSize(width: style.size, height: style.size))
+                .fill(style.fill)
+                .overlay(Circle()
+                            .size(CGSize(width: style.size, height: style.size))
+                            .stroke(lineWidth: style.strokeWeight)
+                            .foregroundColor(style.strokeColor))
+                .shadow(color: style.shadowColor, radius: style.shadowRadius, x: style.shadowOffset.width, y: style.shadowOffset.height)
+                .frame(width: style.size, height: style.size, alignment: .center)
+            if handleLabel != nil {
+                handleLabel!
+                    .offset(style.labelOffset ?? CGSize(width: 0, height: -style.size * 1.2))
             }
         }
-        private var _minHandleSeparation: Double = 0.2
+    }
+    
+    init(_ value: Binding<Double>, handleFormatter: (inout RangeSlider.HandleStyle) -> () = { _ in }) {
+        _value = value
+        handleFormatter(&style)
+        style.labelStyle.map { handleLabel = HandleLabel(value: $value, style: $0) }
     }
 }
 
@@ -321,9 +279,13 @@ struct RangeSlider: View {
             offsetHigh = maxWidth * CGFloat((newValue - minValue) / (maxValue - minValue))
         }
     }
-    var minValue: Double
-    var maxValue: Double
-    var style: Style
+    
+    private var minValue: Double
+    private var maxValue: Double
+
+    private var barStyle = BarStyle()
+    private var leftHandle: RangeSliderHandle
+    private var rightHandle: RangeSliderHandle
     
     //unit = pixel
     @State private var offsetLowBookmark: CGFloat = .zero
@@ -334,26 +296,45 @@ struct RangeSlider: View {
     
     //unit = percent
     private var lowerHandleUpperBound: Double {
-        Double(offsetHigh / maxWidth) - style.minHandleSeparation
+        Double(offsetHigh / maxWidth) - barStyle.minHandleSeparation
     }
     private var upperHandleLowerBound: Double {
-        Double(offsetLow / maxWidth) + style.minHandleSeparation
+        Double(offsetLow / maxWidth) + barStyle.minHandleSeparation
     }
     
     var body: some View {
         ZStack (alignment: Alignment(horizontal: .leading, vertical: .center)) {
             Group {
-                RoundedRectangle(cornerRadius: style.barHeight / 2)
-                    .fill(style.barBackgroundColor)
+                RoundedRectangle(cornerRadius: barStyle.barHeight / 2)
+                    .fill(barStyle.barOutsideFill)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: barStyle.barHeight / 2)
+                            .stroke(lineWidth: barStyle.barOutsideStrokeWeight)
+                            .foregroundColor(barStyle.barOutsideStrokeColor)
+                    )
+                    
                     .padding([.leading, .trailing], 5)
+                    .modifier(WidthReader())
+                    .onPreferenceChange(WidthPreferenceKey.self) { width in
+                        maxWidth = width - (leftHandle.style.size + rightHandle.style.size) * 0.5
+                        offsetHigh = CGFloat( ( highValue - minValue) / (maxValue - minValue) ) * (maxWidth)
+                        offsetLow = CGFloat( ( lowValue - minValue) / (maxValue - minValue) ) * (maxWidth)
+                        offsetHighBookmark = offsetHigh
+                        offsetLowBookmark = offsetLow
+                    }
                 Rectangle ()
-                    .size(width: (offsetHigh - offsetLow), height: style.barHeight)
-                    .fill(style.barSelectedColor)
-                    .offset(x: offsetLow, y: 0)
+                    .size(width: (offsetHigh - offsetLow), height: barStyle.barHeight)
+                    .fill(barStyle.barInsideFill)
+                    .overlay(
+                        Rectangle()
+                            .size(width: (offsetHigh - offsetLow), height: barStyle.barHeight)
+                            .stroke(lineWidth: barStyle.barInsideStrokeWeight)
+                            .foregroundColor(barStyle.barInsideStrokeColor)
+                    )
+                    .offset(x: offsetLow + (leftHandle.style.size + rightHandle.style.size) * 0.25, y: 0)
             }
-            .frame(width: nil, height: style.barHeight, alignment: .center)
-            //low handle
-            RangeSliderHandle($lowValue, position: .lower, style: style)
+            .frame(width: nil, height: barStyle.barHeight, alignment: .center)
+            leftHandle
                 .gesture(
                     DragGesture (minimumDistance: 0.0, coordinateSpace: .global)
                         .onChanged { drag in
@@ -364,8 +345,7 @@ struct RangeSlider: View {
                             offsetLowBookmark = offsetLow
                         }))
                 .offset(x: offsetLow, y: 0)
-            //high handle
-            RangeSliderHandle($highValue, position: .upper, style: style)
+            rightHandle
                 .gesture (
                     DragGesture (minimumDistance: 0.0, coordinateSpace: .global)
                         .onChanged { drag in
@@ -377,52 +357,123 @@ struct RangeSlider: View {
                         }))
                 .offset(x: offsetHigh, y: 0)
         }
-        .modifier(SizeModifier())
-        .onPreferenceChange(WidthPreferenceKey.self) { width in
-            maxWidth = width - style.handleSize
-            offsetHigh = CGFloat( ( highValue - minValue) / (maxValue - minValue) ) * (maxWidth)
-            offsetHighBookmark = offsetHigh
-            offsetLow = CGFloat( ( lowValue - minValue) / (maxValue - minValue) ) * (maxWidth)
-            offsetLowBookmark = offsetLow
-        }
     }
     
-    init (selectedLow low: Binding<Double>, selectedHigh high: Binding<Double>, minimum min: Double, maximum max: Double, _ style: () -> Style = { Style() }) {
+    init (
+        selectedLow low: Binding<Double>,
+        selectedHigh high: Binding<Double>,
+        minimum min: Double,
+        maximum max: Double,
+        barFormatter: (inout BarStyle) -> () = { _ in },
+        rightHandleFormatter: (inout HandleStyle) -> () = { _ in },
+        leftHandleFormatter: (inout HandleStyle) -> () = { _ in })
+    {
         _lowValue = low
         _highValue = high
         minValue = min
         maxValue = max
-        self.style = style()
+        barFormatter(&barStyle)
+        rightHandle = RangeSliderHandle (
+            high,
+            handleFormatter: rightHandleFormatter
+        )
+        leftHandle = RangeSliderHandle (
+            low,
+            handleFormatter: leftHandleFormatter
+        )
     }
-//    
-//    func style(_ sliderStyle: () -> RangeSlider.Style) -> some View {
-//        return RangeSlider(lowValue: $lowValue, highValue: $highValue, minValue: self.minValue, maxValue: self.maxValue, style: sliderStyle())
-//    }
 }
 
-struct SliderTest: View {
-    @Binding var sliderValue: Double
-
-    var body: some View {
-        Slider(value: $sliderValue)
-
+extension RangeSlider {
+    struct BarStyle {
+        var barHeight: CGFloat = 4.0
+        var barOutsideFill = Color.black.opacity(0.15)
+        var barOutsideStrokeColor: Color = .clear
+        var barOutsideStrokeWeight: CGFloat = 0.0
+        var barInsideFill: Color = Color(UIColor.systemBlue)
+        var barInsideStrokeColor = Color(UIColor.clear)
+        var barInsideStrokeWeight: CGFloat = 0.0
+        var minHandleSeparation: Double { //percent
+            set {
+                if newValue < 0.01 { _minHandleSeparation = 0.01
+                } else if newValue > 0.99 {
+                    _minHandleSeparation = 0.99
+                } else {
+                    _minHandleSeparation = newValue
+                }
+                
+            }
+            get {
+                return _minHandleSeparation
+            }
+        }
+        private var _minHandleSeparation: Double = 0.2
+    }
+    struct HandleStyle {
+        var labelStyle: LabelStyle?
+        var labelOffset: CGSize?
+        var size: CGFloat = 27.0
+        var shadowColor: Color = Color.black.opacity(0.15)
+        var shadowRadius: CGFloat = 2.0
+        var shadowOffset: CGSize = CGSize(width: 1, height: 1)
+        var fill: Color = .white
+        var strokeColor: Color = .clear
+        var strokeWeight: CGFloat = 0.5
+    }
+    struct LabelStyle {
+        var color: Color = .black
+        var background: Color = .clear
+        var numberFormat = NumberFormatter()
+        var labelFont: Font = .body
+        var labelWeight: Font.Weight = .regular
+        var isItalic: Bool = false
+        var isBold: Bool = false
     }
 }
 
 struct Utilities_Previews: PreviewProvider {
 //        @ObservedObject var slider = CustomSlider(start: 10, end: 100)
     @State static var sliderVal: Double = 0.5
-    @State static var lowVal: Double = 45
+    @State static var lowVal: Double = 50
     @State static var highVal: Double = 80
+    static var formatter: NumberFormatter {
+        let formatter = NumberFormatter()
+        formatter.positiveFormat = "2\u{00B0}"
+        return formatter
+    }
     static var previews: some View {
-//        HStack {
-//            Spacer()
-//            VStack {
-////                Image.fanLarge
-//                RangeSlider(lowValue: $lowVal, highValue: $highVal, minValue: 40, maxValue: 85)
+
+        RangeSlider(
+            selectedLow: $lowVal,
+            selectedHigh: $highVal,
+            minimum: 50,
+            maximum: 85,
+            barFormatter: { style in
+                style.barInsideFill = .main
+            },
+            rightHandleFormatter: { style in
+                style.size = 25
+                style.strokeColor = .red
+                style.strokeWeight = 0.75
+                style.labelOffset = CGSize(width: 0, height: -25)
+                style.labelStyle = RangeSlider.LabelStyle()
+                style.labelStyle?
+                    .numberFormat
+                    .positiveFormat = "2\u{00B0}"
+            },
+            leftHandleFormatter: { style in
+                style.size = 25
+                style.strokeColor = .blue
+                style.strokeWeight = 0.75
+                style.labelOffset = CGSize(width: 0, height: -25)
+                style.labelStyle = RangeSlider.LabelStyle()
+                style.labelStyle?
+                    .numberFormat
+                    .positiveFormat = "2\u{00B0}"
+            })
 //                    .padding(50)
 ////                    .frame(width: nil, height: nil, alignment: /*@START_MENU_TOKEN@*/.center/*@END_MENU_TOKEN@*/)
-                Text("Low: \(lowVal)")
+//                Text("Low: \(lowVal)")
 //                Text("High: \(highVal)")
 //            }
 //            Spacer ()
