@@ -8,15 +8,45 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @ObservedObject var viewModel: SettingsViewModel
     @State var lowVal: Double = 55
     @State var highVal: Double = 75
-
+    @State var allowLocation: Bool = false
+    
     var body: some View {
         ZStack {
-            SettingsBackgound()
-            TemperatureSelector(lowTemp: $lowVal, highTemp: $highVal)
-    .padding()
+            Color.main
+                .ignoresSafeArea()
+            VStack {
+                SettingsBackgound()
+                List {
+                    Section(header: Text("Location")) {
+                        Toggle(isOn: $allowLocation) {
+                            Text("Allow location").foregroundColor(.main)
+                        }
+                    }
+                    Section(header: Text("Outside temperature alerts")) {
+                        Toggle(isOn: $allowLocation) {
+                            Text("Enable").foregroundColor(.main)
+                        }
+                    }
+                }
+                .background(Color.main)
+                .foregroundColor(.white)
+                Spacer()
+//                if viewModel.currentTemp != nil {
+//                    Text(viewModel.currentTemp!)
+//                }
+//                if viewModel.locationAvailable == true && viewModel.location != nil {
+//                    Text("Latitude: \(viewModel.location!.lat), Longitude: \(viewModel.location!.lon)")
+//                }
+            }
         }
+        .listStyle(GroupedListStyle())
+    }
+    
+    init () {
+        viewModel = SettingsViewModel()
     }
 }
 
@@ -36,6 +66,7 @@ struct TemperatureSelector: View {
                 style.barInsideFill = .white
                 style.barOutsideStrokeColor = .white
                 style.barOutsideStrokeWeight = 0.75
+                style.barHeight = 7.0
             },
             rightHandleFormatter: { style in
                 style.size = CGSize(width: 30, height: 30)
@@ -65,8 +96,6 @@ struct TemperatureSelector: View {
 struct SettingsBackgound: View {
     var body: some View {
         ZStack {
-            Color.main
-                .ignoresSafeArea()
             VStack (alignment: .center, spacing: 0) {
                 HStack (alignment: .firstTextBaseline) {
                     Text("Settings").font(.largeTitle)
@@ -76,7 +105,6 @@ struct SettingsBackgound: View {
                 Divider()
                     .frame(width: nil, height: 1, alignment: .center)
                     .background(Color.background)
-                Spacer()
             }
             .padding()
         }

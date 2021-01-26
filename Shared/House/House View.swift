@@ -13,7 +13,7 @@ struct HouseView: View {
     @State var info: String = ""
     @State private var tap: Bool = false
     @State private var fanLabel: String?
-    var weather = WeatherManager()
+    var weather = WeatherManager.shared
     
     var body: some View {
         

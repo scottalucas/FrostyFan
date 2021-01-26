@@ -58,14 +58,17 @@ class Settings: ObservableObject {
     }
     @Published var configuredAlarms = Alarm() {
         willSet {
-            defer { houseSettings.configuredAlarms = newValue }
+            defer {
+                houseSettings.configuredAlarms = newValue
+                UserDefaults.standard.setValue(data, forKey: HouseStorageValue.Key)
+            }
             newConfiguredAlarms = newValue.subtracting(configuredAlarms)
             let encoder = JSONEncoder()
             let data = (try? encoder.encode(houseSettings)) ?? Data()
-            UserDefaults.standard.setValue(data, forKey: HouseStorageValue.Key)
         }
     }
     @Published private (set) var newConfiguredAlarms = Alarm ()
+    
     @Published var lowTempLimitSet: Double? {
         willSet {
             houseSettings.lowTempLimitSet = newValue

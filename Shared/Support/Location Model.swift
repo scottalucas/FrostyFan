@@ -10,11 +10,15 @@ import CoreLocation
 import Combine
 import SwiftUI
 
-class LocationManager: CLLocationManager, CLLocationManagerDelegate {
+class LocationManager: CLLocationManager, ObservableObject {
+    static let shared = LocationManager()
     private var settings = Settings.shared
-    override init () {
+    @Published private (set) var authorized: Bool?
+    
+    private override init () {
         super.init()
         delegate = self
+        locationManagerDidChangeAuthorization(self)
         print("Location services are enabled: \(CLLocationManager.locationServicesEnabled())")
     }
     
@@ -22,6 +26,9 @@ class LocationManager: CLLocationManager, CLLocationManagerDelegate {
         requestWhenInUseAuthorization()
         startUpdatingLocation()
     }
+}
+
+extension LocationManager: CLLocationManagerDelegate {
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         print(locations.last.debugDescription)
@@ -31,6 +38,18 @@ class LocationManager: CLLocationManager, CLLocationManagerDelegate {
     
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print("location manager failed with error \(error.localizedDescription)")
+    }
+    
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        switch authorizationStatus {
+        case .authorizedAlways, .authorizedWhenInUse:
+            authorized = true
+        case .notDetermined:
+            authorized = nil
+        default:
+            settings.houseLocation = nil
+            authorized = false
+        }
     }
 }
 

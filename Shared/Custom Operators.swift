@@ -33,6 +33,27 @@ public struct AnyShape: Shape {
     }
 }
 
+extension View {
+    func eraseToAnyView() -> AnyView {
+        AnyView(self)
+    }
+}
+
+extension Shape {
+    func eraseToAnyShape () -> AnyShape {
+        return AnyShape(self)
+    }
+}
+
+extension Array where Element == (String, String?) {
+    var jsonData: Data {
+        let newDict = Dictionary(self, uniquingKeysWith: { (first, _) in first })
+        guard let data = try? JSONSerialization.data(withJSONObject: newDict) else {
+            return Data()
+        }
+        return data
+    }
+}
 //
 //extension View {
 //    @ViewBuilder

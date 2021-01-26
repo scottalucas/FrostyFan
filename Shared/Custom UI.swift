@@ -37,12 +37,6 @@ extension Color {
     static var background = Color(UIColor.background)
 }
 
-extension View {
-    func eraseToAnyView() -> AnyView {
-        AnyView(self)
-    }
-}
-
 
 struct RefreshableScrollView<Content: View>: View {
     @State private var previousScrollOffset: CGFloat = 0
@@ -413,7 +407,7 @@ extension RangeSlider {
         private var _minHandleSeparation: Double = 0.2
     }
     struct HandleStyle {
-        private (set) var handleShape: AnyShape = AnyShape(Circle())
+        private (set) var handleShape: AnyShape = Circle().eraseToAnyShape()
         private (set) var handleBackground: AnyView?
         var labelStyle: LabelStyle?
         var labelOffset: CGSize?
@@ -425,7 +419,7 @@ extension RangeSlider {
         var strokeColor: Color = .clear
         var strokeWeight: CGFloat = 1.0
         mutating func setShape<S: Shape>(to shape: S) {
-            handleShape = AnyShape(shape)
+            handleShape = shape.eraseToAnyShape()
         }
         mutating func setBackground<V: View> (to view: V) {
             handleBackground = view.eraseToAnyView()

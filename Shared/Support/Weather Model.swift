@@ -11,6 +11,7 @@ import Combine
 import SwiftUI
 
 class WeatherManager: ObservableObject {
+    static let shared = WeatherManager()
     @ObservedObject private var settings = Settings.shared
     @Published var currentTemp: Double?
     
@@ -38,7 +39,7 @@ class WeatherManager: ObservableObject {
         }
     }
     
-    init () {
+    private init () {
         self.lastUpdate = Settings.shared.weatherStorageValue?.lastUpdate ?? .distantPast
         self.nextUpdate = Settings.shared.weatherStorageValue?.nextUpdate ?? WeatherCheckInterval.nextRecommendedDate(forTemp: nil)
        
