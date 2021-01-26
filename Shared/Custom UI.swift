@@ -242,26 +242,29 @@ struct RangeSliderHandle: View {
     
     var body: some View {
         ZStack {
-            Circle ()
-                .size(CGSize(width: style.size, height: style.size))
+            style.handleShape
+                .size(style.size)
                 .fill(style.fill)
-                .overlay(Circle()
-                            .size(CGSize(width: style.size, height: style.size))
+                .overlay(style.handleShape
+                            .size(style.size)
                             .stroke(lineWidth: style.strokeWeight)
                             .foregroundColor(style.strokeColor))
+                .overlay(style.handleBackground ?? Color.clear.eraseToAnyView())
                 .shadow(color: style.shadowColor, radius: style.shadowRadius, x: style.shadowOffset.width, y: style.shadowOffset.height)
-                .frame(width: style.size, height: style.size, alignment: .center)
-            if handleLabel != nil {
-                handleLabel!
-                    .offset(style.labelOffset ?? CGSize(width: 0, height: -style.size * 1.2))
+                .frame(width: style.size.width, height: style.size.height, alignment: .center)
+            if let label = handleLabel {
+                label
+                    .offset(style.labelOffset ?? CGSize(width: 0, height: -style.size.height * 1.3))
             }
         }
     }
     
-    init(_ value: Binding<Double>, handleFormatter: (inout RangeSlider.HandleStyle) -> () = { _ in }) {
-        _value = value
+    init(_ value: Binding<Double>? = nil, handleFormatter: (inout RangeSlider.HandleStyle) -> () = { _ in }) {
+        _value = value ?? .constant(0.0)
         handleFormatter(&style)
-        style.labelStyle.map { handleLabel = HandleLabel(value: $value, style: $0) }
+        if let val = value, let style = style.labelStyle {
+            handleLabel = HandleLabel(value: val, style: style)
+        }
     }
 }
 
@@ -316,7 +319,7 @@ struct RangeSlider: View {
                     .padding([.leading, .trailing], 5)
                     .modifier(WidthReader())
                     .onPreferenceChange(WidthPreferenceKey.self) { width in
-                        maxWidth = width - (leftHandle.style.size + rightHandle.style.size) * 0.5
+                        maxWidth = width - (leftHandle.style.size.width + rightHandle.style.size.width) * 0.5
                         offsetHigh = CGFloat( ( highValue - minValue) / (maxValue - minValue) ) * (maxWidth)
                         offsetLow = CGFloat( ( lowValue - minValue) / (maxValue - minValue) ) * (maxWidth)
                         offsetHighBookmark = offsetHigh
@@ -331,7 +334,7 @@ struct RangeSlider: View {
                             .stroke(lineWidth: barStyle.barInsideStrokeWeight)
                             .foregroundColor(barStyle.barInsideStrokeColor)
                     )
-                    .offset(x: offsetLow + (leftHandle.style.size + rightHandle.style.size) * 0.25, y: 0)
+                    .offset(x: offsetLow + (leftHandle.style.size.width + rightHandle.style.size.width) * 0.25, y: 0)
             }
             .frame(width: nil, height: barStyle.barHeight, alignment: .center)
             leftHandle
@@ -410,16 +413,25 @@ extension RangeSlider {
         private var _minHandleSeparation: Double = 0.2
     }
     struct HandleStyle {
+        private (set) var handleShape: AnyShape = AnyShape(Circle())
+        private (set) var handleBackground: AnyView?
         var labelStyle: LabelStyle?
         var labelOffset: CGSize?
-        var size: CGFloat = 27.0
+        var size: CGSize = CGSize(width: 30, height: 30)
         var shadowColor: Color = Color.black.opacity(0.15)
-        var shadowRadius: CGFloat = 2.0
-        var shadowOffset: CGSize = CGSize(width: 1, height: 1)
+        var shadowRadius: CGFloat = 2.5
+        var shadowOffset: CGSize = CGSize(width: 1.5, height: 1.5)
         var fill: Color = .white
         var strokeColor: Color = .clear
-        var strokeWeight: CGFloat = 0.5
+        var strokeWeight: CGFloat = 1.0
+        mutating func setShape<S: Shape>(to shape: S) {
+            handleShape = AnyShape(shape)
+        }
+        mutating func setBackground<V: View> (to view: V) {
+            handleBackground = view.eraseToAnyView()
+        }
     }
+    
     struct LabelStyle {
         var color: Color = .black
         var background: Color = .clear
@@ -432,15 +444,9 @@ extension RangeSlider {
 }
 
 struct Utilities_Previews: PreviewProvider {
-//        @ObservedObject var slider = CustomSlider(start: 10, end: 100)
-    @State static var sliderVal: Double = 0.5
     @State static var lowVal: Double = 50
     @State static var highVal: Double = 80
-    static var formatter: NumberFormatter {
-        let formatter = NumberFormatter()
-        formatter.positiveFormat = "2\u{00B0}"
-        return formatter
-    }
+
     static var previews: some View {
 
         RangeSlider(
@@ -452,42 +458,19 @@ struct Utilities_Previews: PreviewProvider {
                 style.barInsideFill = .main
             },
             rightHandleFormatter: { style in
-                style.size = 25
                 style.strokeColor = .red
-                style.strokeWeight = 0.75
-                style.labelOffset = CGSize(width: 0, height: -25)
                 style.labelStyle = RangeSlider.LabelStyle()
                 style.labelStyle?
                     .numberFormat
                     .positiveFormat = "2\u{00B0}"
             },
             leftHandleFormatter: { style in
-                style.size = 25
                 style.strokeColor = .blue
-                style.strokeWeight = 0.75
-                style.labelOffset = CGSize(width: 0, height: -25)
                 style.labelStyle = RangeSlider.LabelStyle()
                 style.labelStyle?
                     .numberFormat
                     .positiveFormat = "2\u{00B0}"
-            })
-//                    .padding(50)
-////                    .frame(width: nil, height: nil, alignment: /*@START_MENU_TOKEN@*/.center/*@END_MENU_TOKEN@*/)
-//                Text("Low: \(lowVal)")
-//                Text("High: \(highVal)")
-//            }
-//            Spacer ()
-//            VStack {
-//                Spacer ()
-//                Image.settings
-//                Image.speed
-//                Image.thermometer
-//                Image.timer
-//                Image.rainDrops
-//                Color.main
-//                    .frame(width: 25, height: 25, alignment: .center)
-//            }
-//            Spacer()
-//        }
+            }
+        )
     }
 }

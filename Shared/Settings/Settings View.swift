@@ -38,7 +38,7 @@ struct TemperatureSelector: View {
                 style.barOutsideStrokeWeight = 0.75
             },
             rightHandleFormatter: { style in
-                style.size = 30
+                style.size = CGSize(width: 30, height: 30)
                 style.strokeColor = .red
                 style.strokeWeight = 2.0
                 style.labelOffset = CGSize(width: 0, height: -30)
@@ -49,7 +49,7 @@ struct TemperatureSelector: View {
                 style.labelStyle?.color = .white
             },
             leftHandleFormatter: { style in
-                style.size = 30
+                style.size = CGSize(width: 30, height: 30)
                 style.strokeColor = .blue
                 style.strokeWeight = 2.0
                 style.labelOffset = CGSize(width: 0, height: -30)
