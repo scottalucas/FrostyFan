@@ -23,29 +23,38 @@ struct SettingsView: View {
                     Section(header: Text("Location")) {
                         if viewModel.locationAvailable == nil {
                             HStack {
-                                Text("Location services disabled on this device.")
+                                Text("Status: disabled on this device.")
                                     .foregroundColor(.main)
                             }
-                        } else if viewModel.locationAvailable! == true {
+                        } else if viewModel.locationAvailable! == true && viewModel.location != nil {
                             HStack {
-                                Text("Location available")
+                                Text("Status: available")
                                     .foregroundColor(.main)
                                 Spacer()
                                 Button(action: {
                                     viewModel.clearLocation()
                                     print("pushed")
                                 }, label: {
-                                    Text("Clear Location").foregroundColor(.main)
+                                    Text("Clear Location")
+                                        .padding(5)
+                                        .background(Color.main)
+                                        .clipShape(RoundedRectangle(cornerRadius: 5.0))
                                 })
                             }
                         } else {
                             HStack {
-                            Text("Location required")
+                            Text("Status: not set")
                                 .foregroundColor(.main)
-                                Button ("Get location") {
+                                Spacer()
+                                Button(action: {
                                     viewModel.getLocation()
                                     print("pushed")
-                                }
+                                }, label: {
+                                    Text("Set Location")
+                                        .padding(5)
+                                        .background(Color.main)
+                                        .clipShape(RoundedRectangle(cornerRadius: 5.0))
+                                })
                             }
                         }
                     }
@@ -62,6 +71,7 @@ struct SettingsView: View {
                                 Toggle("Interlock", isOn: $viewModel.interlockNotificationRequested)
                             }
                         }
+                        .toggleStyle(SwitchToggleStyle(tint: .main))
                     }
                 }
                 .background(Color.main)

@@ -10,6 +10,7 @@ import SwiftUI
 
 class SettingsViewModel: ObservableObject {
     private var settings: Settings
+    private var locMgr: LocationManager
     @Published private (set) var locationAvailable: Bool?
     @Published var temperatureNotificationsRequested = false {
         willSet {
@@ -48,6 +49,7 @@ class SettingsViewModel: ObservableObject {
     
     init (settings: Settings = Settings.shared, location: LocationManager = LocationManager.shared) {
         self.settings = settings
+        locMgr = location
         settings.$configuredAlarms
             .map { alarms in
                 !alarms.isDisjoint(with: [.tooHot, .tooCold])
@@ -83,7 +85,7 @@ class SettingsViewModel: ObservableObject {
     }
     
     func getLocation() {
-        LocationManager.shared.update()
+        locMgr.update()
     }
     
     func clearLocation () {

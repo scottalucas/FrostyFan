@@ -110,11 +110,12 @@ struct SettingsMocks {
         var house = Settings.HouseStorageValue()
         var weather = Settings.WeatherStorageValue()
         house.configuredAlarms = [.interlock, .tooHot, .tooCold]
-        house.fanLocation = Settings.HouseStorageValue.FanLocation(lat: 10.0, lon: -35.0)
+//        house.fanLocation = nil
+        house.fanLocation = Settings.HouseStorageValue.FanLocation(lat: 37.3230, lon: 122.0575)
         mockDefaults = MockUserDefaults(fan: fans, house: house, weather: weather)
         mockSettings = Settings.mock(useDefaults: mockDefaults)
-        var locMgr = LocationManager.mock(usingMgr: mockLocationManager, usingSettings: mockSettings)
         mockLocationManager.authorizationStatus = .authorizedAlways
+        var locMgr = LocationManager.mock(usingMgr: mockLocationManager, usingSettings: mockSettings)
         mockViewModel = SettingsViewModel(settings: mockSettings, location: locMgr)
         mockDefaults.houseSettings.configuredAlarms = [.interlock, .tooHot, .tooCold]
 //        mockLocationManager.
