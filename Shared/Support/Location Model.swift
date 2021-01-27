@@ -10,27 +10,37 @@ import CoreLocation
 import Combine
 import SwiftUI
 
-class LocationManager: CLLocationManager, ObservableObject {
+class LocationManager: NSObject, ObservableObject {
     static let shared = LocationManager()
-    private var settings = Settings.shared
+    static func mock (usingMgr mgr: LocationManagerProtocol, usingSettings settings: Settings) -> LocationManager {
+        LocationManager(locManager: mgr, settings: settings)
+    }
+    private var settings: Settings
+    private var mgr: LocationManagerProtocol
     @Published private (set) var authorized: Bool?
     
-    private override init () {
+    private init (locManager manager: LocationManagerProtocol = CLLocationManager(), settings: Settings = Settings.shared ) {
+        mgr = manager
+        self.settings = settings
         super.init()
-        delegate = self
-        locationManagerDidChangeAuthorization(self)
+        mgr.delegate = self
+        changedAuthorization(mgr)
         print("Location services are enabled: \(CLLocationManager.locationServicesEnabled())")
     }
     
     func update () {
-        requestWhenInUseAuthorization()
-        startUpdatingLocation()
+        mgr.requestWhenInUseAuthorization()
+        mgr.startUpdatingLocation()
     }
 }
 
 extension LocationManager: CLLocationManagerDelegate {
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        updatedLocations(manager, locations: locations)
+    }
+    
+    func updatedLocations (_ manager: LocationManagerProtocol, locations: [CLLocation]) {
         print(locations.last.debugDescription)
         settings.houseLocation = locations.last.map { $0 }
         manager.stopUpdatingLocation()
@@ -41,7 +51,11 @@ extension LocationManager: CLLocationManagerDelegate {
     }
     
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        switch authorizationStatus {
+        changedAuthorization(manager)
+    }
+    
+    func changedAuthorization(_ manager: LocationManagerProtocol) {
+        switch manager.authorizationStatus {
         case .authorizedAlways, .authorizedWhenInUse:
             authorized = true
         case .notDetermined:
@@ -53,3 +67,13 @@ extension LocationManager: CLLocationManagerDelegate {
     }
 }
 
+protocol LocationManagerProtocol {
+    var delegate: CLLocationManagerDelegate? { get set }
+    var authorizationStatus: CLAuthorizationStatus { get }
+    func requestWhenInUseAuthorization () -> Void
+    func startUpdatingLocation () -> Void
+    func stopUpdatingLocation () -> Void
+    static func locationServicesEnabled () -> Bool
+}
+
+extension CLLocationManager: LocationManagerProtocol { }

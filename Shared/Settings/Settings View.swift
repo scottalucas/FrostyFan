@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @ObservedObject var viewModel: SettingsViewModel
+    @StateObject var viewModel: SettingsViewModel
     @State var lowVal: Double = 55
     @State var highVal: Double = 75
     @State var allowLocation: Bool = false
@@ -21,32 +21,67 @@ struct SettingsView: View {
                 SettingsBackgound()
                 List {
                     Section(header: Text("Location")) {
-                        Toggle(isOn: $allowLocation) {
-                            Text("Allow location").foregroundColor(.main)
+                        if viewModel.locationAvailable == nil {
+                            HStack {
+                                Text("Location services disabled on this device.")
+                                    .foregroundColor(.main)
+                            }
+                        } else if viewModel.locationAvailable! == true {
+                            HStack {
+                                Text("Location available")
+                                    .foregroundColor(.main)
+                                Spacer()
+                                Button(action: {
+                                    viewModel.clearLocation()
+                                    print("pushed")
+                                }, label: {
+                                    Text("Clear Location").foregroundColor(.main)
+                                })
+                            }
+                        } else {
+                            HStack {
+                            Text("Location required")
+                                .foregroundColor(.main)
+                                Button ("Get location") {
+                                    viewModel.getLocation()
+                                    print("pushed")
+                                }
+                            }
                         }
                     }
-                    Section(header: Text("Outside temperature alerts")) {
-                        Toggle(isOn: $allowLocation) {
-                            Text("Enable").foregroundColor(.main)
+                    Section(header: Text("Alerts")) {
+                        VStack {
+                            HStack {
+                                Text("Temperature alarms")
+                                    .foregroundColor(.main)
+                                Toggle("Enable", isOn: $viewModel.temperatureNotificationsRequested)
+                            }
+                            HStack {
+                                Text("Interlock alarms")
+                                    .foregroundColor(.main)
+                                Toggle("Interlock", isOn: $viewModel.interlockNotificationRequested)
+                            }
                         }
                     }
                 }
                 .background(Color.main)
                 .foregroundColor(.white)
                 Spacer()
-//                if viewModel.currentTemp != nil {
-//                    Text(viewModel.currentTemp!)
-//                }
-//                if viewModel.locationAvailable == true && viewModel.location != nil {
-//                    Text("Latitude: \(viewModel.location!.lat), Longitude: \(viewModel.location!.lon)")
-//                }
+                if viewModel.currentTemp != nil {
+                    Text(viewModel.currentTemp!)
+                        .foregroundColor(.white)
+                }
+                if viewModel.locationAvailable == true && viewModel.location != nil {
+                    Text("Latitude: \(viewModel.location!.lat), Longitude: \(viewModel.location!.lon)")
+                        .foregroundColor(.white)
+                }
             }
         }
         .listStyle(GroupedListStyle())
     }
     
-    init () {
-        viewModel = SettingsViewModel()
+    init (viewModel: SettingsViewModel = SettingsViewModel()) {
+        _viewModel = StateObject(wrappedValue: viewModel)
     }
 }
 
@@ -113,6 +148,6 @@ struct SettingsBackgound: View {
 
 struct Settings_View_Previews: PreviewProvider {
     static var previews: some View {
-        SettingsView()
+        SettingsView(viewModel: SettingsMocks().mockViewModel)
     }
 }
