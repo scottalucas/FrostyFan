@@ -12,24 +12,33 @@ import SwiftUI
 
 class LocationManager: NSObject, ObservableObject {
     static let shared = LocationManager()
-    static func mock (usingMgr mgr: LocationManagerProtocol, usingSettings settings: Settings) -> LocationManager {
-        LocationManager(locManager: mgr, settings: settings)
+    static func mock (usingMgr mgr: LocationManagerProtocol) -> LocationManager {
+        LocationManager(locManager: mgr)
     }
-    private var settings: Settings
     private var mgr: LocationManagerProtocol
-    @Published private (set) var authorized: Bool?
+    @AppStorage("locationAvailability") var locationStatus: LocationStatus = .unknown
+    @AppStorage("locLat") var latitude: Double?
+    @AppStorage("locLon") var longitude: Double?
     
-    private init (locManager manager: LocationManagerProtocol = CLLocationManager(), settings: Settings = Settings.shared ) {
+    enum LocationStatus: String {
+        case deviceProhibited, appProhibited, appAllowed, unknown
+    }
+    
+    private init (locManager manager: LocationManagerProtocol = CLLocationManager()) {
         mgr = manager
-        self.settings = settings
         super.init()
         mgr.delegate = self
-        changedAuthorization(mgr)
+        getLocationStatus()
+        if locationStatus != .appAllowed {
+            mgr.requestWhenInUseAuthorization()
+        }
         print("Location services are enabled: \(CLLocationManager.locationServicesEnabled())")
     }
-    
-    func update () {
-        mgr.requestWhenInUseAuthorization()
+
+    func updateLocation () {
+        if locationStatus != .appAllowed {
+            mgr.requestWhenInUseAuthorization()
+        }
         mgr.startUpdatingLocation()
     }
 }
@@ -40,29 +49,37 @@ extension LocationManager: CLLocationManagerDelegate {
         updatedLocations(manager, locations: locations)
     }
     
-    func updatedLocations (_ manager: LocationManagerProtocol, locations: [CLLocation]) {
-        print(locations.last.debugDescription)
-        settings.houseLocation = locations.last.map { $0 }
-        manager.stopUpdatingLocation()
-    }
-    
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print("location manager failed with error \(error.localizedDescription)")
     }
     
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        changedAuthorization(manager)
+        getLocationStatus()
     }
     
-    func changedAuthorization(_ manager: LocationManagerProtocol) {
-        switch manager.authorizationStatus {
-        case .authorizedAlways, .authorizedWhenInUse:
-            authorized = true
-        case .notDetermined:
-            authorized = nil
+    private func updatedLocations (_ manager: LocationManagerProtocol, locations: [CLLocation]) {
+        latitude = locations.last.map { $0.coordinate.latitude }
+        longitude = locations.last.map { $0.coordinate.longitude }
+        manager.stopUpdatingLocation()
+    }
+
+    func getLocationStatus() {
+        if mgr.authorizationStatus == .notDetermined {
+            mgr.requestWhenInUseAuthorization()
+        }
+        switch (CLLocationManager.locationServicesEnabled(), mgr.authorizationStatus) {
+        case (false, _):
+            longitude = nil
+            latitude = nil
+            locationStatus = .deviceProhibited
+        case (_, .authorizedAlways), (_, .authorizedWhenInUse):
+            locationStatus = .appAllowed
+        case (_, .notDetermined):
+            locationStatus = .unknown
         default:
-            settings.houseLocation = nil
-            authorized = false
+            longitude = nil
+            latitude = nil
+            locationStatus = .appProhibited
         }
     }
 }

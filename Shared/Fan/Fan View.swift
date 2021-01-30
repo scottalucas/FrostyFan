@@ -117,9 +117,6 @@ struct FanView: View {
                 self.angle = .degrees(179.99)
             }
         }
-//        .onAppear(perform: {
-//            fanViewModel.refresh()
-//        })
     }
     
     init(fanViewModel: FanViewModel) {

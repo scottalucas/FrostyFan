@@ -29,27 +29,27 @@ class TestViewModel: ObservableObject {
 class MockUserDefaults: UserDefaultsProtocol {
     let encoder = JSONEncoder()
     let decoder = JSONDecoder()
-    var fanSettings: Settings.FanStorageValue
-    var houseSettings: Settings.HouseStorageValue
-    var weatherSettings: Settings.WeatherStorageValue
+    var fanStorage: Storage.FanStorageValue
+    var houseStorage: Storage.HouseStorageValue
+    var weatherStorage: Storage.WeatherStorageValue
     
-    init (fan: Settings.FanStorageValue, house: Settings.HouseStorageValue, weather: Settings.WeatherStorageValue) {
-        fanSettings = fan
-        houseSettings = house
-        weatherSettings = weather
+    init (fan: Storage.FanStorageValue, house: Storage.HouseStorageValue, weather: Storage.WeatherStorageValue) {
+        fanStorage = fan
+        houseStorage = house
+        weatherStorage = weather
     }
     
     func data(forKey: String) -> Data? {
         switch forKey {
-        case Settings.FanStorageValue.Key:
+        case Storage.FanStorageValue.Key:
             print("Fan settings retrieved")
-            return (try? encoder.encode(fanSettings)) ?? Data()
-        case Settings.HouseStorageValue.Key:
+            return (try? encoder.encode(fanStorage)) ?? Data()
+        case Storage.HouseStorageValue.Key:
             print("House settings retrieved")
-            return (try? encoder.encode(houseSettings)) ?? Data()
-        case Settings.WeatherStorageValue.Key:
+            return (try? encoder.encode(houseStorage)) ?? Data()
+        case Storage.WeatherStorageValue.Key:
             print("Weather settings retrieved")
-            return (try? encoder.encode(weatherSettings)) ?? Data()
+            return (try? encoder.encode(weatherStorage)) ?? Data()
         default:
             return Data()
         }
@@ -61,15 +61,15 @@ class MockUserDefaults: UserDefaultsProtocol {
             return
         }
         switch forKey {
-        case Settings.FanStorageValue.Key:
+        case Storage.FanStorageValue.Key:
             print("Fan settings stored")
-            fanSettings = (try? decoder.decode(Settings.FanStorageValue.self, from: data)) ?? Settings.FanStorageValue(fans: [:])
-        case Settings.HouseStorageValue.Key:
+            fanStorage = (try? decoder.decode(Storage.FanStorageValue.self, from: data)) ?? Storage.FanStorageValue(fans: [:])
+        case Storage.HouseStorageValue.Key:
             print("House settings stored")
-            houseSettings = (try? decoder.decode(Settings.HouseStorageValue.self, from: data)) ?? Settings.HouseStorageValue()
-        case Settings.WeatherStorageValue.Key:
+            houseStorage = (try? decoder.decode(Storage.HouseStorageValue.self, from: data)) ?? Storage.HouseStorageValue()
+        case Storage.WeatherStorageValue.Key:
             print("Weather settings stored")
-            weatherSettings = (try? decoder.decode(Settings.WeatherStorageValue.self, from: data)) ?? Settings.WeatherStorageValue()
+            weatherStorage = (try? decoder.decode(Storage.WeatherStorageValue.self, from: data)) ?? Storage.WeatherStorageValue()
         default:
             return
         }
@@ -100,24 +100,24 @@ class MockLocationManager: LocationManagerProtocol {
     
 }
 
-struct SettingsMocks {
+struct StorageMocks {
     var mockDefaults: MockUserDefaults
-    var mockSettings: Settings
+    var mockStorage: Storage
     var mockViewModel: SettingsViewModel
     var mockLocationManager = MockLocationManager()
     init () {
-        var fans = Settings.FanStorageValue(fans: [:])
-        var house = Settings.HouseStorageValue()
-        var weather = Settings.WeatherStorageValue()
+        let fans = Storage.FanStorageValue(fans: [:])
+        var house = Storage.HouseStorageValue(fromLoc: CLLocation(latitude: .init(37.3230), longitude: .init(122.0575)))
+        let weather = Storage.WeatherStorageValue()
         house.configuredAlarms = [.interlock, .tooHot, .tooCold]
 //        house.fanLocation = nil
-        house.fanLocation = Settings.HouseStorageValue.FanLocation(lat: 37.3230, lon: 122.0575)
+//        house.fanLocation = Storage.HouseStorageValue.FanLocation(lat: 37.3230, lon: 122.0575)
         mockDefaults = MockUserDefaults(fan: fans, house: house, weather: weather)
-        mockSettings = Settings.mock(useDefaults: mockDefaults)
-        mockLocationManager.authorizationStatus = .authorizedAlways
-        var locMgr = LocationManager.mock(usingMgr: mockLocationManager, usingSettings: mockSettings)
-        mockViewModel = SettingsViewModel(settings: mockSettings, location: locMgr)
-        mockDefaults.houseSettings.configuredAlarms = [.interlock, .tooHot, .tooCold]
+        mockStorage = Storage.mock(useDefaults: mockDefaults)
+        mockLocationManager.authorizationStatus = .authorizedWhenInUse
+        let locMgr = LocationManager.mock(usingMgr: mockLocationManager)
+        mockViewModel = SettingsViewModel(settings: mockStorage, location: locMgr)
+        mockDefaults.houseStorage.configuredAlarms = [.interlock, .tooHot, .tooCold]
 //        mockLocationManager.
     }
 }

@@ -34,7 +34,6 @@ class FanViewModel: ObservableObject {
     
     init (forModel model: FanModel) {
         self.model = model
-//        self.name = fanSettings.fans?[model.fanCharacteristics.macAddr]?.name ?? "\(model.fanCharacteristics.airspaceFanModel)"
         startSubscribers()
     }
     
@@ -56,7 +55,7 @@ class FanViewModel: ObservableObject {
     }
     
     func raiseAlarm (forCondition condition: Alarm) {
-        guard !condition.isDisjoint(with: Settings.shared.configuredAlarms) else {
+        guard !condition.isDisjoint(with: Storage.shared.configuredAlarms) else {
             clearAlarm(forCondition: condition)
             return
         }

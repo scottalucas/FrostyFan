@@ -9,53 +9,53 @@ import Foundation
 import Combine
 import CoreLocation
 
-class Settings: ObservableObject {
+class Storage: ObservableObject {
     typealias MacAddr = String
     typealias IpAddress = String
     typealias FanName = String
     private var defaults: UserDefaultsProtocol
-    static let shared = Settings()
-    static func mock(useDefaults defaults: UserDefaultsProtocol) -> Settings {
-        Settings.init(defaults: defaults)
+    static let shared = Storage()
+    static func mock(useDefaults defaults: UserDefaultsProtocol) -> Storage {
+        Storage.init(defaults: defaults)
     }
     
     @Published var houseLocation: CLLocation? {
         willSet {
-            houseSettings.fanLocation = newValue.map { HouseStorageValue.FanLocation(lat: $0.coordinate.latitude, lon: $0.coordinate.longitude) } ?? nil
+            houseStorage.fanLocation = newValue.map { HouseStorageValue.FanLocation(lat: $0.coordinate.latitude, lon: $0.coordinate.longitude) } ?? nil
             let encoder = JSONEncoder()
-            let data = (try? encoder.encode(houseSettings)) ?? Data()
+            let data = (try? encoder.encode(houseStorage)) ?? Data()
             defaults.set(data, forKey: HouseStorageValue.Key)
         }
     }
     @Published var fanNames = Dictionary<MacAddr, FanName?>() { //use .update at call site
         willSet {
             for (macAddr, fanName) in newValue {
-                var changedFan = fanSettings.fans[macAddr] ?? FanStorageValue.Fan()
+                var changedFan = fanStorage.fans[macAddr] ?? FanStorageValue.Fan()
                 changedFan.name = fanName
-                fanSettings.fans.updateValue(changedFan, forKey: macAddr)
+                fanStorage.fans.updateValue(changedFan, forKey: macAddr)
             }
             let encoder = JSONEncoder()
-            let data = (try? encoder.encode(fanSettings)) ?? Data()
+            let data = (try? encoder.encode(fanStorage)) ?? Data()
             defaults.set(data, forKey: FanStorageValue.Key)
         }
     }
     @Published var fanIpAddrs = Dictionary<MacAddr, IpAddress?>() {
         willSet {
             for (macAddr, ipAddr) in newValue {
-                var changedFan = fanSettings.fans[macAddr] ?? FanStorageValue.Fan()
+                var changedFan = fanStorage.fans[macAddr] ?? FanStorageValue.Fan()
                 changedFan.lastIp = ipAddr
-                fanSettings.fans.updateValue(changedFan, forKey: macAddr)
+                fanStorage.fans.updateValue(changedFan, forKey: macAddr)
             }
             let encoder = JSONEncoder()
-            let data = (try? encoder.encode(fanSettings)) ?? Data()
+            let data = (try? encoder.encode(fanStorage)) ?? Data()
             defaults.set(data, forKey: FanStorageValue.Key)
         }
     }
     @Published var triggeredAlarms = Alarm() {
         willSet {
-            houseSettings.triggeredAlarms = newValue
+            houseStorage.triggeredAlarms = newValue
             let encoder = JSONEncoder()
-            let data = (try? encoder.encode(houseSettings)) ?? Data()
+            let data = (try? encoder.encode(houseStorage)) ?? Data()
             defaults.set(data, forKey: HouseStorageValue.Key)
         }
     }
@@ -63,8 +63,8 @@ class Settings: ObservableObject {
         willSet {
             newConfiguredAlarms = newValue.subtracting(configuredAlarms)
             let encoder = JSONEncoder()
-            let data = (try? encoder.encode(houseSettings)) ?? Data()
-            houseSettings.configuredAlarms = newValue
+            let data = (try? encoder.encode(houseStorage)) ?? Data()
+            houseStorage.configuredAlarms = newValue
             defaults.set(data, forKey: HouseStorageValue.Key)
         }
     }
@@ -72,17 +72,17 @@ class Settings: ObservableObject {
     
     @Published var lowTempLimitSet: Double? {
         willSet {
-            houseSettings.lowTempLimitSet = newValue
+            houseStorage.lowTempLimitSet = newValue
             let encoder = JSONEncoder()
-            let data = (try? encoder.encode(houseSettings)) ?? Data()
+            let data = (try? encoder.encode(houseStorage)) ?? Data()
             defaults.set(data, forKey: HouseStorageValue.Key)
         }
     }
     @Published var highTempLimitSet: Double? {
         willSet {
-            houseSettings.highTempLimitSet = newValue
+            houseStorage.highTempLimitSet = newValue
             let encoder = JSONEncoder()
-            let data = (try? encoder.encode(houseSettings)) ?? Data()
+            let data = (try? encoder.encode(houseStorage)) ?? Data()
             defaults.set(data, forKey: HouseStorageValue.Key)
         }
     }
@@ -94,20 +94,20 @@ class Settings: ObservableObject {
         }
     }
     
-    private var fanSettings: FanStorageValue
-    private var houseSettings: HouseStorageValue
+    private var fanStorage: FanStorageValue
+    private var houseStorage: HouseStorageValue
     
     private init (defaults: UserDefaultsProtocol = UserDefaults.standard) {
         self.defaults = defaults
         let decoder = JSONDecoder()
-        fanSettings = {
+        fanStorage = {
             guard
                 let data = defaults.data(forKey: FanStorageValue.Key),
                 let retValue = try? decoder.decode(FanStorageValue.self, from: data)
             else { return FanStorageValue(fans: [:]) }
            return retValue
         }()
-        houseSettings = {
+        houseStorage = {
             guard
                 let data = defaults.data(forKey: HouseStorageValue.Key),
                 let decodeVal = try? decoder.decode(HouseStorageValue.self, from: data)
@@ -119,18 +119,19 @@ class Settings: ObservableObject {
                 return try? decoder.decode(WeatherStorageValue.self, from: data)
             } else { return nil }
         }()
-        fanNames = fanSettings.fans.compactMapValues({ $0.name })
-        fanIpAddrs = fanSettings.fans.compactMapValues({ $0.lastIp })
-        triggeredAlarms = houseSettings.triggeredAlarms
-        configuredAlarms = houseSettings.configuredAlarms
-        lowTempLimitSet = houseSettings.lowTempLimitSet
-        highTempLimitSet = houseSettings.highTempLimitSet
+        fanNames = fanStorage.fans.compactMapValues({ $0.name })
+        fanIpAddrs = fanStorage.fans.compactMapValues({ $0.lastIp })
+        houseLocation = houseStorage.fanCLLocation
+        triggeredAlarms = houseStorage.triggeredAlarms
+        configuredAlarms = houseStorage.configuredAlarms
+        lowTempLimitSet = houseStorage.lowTempLimitSet
+        highTempLimitSet = houseStorage.highTempLimitSet
     }
 }
 
-extension Settings {
+extension Storage {
     struct FanStorageValue: Codable {
-        static var Key = "fanSettings"
+        static var Key = "fanStorage"
         var fans: Dictionary<MacAddr, Fan>
         struct Fan: Codable {
             var lastIp: String?
@@ -138,7 +139,7 @@ extension Settings {
         }
     }
     struct HouseStorageValue: Codable {
-        static var Key = "houseSettings"
+        static var Key = "houseStorage"
         var fanLocation: FanLocation?
         var fanCLLocation: CLLocation? {
             return fanLocation.map {CLLocation(latitude: $0.lat, longitude: $0.lon) } ?? nil
@@ -156,9 +157,9 @@ extension Settings {
         }
     }
     struct WeatherStorageValue: Codable {
-        static var Key = "weatherSettings"
+        static var Key = "weatherStorage"
         var lastUpdate: Date?
-        var nextUpdate: Date?
+//        var nextUpdate: Date?
         var rawForecast: WeatherObject?
     }
 }

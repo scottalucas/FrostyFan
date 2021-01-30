@@ -9,46 +9,46 @@ import Foundation
 import SwiftUI
 
 class SettingsViewModel: ObservableObject {
-    private var settings: Settings
+    private var storage: Storage
     private var locMgr: LocationManager
-    @Published private (set) var locationAvailable: Bool?
+    @Published private (set) var locationAvailable: LocationManager.LocationStatus = .unknown
     @Published var temperatureNotificationsRequested = false {
         willSet {
             if newValue {
-                settings.configuredAlarms.insert([.tooHot, .tooCold])
+                storage.configuredAlarms.insert([.tooHot, .tooCold])
             } else {
-                settings.configuredAlarms.remove([.tooHot, .tooCold])
+                storage.configuredAlarms.remove([.tooHot, .tooCold])
             }
         }
     }
     @Published var interlockNotificationRequested = false{
         willSet {
             if newValue {
-                settings.configuredAlarms.insert([.interlock])
+                storage.configuredAlarms.insert([.interlock])
             } else {
-                settings.configuredAlarms.remove([.interlock])
+                storage.configuredAlarms.remove([.interlock])
             }
         }
     }
     @Published var highTempLimit: Double? {
         willSet {
-            if newValue != settings.highTempLimitSet {
-                settings.highTempLimitSet = newValue
+            if newValue != storage.highTempLimitSet {
+                storage.highTempLimitSet = newValue
             }
         }
     }
     @Published var lowTempLimit: Double? {
         willSet {
-            if newValue != settings.lowTempLimitSet {
-                settings.lowTempLimitSet = newValue
+            if newValue != storage.lowTempLimitSet {
+                storage.lowTempLimitSet = newValue
             }
         }
     }
-    @Published private (set) var location: (lat: String, lon: String)?
+//    @Published private (set) var location: (lat: String, lon: String)?
     @Published private (set) var currentTemp: String?
     
-    init (settings: Settings = Settings.shared, location: LocationManager = LocationManager.shared) {
-        self.settings = settings
+    init (settings: Storage = Storage.shared, location: LocationManager = LocationManager.shared) {
+        self.storage = settings
         locMgr = location
         settings.$configuredAlarms
             .map { alarms in
@@ -67,29 +67,35 @@ class SettingsViewModel: ObservableObject {
         
         settings.$lowTempLimitSet
             .assign(to: &$lowTempLimit)
+//
+//        settings.$houseLocation
+//            .map { loc in
+//                loc.map { (String($0.coordinate.latitude), String($0.coordinate.longitude)) } ?? nil
+//            }
+//            .assign(to: &$location)
         
-        settings.$houseLocation
-            .map { loc in
-                loc.map { (String($0.coordinate.latitude), String($0.coordinate.longitude)) } ?? nil
-            }
-            .assign(to: &$location)
+//        WeatherManager.shared.$currentTemp
+//            .map { temp in
+//                temp.map { String($0) } ?? nil
+//            }
+//            .assign(to: &$currentTemp)
         
-        WeatherManager.shared.$currentTemp
-            .map { temp in
-                temp.map { String($0) } ?? nil
-            }
-            .assign(to: &$currentTemp)
-        
-        location.$authorized
-            .assign(to: &$locationAvailable)
+//        requestAuthorization()
+//        if storage.houseLocation == nil {
+//            getLocation()
+//        }
     }
     
-    func getLocation() {
-        locMgr.update()
-    }
+//    func getLocation() {
+//        locMgr.updateLocation()
+//    }
+//
+//    func requestAuthorization () {
+//        locMgr.requestAuthorization()
+//    }
     
     func clearLocation () {
-        settings.houseLocation = nil
+        storage.houseLocation = nil
     }
 }
 

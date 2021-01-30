@@ -10,7 +10,7 @@ import SwiftUI
 import Combine
 
 class House: ObservableObject {
-    static let shared = House.init()
+    static let shared = House()
     @Published var fansAt = Set<FanModel>() //IP addresses
     @Published var runningFans = Set<FanModel>()
     @Published var scanning: Bool = false
@@ -52,7 +52,7 @@ class House: ObservableObject {
     }
     
     func raiseAlarm(forCondition condition: Alarm) {
-        guard !condition.isDisjoint(with: Settings.shared.configuredAlarms) else {
+        guard !condition.isDisjoint(with: Storage.shared.configuredAlarms) else {
             clearAlarm(forCondition: condition)
             return
         }
