@@ -23,7 +23,6 @@ class FanViewModel: ObservableObject {
     @Published var offDateTxt = ""
     @Published var testText: String?
     @Published var physicalFanSpeed: Int?
-    @Published var showPhysicalSpeedIndicator: Bool = false
     @Published var bladeColor: UIColor = .main
     @Published var commError: Bool = false
     @Published var displayedAlarms = Alarm(rawValue: 0)
@@ -32,32 +31,15 @@ class FanViewModel: ObservableObject {
     
     private var bag = Set<AnyCancellable>()
     
-    init (forModel model: FanModel) {
-        self.model = model
+    init (atAddr addr: String, usingChars chars: FanCharacteristics) {
+        print("view model init")
+        self.model = FanModel(forAddress: addr, usingChars: chars)
         startSubscribers()
     }
-    
-    init(atAddr addr: String) {
-        self.model = FanModel(forAddress: addr)
-        startSubscribers()
-    }
-    
-    func setFan(toSpeed finalTarget: Int?) {
-        model.setFan(toSpeed: finalTarget)
-    }
-    
-//    func setFan(name: String) {
-//        self.name = name
-////        fanSettings.update(self)
+//    
+//    func refresh () {
+//        model.setFan()
 //    }
-    
-    func setFan(addTimerHours hoursToAdd: Int) {
-        model.setFan(addHours: hoursToAdd)
-    }
-    
-    func refresh () {
-        model.setFan()
-    }
     
     func raiseAlarm (forCondition condition: Alarm) {
         guard !condition.isDisjoint(with: Storage.shared.configuredAlarms) else {
@@ -66,25 +48,17 @@ class FanViewModel: ObservableObject {
         }
         displayedAlarms.update(with: condition)
         bladeColor = displayedAlarms.isDisjoint(with: Alarm.redColorAlarms) ? .main : .alarm
-        showPhysicalSpeedIndicator = displayedAlarms.isDisjoint(with: Alarm.displaySpeedIndicator) ? false : true
     }
 
     func clearAlarm (forCondition cond: Alarm? = nil) {
         if let condition = cond {
             displayedAlarms.remove(condition)
             bladeColor = displayedAlarms.isDisjoint(with: Alarm.redColorAlarms) ? .main : .alarm
-            showPhysicalSpeedIndicator = displayedAlarms.isDisjoint(with: Alarm.displaySpeedIndicator) ? false : true
+
         } else {
             displayedAlarms = []
             bladeColor = .main
-            showPhysicalSpeedIndicator = false
         }
-    }
-}
-
-extension FanViewModel {
-    convenience init () {
-        self.init(forModel: FanModel())
     }
 }
 
@@ -117,17 +91,6 @@ extension FanViewModel {
                 self.model.setFan(toSpeed: newSpeed)
             })
             .store(in: &bag)
-        
-//        model.$fanCharacteristics
-//            .receive(on: DispatchQueue.main)
-//            .filter { [weak self] _ in
-//                self?.name.count == 0
-//            }
-//            .map { $0.airspaceFanModel }
-//            .map { retrievedModelNumber -> String in
-//                return retrievedModelNumber.count == 0 ? "Whole House Fan" : retrievedModelNumber
-//            }
-//            .assign(to: &$name)
         
         model.$fanCharacteristics
             .receive(on: DispatchQueue.main)

@@ -26,7 +26,7 @@ class FanModel: ObservableObject {
         ipAddr = address
         connectFanSubscribers()
         chars.map { fanCharacteristics = $0 } ?? self.getFanStatus(sendingCommand: .refresh)
-        print("init fan model \(ipAddr)")
+        print("init fan model ip address in chars: \(ipAddr) from init: \(address)")
     }
     
     func setFan(toSpeed finalTarget: Int? = nil) {
@@ -189,6 +189,7 @@ struct FanStatusLoader {
 
 extension FanModel {
     convenience init () {
+        print("Test fan model init")
         self.init(forAddress: "0.0.0.0:8181")
     }
 }
@@ -255,11 +256,9 @@ extension FanModel {
             DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(delayMSec)) { [loaderPublisher] in
                 loaderPublisher.send (loader)
             }
+        } else {
+            commError = true
         }
-    }
-    
-    private func fanCommFailed(withError commErr: Error) {
-        
     }
 
     private func connectFanSubscribers () {
@@ -269,8 +268,8 @@ extension FanModel {
             .switchToLatest()
 //            .print("char loader")
             .sink(receiveCompletion: { [weak self] (comp) in
-                if case .failure(let err) = comp {
-                    self?.fanCommFailed(withError: err)
+                if case .failure = comp {
+                    self?.commError = true
                 }
                 print("Unexpected completion in characteristics listener \(comp)")
             }, receiveValue: { [weak self] chars in
@@ -299,7 +298,7 @@ extension FanModel {
         loaderPublisher
             .switchToLatest()
             .map { $0.speed }
-//            .print("speed controller")
+//            .print("speed controller \(self.targetSpeed.debugDescription)")
             .sink(receiveCompletion: { comp in
             }, receiveValue: { [weak self] speed in
                 guard let self = self else { return }
@@ -319,7 +318,7 @@ extension FanModel {
         loaderPublisher
             .switchToLatest()
             .map { $0.timer }
-            .print("timer controller")
+//            .print("timer controller")
             .sink(receiveCompletion: { comp in
             }, receiveValue: { [weak self] timer in
                 defer { self?.lastReportedTimer = timer }

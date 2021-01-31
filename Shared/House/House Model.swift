@@ -36,7 +36,9 @@ class House: ObservableObject {
                 }
             }, receiveValue: { [weak self] (ipAddr, chars) in
                 print ("Found fan addr: \(ipAddr)")
-                self?.fans.update(with: chars)
+                var modChars = chars
+                modChars.ipAddr = ipAddr
+                self?.fans.update(with: modChars)
             })
             .store(in: &bag)
     }

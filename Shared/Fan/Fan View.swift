@@ -9,11 +9,12 @@ import SwiftUI
 
 struct FanView: View {
     typealias IPAddr = String
+    @Environment(\.scenePhase) var scenePhase
     @StateObject var fanViewModel: FanViewModel
 //    @AppStorage("test") var name: String = ""
     @AppStorage var name: String?
     @State private var angle: Angle = .zero
-    @State private var indicator: Bool = false
+    @State private var showPhysicalSpeedIndicator: Bool = false
     @State private var activeSheet: Sheet?
     @State private var hoursToAdd: Int = 0
     @Binding var fanAddrs: Set<FanCharacteristics>
@@ -46,7 +47,7 @@ struct FanView: View {
                 Spacer()
                 Button(
                     action: {
-                        fanViewModel.refresh()
+                        fanViewModel.model.setFan()
                         activeSheet = .timer
                     }, label: {
                         VStack {
@@ -63,7 +64,7 @@ struct FanView: View {
                         }
                         .padding(.bottom, 15)
                     })
-                SpeedController(displayedSegmentNumber: $fanViewModel.displayedSegmentNumber, controllerSegments: $fanViewModel.controllerSegments, showPhysicalSpeedIndicator: $fanViewModel.showPhysicalSpeedIndicator, bladeColor: $fanViewModel.bladeColor, physicalFanSpeed: $fanViewModel.physicalFanSpeed)
+                SpeedController(displayedSegmentNumber: $fanViewModel.displayedSegmentNumber, controllerSegments: $fanViewModel.controllerSegments, showPhysicalSpeedIndicator: $showPhysicalSpeedIndicator, bladeColor: $fanViewModel.bladeColor, physicalFanSpeed: $fanViewModel.physicalFanSpeed)
                     .padding([.leading, .trailing], 20)
             }
             VStack() {
@@ -77,7 +78,7 @@ struct FanView: View {
                     .scaleEffect(1.5)
                     .overlay(
                         Button(action: {
-                            fanViewModel.refresh()
+                            fanViewModel.model.setFan()
                             activeSheet = .detail
                         }, label: {
                                 if fanViewModel.displayedAlarms.isEmpty {
@@ -112,7 +113,7 @@ struct FanView: View {
             .padding([.leading, .trailing], 20.0)
             .padding(.top, 40.0)
         }
-        .sheet(item: $activeSheet, onDismiss: { indicator = true }, content: { $0.view(view: self) })
+        .sheet(item: $activeSheet) { $0.view(view: self) }
         .onReceive(fanViewModel.$fanRotationDuration) { val in
             self.angle = .zero
             withAnimation(Animation.linear(duration: val)) {
@@ -126,6 +127,7 @@ struct FanView: View {
         }
         .onReceive(fanViewModel.$physicalFanSpeed) { spd in
             spd.map {
+                showPhysicalSpeedIndicator = spd != fanViewModel.displayedSegmentNumber ? true : false
                 if $0 > 0 {
                     runningFans.update(with: fanViewModel.model.fanCharacteristics)
                 } else {
@@ -133,16 +135,22 @@ struct FanView: View {
                 }
             }
         }
-        .onAppear(perform: {
-            fanViewModel.refresh()
+        .onChange(of: scenePhase, perform: { scene in
+            switch scene {
+            case .background, .inactive:
+                break
+            case .active:
+                fanViewModel.model.setFan()
+            @unknown default:
+                break
+            }
         })
     }
     
     init (addr: String, chars: FanCharacteristics, allFans fans: Binding<Set<FanCharacteristics>>, runningFans running: Binding<Set<FanCharacteristics>>) {
         _fanAddrs = fans
         _runningFans = running
-        let mod = FanModel(forAddress: addr, usingChars: chars)
-        _fanViewModel = StateObject(wrappedValue: FanViewModel(forModel: mod))
+        _fanViewModel = StateObject(wrappedValue: FanViewModel(atAddr: addr, usingChars: chars))
         _name = AppStorage<String?>(chars.macAddr)
     }
 }
