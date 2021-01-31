@@ -8,20 +8,13 @@
 import SwiftUI
 
 struct SettingsView: View {
-    typealias LocationStatus = LocationManager.LocationStatus
-    @StateObject var viewModel: SettingsViewModel
-    @EnvironmentObject var weather: WeatherManager
-    @AppStorage("tempAlertsEnabled") var temperatureAlertsEnabled: Bool = false
-    @AppStorage("interlockAlertsEnabled") var interlockAlertsEnabled: Bool = false
-    @AppStorage("locationAvailability") var locationAvailability: LocationStatus = .unknown
-    @AppStorage("locLat") var latitude: Double?
-    @AppStorage("locLon") var longitude: Double?
+    @EnvironmentObject var weather: Weather
+    @EnvironmentObject var location: Location
+    @AppStorage(StorageKey.temperatureAlert.key()) var temperatureAlertsEnabled: Bool = false
+    @AppStorage(StorageKey.interlockAlert.key()) var interlockAlertsEnabled: Bool = false
     @Environment(\.scenePhase) var scenePhase
-    private var locationManager = LocationManager.shared
-    private var latFormatter: NumberFormatter
-    private var lonFormatter: NumberFormatter
     private var coordinatesAvailable: Bool {
-        return (latitude == nil || longitude == nil) ? false : true
+        return (location.latStr == nil || location.lonStr == nil) ? false : true
     }
 
     var body: some View {
@@ -31,7 +24,7 @@ struct SettingsView: View {
             VStack {
                 SettingsBackgound()
                 List {
-                    if locationAvailability == .deviceProhibited {
+                    if location.status == .deviceProhibited {
                         Section(header: Text("Location")) {
                             HStack {
                                 Text("Location off for this device")
@@ -48,7 +41,7 @@ struct SettingsView: View {
                             }
                         }
                     }
-                    else if locationAvailability == .appProhibited {
+                    else if location.status == .appProhibited {
                         Section(header: Text("Location")) {
                             HStack {
                                 Text("Location disabled for Toasty")
@@ -65,14 +58,14 @@ struct SettingsView: View {
                             }
                         }
                     }
-                    else if locationAvailability == .appAllowed, !coordinatesAvailable {
+                    else if location.status == .appAllowed, !coordinatesAvailable {
                         Section(header: Text("Location")) {
                             HStack {
                                 Text("Status: not set")
                                     .foregroundColor(.main)
                                 Spacer()
                                 Button(action: {
-                                    locationManager.updateLocation()
+                                    location.updateLocation()
                                 }, label: {
                                     Text("Set Location")
                                         .padding(5)
@@ -82,15 +75,14 @@ struct SettingsView: View {
                             }
                         }
                     }
-                    else if locationAvailability == .appAllowed, coordinatesAvailable {
+                    else if location.status == .appAllowed, coordinatesAvailable {
                         Section(header: Text("Location")) {
                             HStack {
                                 Text("Status: available")
                                     .foregroundColor(.main)
                                 Spacer()
                                 Button(action: {
-                                    latitude = nil
-                                    longitude = nil
+                                    location.clearLocation()
                                 }, label: {
                                     Text("Erase Location")
                                         .padding(5)
@@ -103,17 +95,24 @@ struct SettingsView: View {
                     else {
                         Section(header: Text("Location")) {
                             HStack {
-                                Text("Location status unknown.")
+                                Text("Location status unknown")
                                     .foregroundColor(.main)
+                                Spacer()
+                                Button(action: {
+                                    UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!)
+                                }, label: {
+                                    Text("Change Settings")
+                                        .padding(5)
+                                        .background(Color.main)
+                                        .clipShape(RoundedRectangle(cornerRadius: 5.0))
+                                })
                             }
                         }
                     }
                     Section(header: Text("Alerts")) {
                         VStack {
                             if
-                                locationAvailability == .appAllowed,
-                                latitude != nil,
-                                longitude != nil {
+                                location.status == .appAllowed, coordinatesAvailable {
                                 HStack {
                                     Text("Temperature")
                                         .foregroundColor(.main)
@@ -129,7 +128,7 @@ struct SettingsView: View {
                         .toggleStyle(SwitchToggleStyle(tint: .main))
                     }
                     if
-                        locationAvailability == .appAllowed, coordinatesAvailable, temperatureAlertsEnabled {
+                        location.status == .appAllowed, coordinatesAvailable, temperatureAlertsEnabled {
                         Section(header: Text("temperature alert range")) {
                             VStack {
                                 TemperatureSelector()
@@ -141,54 +140,46 @@ struct SettingsView: View {
                     .background(Color.main)
                     .foregroundColor(.white)
                 Spacer()
-                if let tempStr = weather.currentTempStr {
-                    Text("Outside temperature: \(tempStr)")
-                        .foregroundColor(.white)
+                HStack {
+                    VStack (alignment: .leading) {
+                        if let tempStr = weather.currentTempStr {
+                            Text("Outside temperature: \(tempStr)")
+                                .foregroundColor(.white)
+                                .italic()
+                        }
+                        if location.status == .appAllowed, coordinatesAvailable
+                        {
+                            Text("Location: \(location.latStr!), \(location.lonStr!)")
+                                .foregroundColor(.white)
+                                .italic()
+                        }
+                    }
+                    .font(.body)
+                    Spacer()
                 }
-                if locationAvailability == .appAllowed,
-                   let lat = latitude,
-                   let lon = longitude,
-                   let latNS = NSNumber(value: lat),
-                   let lonNS = NSNumber(value: lon),
-                   let latStr = latFormatter.string(from: latNS),
-                   let lonStr = lonFormatter.string(from: lonNS)
-                {
-                    Text("Location: \(latStr), \(lonStr)")
-                        .foregroundColor(.white)
-                }
+                .padding()
             }
         }
         .listStyle(GroupedListStyle())
         .onAppear {
-            locationManager.getLocationStatus()
+            location.getLocationStatus()
         }
-//        .onChange(of: scenePhase, perform: { scene in
-//            switch scene {
-//            case .background, .inactive:
-//                break
-//            case .active:
-//                print("became active")
-//                viewModel.requestAuthorization()
-//            @unknown default:
-//                break
-//            }
-//        })
-    }
-    
-    init (viewModel: SettingsViewModel = SettingsViewModel()) {
-        _viewModel = StateObject(wrappedValue: viewModel)
-        latFormatter = NumberFormatter()
-        lonFormatter = NumberFormatter()
-        latFormatter.positiveFormat = "##0.00\u{00B0} N"
-        latFormatter.negativeFormat = "##0.00\u{00B0} S"
-        lonFormatter.positiveFormat = "##0.00\u{00B0} E"
-        lonFormatter.negativeFormat = "##0.00\u{00B0} W"
+        .onChange(of: scenePhase, perform: { scene in
+            switch scene {
+            case .background, .inactive:
+                break
+            case .active:
+                location.getLocationStatus()
+            @unknown default:
+                break
+            }
+        })
     }
 }
 
 struct TemperatureSelector: View {
-    @AppStorage("lowTempLimit") var lowTemp: Double = 55
-    @AppStorage("highTempLimit") var highTemp: Double = 75
+    @AppStorage(StorageKey.lowTempLimit.key()) var lowTemp: Double = 55
+    @AppStorage(StorageKey.highTempLimit.key()) var highTemp: Double = 75
     private let min = 40.0
     private let max = 85.0
     
@@ -249,6 +240,8 @@ struct SettingsBackgound: View {
 
 struct Settings_View_Previews: PreviewProvider {
     static var previews: some View {
-        SettingsView(viewModel: StorageMocks().mockViewModel)
+        SettingsView()
+            .environmentObject(Weather())
+            .environmentObject(Location())
     }
 }

@@ -10,15 +10,15 @@ import CoreLocation
 import Combine
 import SwiftUI
 
-class WeatherManager: ObservableObject {
-    @AppStorage("lowTempLimit") var lowTempLimit: Double = 55
-    @AppStorage("highTempLimit") var highTempLimit: Double = 75
-    @AppStorage("tempAlertsEnabled") var temperatureAlertsEnabled: Bool = false
-    @AppStorage("locationAvailability") var locationAvailability: LocationManager.LocationStatus = .unknown
-    @AppStorage("locLat") var latitude: Double?
-    @AppStorage("locLon") var longitude: Double?
-    @AppStorage("lastWeatherUpdate") var lastUpdate: Double?
-    @AppStorage("weatherForecast") var forecastData: Data?
+class Weather: ObservableObject {
+    @AppStorage(StorageKey.lowTempLimit.key()) var lowTempLimit: Double = 55
+    @AppStorage(StorageKey.highTempLimit.key()) var highTempLimit: Double = 75
+    @AppStorage(StorageKey.temperatureAlert.key()) var temperatureAlertsEnabled: Bool = false
+    @AppStorage(StorageKey.locationAvailable.key()) var locationAvailability: Location.LocationStatus = .unknown
+    @AppStorage(StorageKey.locLat.key()) var latitude: Double?
+    @AppStorage(StorageKey.locLon.key()) var longitude: Double?
+    @AppStorage(StorageKey.lastForecastUpdate.key()) var lastUpdate: Double?
+    @AppStorage(StorageKey.forecast.key()) var forecastData: Data?
     @Published private (set) var currentTempStr: String?
     private var currentTemp: Double? {
         willSet {
@@ -33,18 +33,7 @@ class WeatherManager: ObservableObject {
             currentTempStr = tempFormatter.string(from: NSNumber(value: t))
         }
     }
-    
     private var checkTimer = Timer.publish(every: (15.0 * 60.0), on: .main, in: .common)
-//    private var lastUpdate: Date {
-//        settings.weatherStorageValue?.lastUpdate ?? .distantPast
-//    }
-//    private var nextUpdate: Date
-//    private var lat: Double? {
-//        storage.houseLocation?.coordinate.latitude
-//    }
-//    private var lon: Double? {
-//        storage.houseLocation?.coordinate.longitude
-//    }
     private var forecast = Array<(Date, Double)>()
     private var bag = Set<AnyCancellable>()
     

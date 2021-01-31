@@ -171,6 +171,35 @@ protocol UserDefaultsProtocol {
 
 extension UserDefaults: UserDefaultsProtocol {}
 
+enum StorageKey {
+    case interlockAlert, temperatureAlert, lowTempLimit, highTempLimit, locationAvailable, forecast, lastForecastUpdate, locLat, locLon, fanName (String)
+    
+    func key (specifier: String? = nil) -> String {
+        switch self {
+        case .interlockAlert:
+            return "interlockAlert"
+        case .temperatureAlert:
+            return "temperatureAlert"
+        case .lowTempLimit:
+            return "lowTempLimit"
+        case .highTempLimit:
+            return "highTempLimit"
+        case .locationAvailable:
+            return "locAvailable"
+        case .forecast:
+            return "forecast"
+        case .lastForecastUpdate:
+            return "lastForecastUpdate"
+        case .locLat:
+            return "locLat"
+        case .locLon:
+            return "locLon"
+        case .fanName(let macAddr):
+            return "name\(macAddr)"
+        }
+    }
+}
+
 struct ENV {
     private static let pListFilePath = Bundle.main.path(forResource: "Server", ofType: "plist")
     private static let pList = NSDictionary(contentsOfFile: pListFilePath!)!

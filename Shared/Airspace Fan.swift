@@ -14,7 +14,8 @@ struct AirspaceFanApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environmentObject(WeatherManager())
+                .environmentObject(Weather())
+                .environmentObject(Location())
         }
     }
     

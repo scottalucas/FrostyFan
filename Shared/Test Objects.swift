@@ -76,48 +76,48 @@ class MockUserDefaults: UserDefaultsProtocol {
     }
 }
 
-class MockLocationManager: LocationManagerProtocol {
-    var delegate: CLLocationManagerDelegate?
-    
-    var authorizationStatus: CLAuthorizationStatus = .authorizedWhenInUse
-    
-    func requestWhenInUseAuthorization() {
-        return
-    }
-    
-    func startUpdatingLocation() {
-        return
-    }
-    
-    func stopUpdatingLocation() {
-        return
-    }
-    
-    static func locationServicesEnabled() -> Bool {
-        true
-    }
-    
-    
-}
-
-struct StorageMocks {
-    var mockDefaults: MockUserDefaults
-    var mockStorage: Storage
-    var mockViewModel: SettingsViewModel
-    var mockLocationManager = MockLocationManager()
-    init () {
-        let fans = Storage.FanStorageValue(fans: [:])
-        var house = Storage.HouseStorageValue(fromLoc: CLLocation(latitude: .init(37.3230), longitude: .init(122.0575)))
-        let weather = Storage.WeatherStorageValue()
-        house.configuredAlarms = [.interlock, .tooHot, .tooCold]
-//        house.fanLocation = nil
-//        house.fanLocation = Storage.HouseStorageValue.FanLocation(lat: 37.3230, lon: 122.0575)
-        mockDefaults = MockUserDefaults(fan: fans, house: house, weather: weather)
-        mockStorage = Storage.mock(useDefaults: mockDefaults)
-        mockLocationManager.authorizationStatus = .authorizedWhenInUse
-        let locMgr = LocationManager.mock(usingMgr: mockLocationManager)
-        mockViewModel = SettingsViewModel(settings: mockStorage, location: locMgr)
-        mockDefaults.houseStorage.configuredAlarms = [.interlock, .tooHot, .tooCold]
-//        mockLocationManager.
-    }
-}
+//class MockLocationManager: LocationManagerProtocol {
+//    var delegate: CLLocationManagerDelegate?
+//    
+//    var authorizationStatus: CLAuthorizationStatus = .authorizedWhenInUse
+//    
+//    func requestWhenInUseAuthorization() {
+//        return
+//    }
+//    
+//    func startUpdatingLocation() {
+//        return
+//    }
+//    
+//    func stopUpdatingLocation() {
+//        return
+//    }
+//    
+//    static func locationServicesEnabled() -> Bool {
+//        true
+//    }
+//    
+//    
+//}
+//
+//struct StorageMocks {
+//    var mockDefaults: MockUserDefaults
+//    var mockStorage: Storage
+//    var mockViewModel: SettingsViewModel
+////    var mockLocationManager = MockLocationManager()
+//    init () {
+//        let fans = Storage.FanStorageValue(fans: [:])
+//        var house = Storage.HouseStorageValue(fromLoc: CLLocation(latitude: .init(37.3230), longitude: .init(122.0575)))
+//        let weather = Storage.WeatherStorageValue()
+//        house.configuredAlarms = [.interlock, .tooHot, .tooCold]
+////        house.fanLocation = nil
+////        house.fanLocation = Storage.HouseStorageValue.FanLocation(lat: 37.3230, lon: 122.0575)
+//        mockDefaults = MockUserDefaults(fan: fans, house: house, weather: weather)
+//        mockStorage = Storage.mock(useDefaults: mockDefaults)
+//        mockLocationManager.authorizationStatus = .authorizedWhenInUse
+////        let locMgr = LocationManager.mock(usingMgr: mockLocationManager)
+//        mockViewModel = SettingsViewModel(settings: mockStorage)
+//        mockDefaults.houseStorage.configuredAlarms = [.interlock, .tooHot, .tooCold]
+////        mockLocationManager.
+//    }
+//}
