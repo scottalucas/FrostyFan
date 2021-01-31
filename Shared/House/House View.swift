@@ -8,35 +8,39 @@
 import SwiftUI
 
 struct HouseView: View {
-    @ObservedObject var viewModel: HouseViewModel
-    @State var currentTab: Int = 0
-    @State var info: String = ""
+    typealias IPAddr = String
+    @EnvironmentObject var weather: Weather
+    @StateObject var house: House = House()
+    @State private var runningFans = Set<FanCharacteristics>() {
+        didSet {
+            weather.fansRunning = runningFans.count > 0 ? true : false
+        }
+    }
+    @State private var currentTab: Int = 0
+    @State private var info: String = ""
     @State private var tap: Bool = false
     @State private var fanLabel: String?
-    var weather = Weather()
     
     var body: some View {
         
         TabView (selection: $currentTab) {
             ZStack {
                 VStack {
-                    RefreshableScrollView(height: 40, refreshing: $viewModel.scanning) {}
+                    RefreshableScrollView(height: 40, refreshing: $house.scanning) {}
                         .frame(width: nil, height: 75, alignment: .top)
                     Spacer()
                 }
                 VStack {
-                    FanViewPageContainer(viewModel: viewModel)
+                    FanViewPageContainer(fanChars: $house.fans, fanCharsRunning: $runningFans)
                         .ignoresSafeArea(.container, edges: .top)
                     Spacer()
                 }
             }
-//            .fixedSize(horizontal: false, vertical: true)
             .tabItem {
                 Image.fanIcon
-                Text(viewModel.scanning ? "Scanning" : "Fan")
+                Text(house.scanning ? "Scanning" : "Fan")
             }
             .tag(1)
-//            .accentColor(Color.main)
             VStack {
                 SettingsView()
             }
@@ -45,42 +49,28 @@ struct HouseView: View {
                     Text("Alarms")
                 }
                 .tag(2)
-//                .accentColor(Color.main)
         }
         .accentColor(.main)
-    }
-    init (viewModel: HouseViewModel) {
-        self.viewModel = viewModel
-//        weather.$currentTemperature
-//            .receive(on: DispatchQueue.main)
-//            .map { temp -> String? in
-//                guard let temp = temp else { return nil }
-//                return "Current temp: \(Int(temp + 0.5))"
-//            }
-//            .assign(to: &$weatherString)
     }
 }
 
 struct FanViewPageContainer: View {
-    @ObservedObject var viewModel: HouseViewModel
+    typealias IPAddr = String
+    @Binding var fanChars: Set<FanCharacteristics>
+    @Binding var fanCharsRunning: Set<FanCharacteristics>
     @State private var selectedFan: Int = 0
     
     var body: some View {
-        if viewModel.fanModels.count == 0 {
+        if fanChars.count == 0 {
             Text("No fans connected")
-        } else if viewModel.fanModels.count == 1 {
-            viewModel.fanModels.first!
-                .getView()
+        } else if fanChars.count == 1 {
+            FanView(addr: fanChars.first!.ipAddr ?? "not found", chars: fanChars.first!, allFans: $fanChars, runningFans: $fanCharsRunning)
                 .padding(.bottom, 35)
         } else {
             TabView (selection: $selectedFan) {
-                ForEach (viewModel.fanModels, id: \.self) { fanModel in
-                    fanModel
-                        .getView()
+                ForEach (Array(fanChars), id: \.self) { fanAddr in
+                    FanView(addr: fanAddr.ipAddr ?? "not found", chars: fanAddr, allFans: $fanChars, runningFans: $fanCharsRunning)
                         .padding(.bottom, 100)
-                        .onAppear(perform: {
-                            fanModel.setFan()
-                        })
                 }
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))
@@ -91,6 +81,6 @@ struct FanViewPageContainer: View {
 
 struct HouseViewPreviews: PreviewProvider {
     static var previews: some View {
-        HouseView(viewModel: TestHouseViewModel(testFans: [FanModel()]))
+        HouseView()
     }
 }

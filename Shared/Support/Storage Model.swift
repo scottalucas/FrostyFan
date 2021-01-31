@@ -174,7 +174,7 @@ extension UserDefaults: UserDefaultsProtocol {}
 enum StorageKey {
     case interlockAlert, temperatureAlert, lowTempLimit, highTempLimit, locationAvailable, forecast, lastForecastUpdate, locLat, locLon, fanName (String)
     
-    func key (specifier: String? = nil) -> String {
+    var key: String {
         switch self {
         case .interlockAlert:
             return "interlockAlert"

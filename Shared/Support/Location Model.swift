@@ -21,12 +21,12 @@ class Location: NSObject, ObservableObject {
     @Published var lonStr: String?
     @Published var status: LocationStatus = .unknown
     
-    @AppStorage(StorageKey.locationAvailable.key()) private var locationStatus: LocationStatus = .unknown {
+    @AppStorage(StorageKey.locationAvailable.key) private var locationStatus: LocationStatus = .unknown {
         didSet {
             status = locationStatus
         }
     }
-    @AppStorage(StorageKey.locLat.key()) private var latitude: Double? {
+    @AppStorage(StorageKey.locLat.key) private var latitude: Double? {
         willSet {
             if let lat = newValue {
                 let formatter = NumberFormatter()
@@ -38,7 +38,7 @@ class Location: NSObject, ObservableObject {
             }
         }
     }
-    @AppStorage(StorageKey.locLon.key()) private var longitude: Double? {
+    @AppStorage(StorageKey.locLon.key) private var longitude: Double? {
         willSet {
             if let lon = newValue {
                 let formatter = NumberFormatter()

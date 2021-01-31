@@ -8,11 +8,16 @@
 import SwiftUI
 
 struct FanView: View {
-    @ObservedObject var fanViewModel: FanViewModel
+    typealias IPAddr = String
+    @StateObject var fanViewModel: FanViewModel
+//    @AppStorage("test") var name: String = ""
+    @AppStorage var name: String?
     @State private var angle: Angle = .zero
     @State private var indicator: Bool = false
     @State private var activeSheet: Sheet?
     @State private var hoursToAdd: Int = 0
+    @Binding var fanAddrs: Set<FanCharacteristics>
+    @Binding var runningFans: Set<FanCharacteristics>
     private var maxKeypresses: Int {
         13 - (Int(fanViewModel.timer/60) + (fanViewModel.timer%60 != 0 ? 1 : 0)) + 1
     }
@@ -21,11 +26,9 @@ struct FanView: View {
         var id: Int {
             hashValue
         }
-        
         case fanName
         case timer
         case detail
-        
         func view(view: FanView) -> AnyView {
             switch self {
             case .fanName:
@@ -37,7 +40,6 @@ struct FanView: View {
             }
         }
     }
-    
     var body: some View {
         ZStack {
             VStack {
@@ -61,7 +63,7 @@ struct FanView: View {
                         }
                         .padding(.bottom, 15)
                     })
-                SpeedController(viewModel: fanViewModel)
+                SpeedController(displayedSegmentNumber: $fanViewModel.displayedSegmentNumber, controllerSegments: $fanViewModel.controllerSegments, showPhysicalSpeedIndicator: $fanViewModel.showPhysicalSpeedIndicator, bladeColor: $fanViewModel.bladeColor, physicalFanSpeed: $fanViewModel.physicalFanSpeed)
                     .padding([.leading, .trailing], 20)
             }
             VStack() {
@@ -98,7 +100,7 @@ struct FanView: View {
             }
             VStack (alignment: /*@START_MENU_TOKEN@*/.center/*@END_MENU_TOKEN@*/, spacing: 0) {
                 HStack (alignment: .firstTextBaseline) {
-                    Text(fanViewModel.name).font(.largeTitle).foregroundColor(.main)
+                    Text(name ?? fanViewModel.model.fanCharacteristics.airspaceFanModel).font(.largeTitle).foregroundColor(.main)
                         .onLongPressGesture {
                             activeSheet = .fanName
                         }
@@ -117,60 +119,72 @@ struct FanView: View {
                 self.angle = .degrees(179.99)
             }
         }
+        .onReceive(fanViewModel.$commError) { err in
+            if err {
+                fanAddrs.remove(fanViewModel.model.fanCharacteristics)
+            }
+        }
+        .onReceive(fanViewModel.$physicalFanSpeed) { spd in
+            spd.map {
+                if $0 > 0 {
+                    runningFans.update(with: fanViewModel.model.fanCharacteristics)
+                } else {
+                    runningFans.remove(fanViewModel.model.fanCharacteristics)
+                }
+            }
+        }
+        .onAppear(perform: {
+            fanViewModel.refresh()
+        })
     }
     
-    init(fanViewModel: FanViewModel) {
-        self.fanViewModel = fanViewModel
+    init (addr: String, chars: FanCharacteristics, allFans fans: Binding<Set<FanCharacteristics>>, runningFans running: Binding<Set<FanCharacteristics>>) {
+        _fanAddrs = fans
+        _runningFans = running
+        let mod = FanModel(forAddress: addr, usingChars: chars)
+        _fanViewModel = StateObject(wrappedValue: FanViewModel(forModel: mod))
+        _name = AppStorage<String?>(chars.macAddr)
     }
 }
 
 struct SpeedController: View {
-    @ObservedObject private var viewModel: FanViewModel
+    @Binding var displayedSegmentNumber: Int
+    @Binding var controllerSegments: [String]
+    @Binding var showPhysicalSpeedIndicator: Bool
+    @Binding var bladeColor: UIColor
+    @Binding var physicalFanSpeed: Int?
     
     var body: some View {
-            Picker (selection: $viewModel.displayedSegmentNumber, label: Text("Picker")) {
-                ForEach (0..<viewModel.controllerSegments.count, id: \.self) { segmentIndex in
-                    Text(viewModel.controllerSegments[segmentIndex]).tag(segmentIndex)
+            Picker (selection: $displayedSegmentNumber, label: Text("Picker")) {
+                ForEach (0..<controllerSegments.count, id: \.self) { segmentIndex in
+                    Text(controllerSegments[segmentIndex]).tag(segmentIndex)
                 }
             }
             .pickerStyle(SegmentedPickerStyle())
-            .modifier(PhysicalSpeedIndicator(viewModel: viewModel))
-    }
-    
-    init(viewModel: FanViewModel) {
-        self.viewModel = viewModel
-    }
-}
-
-struct Title: ViewModifier {
-    func body(content: Content) -> some View {
-        content
-            .font(.largeTitle)
-            .foregroundColor(.white)
-            .padding()
-            .background(Color.blue)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .modifier(PhysicalSpeedIndicator(showPhysicalSpeedIndicator: $showPhysicalSpeedIndicator, bladeColor: $bladeColor, controllerSegments: $controllerSegments, physicalFanSpeed: $physicalFanSpeed))
     }
 }
 
 struct PhysicalSpeedIndicator: ViewModifier {
-    
-    @ObservedObject var viewModel: FanViewModel
+    @Binding var showPhysicalSpeedIndicator: Bool
+    @Binding var bladeColor: UIColor
+    @Binding var controllerSegments: [String]
+    @Binding var physicalFanSpeed: Int?
     
     func body(content: Content) -> some View {
         content
             .overlay (
-                viewModel.showPhysicalSpeedIndicator ?
+                showPhysicalSpeedIndicator ?
                 GeometryReader { geo2 in
                     Image(systemName: "arrowtriangle.up.fill")
                         .resizable()
-                        .foregroundColor(Color(viewModel.bladeColor))
+                        .foregroundColor(Color(bladeColor))
                         .alignmentGuide(.top, computeValue: { dimension in
                             -geo2.size.height + dimension.height/CGFloat(2)
                         })
                         .alignmentGuide(HorizontalAlignment.center, computeValue: { dimension in
-                            let oneSegW = geo2.size.width/CGFloat(viewModel.controllerSegments.count)
-                            let offs = oneSegW/2.0 + (oneSegW * CGFloat(viewModel.physicalFanSpeed ?? 0)) - dimension.width
+                            let oneSegW = geo2.size.width/CGFloat(controllerSegments.count)
+                            let offs = oneSegW/2.0 + (oneSegW * CGFloat(physicalFanSpeed ?? 0)) - dimension.width
                             return -offs
                         })
                         .animation(.easeInOut)
@@ -183,7 +197,10 @@ struct PhysicalSpeedIndicator: ViewModifier {
 }
 
 struct FanView_Previews: PreviewProvider {
+    @State static var fans: Set<FanCharacteristics> = [FanCharacteristics()]
+    @State static var runningFans = Set<FanCharacteristics>()
+    static var chars = FanCharacteristics()
     static var previews: some View {
-        FanView(fanViewModel: FanViewModel())
+        FanView(addr: "0.0.0.0:8181", chars: chars, allFans: $fans, runningFans: $runningFans)
     }
 }

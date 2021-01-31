@@ -39,8 +39,8 @@
             filePath = "Shared/Support/Weather Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "86"
-            endingLineNumber = "86"
+            startingLineNumber = "87"
+            endingLineNumber = "87"
             landmarkName = "load()"
             landmarkType = "7">
          </BreakpointContent>
@@ -55,8 +55,8 @@
             filePath = "Shared/Support/Weather Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "128"
-            endingLineNumber = "128"
+            startingLineNumber = "129"
+            endingLineNumber = "129"
             landmarkName = "init(components:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -71,8 +71,8 @@
             filePath = "Shared/Support/Weather Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "83"
-            endingLineNumber = "83"
+            startingLineNumber = "84"
+            endingLineNumber = "84"
             landmarkName = "load()"
             landmarkType = "7">
          </BreakpointContent>

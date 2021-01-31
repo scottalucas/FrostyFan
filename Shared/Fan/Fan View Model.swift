@@ -10,14 +10,13 @@ import SwiftUI
 import Combine
 
 class FanViewModel: ObservableObject {
-//    @EnvironmentObject var fanSettings: FanSettings
     @ObservedObject var model: FanModel
     @Published var fanRotationDuration: Double = 0.0
     @Published var displayedSegmentNumber: Int = -1
     @Published var opening: String = "No"
     @Published var airspaceFanModel: String?
     @Published var macAddr: String = "BEEF"
-    @Published var name = ""
+//    @Published var name = ""
     @Published var controllerSegments: [String] = ["Off", "On"]
     @Published var interlocked: Bool = false
     @Published var timer = 0
@@ -26,6 +25,7 @@ class FanViewModel: ObservableObject {
     @Published var physicalFanSpeed: Int?
     @Published var showPhysicalSpeedIndicator: Bool = false
     @Published var bladeColor: UIColor = .main
+    @Published var commError: Bool = false
     @Published var displayedAlarms = Alarm(rawValue: 0)
     private var displayedMotorSpeed: Int?
     private var displayMotor = PassthroughSubject<AnyPublisher<Double, Never>, Never>()
@@ -37,14 +37,19 @@ class FanViewModel: ObservableObject {
         startSubscribers()
     }
     
+    init(atAddr addr: String) {
+        self.model = FanModel(forAddress: addr)
+        startSubscribers()
+    }
+    
     func setFan(toSpeed finalTarget: Int?) {
         model.setFan(toSpeed: finalTarget)
     }
     
-    func setFan(name: String) {
-        self.name = name
-//        fanSettings.update(self)
-    }
+//    func setFan(name: String) {
+//        self.name = name
+////        fanSettings.update(self)
+//    }
     
     func setFan(addTimerHours hoursToAdd: Int) {
         model.setFan(addHours: hoursToAdd)
@@ -74,10 +79,6 @@ class FanViewModel: ObservableObject {
             bladeColor = .main
             showPhysicalSpeedIndicator = false
         }
-    }
-
-    func getView () -> some View {
-        FanView(fanViewModel: self)
     }
 }
 
@@ -117,16 +118,16 @@ extension FanViewModel {
             })
             .store(in: &bag)
         
-        model.$fanCharacteristics
-            .receive(on: DispatchQueue.main)
-            .filter { [weak self] _ in
-                self?.name.count == 0
-            }
-            .map { $0.airspaceFanModel }
-            .map { retrievedModelNumber -> String in
-                return retrievedModelNumber.count == 0 ? "Whole House Fan" : retrievedModelNumber
-            }
-            .assign(to: &$name)
+//        model.$fanCharacteristics
+//            .receive(on: DispatchQueue.main)
+//            .filter { [weak self] _ in
+//                self?.name.count == 0
+//            }
+//            .map { $0.airspaceFanModel }
+//            .map { retrievedModelNumber -> String in
+//                return retrievedModelNumber.count == 0 ? "Whole House Fan" : retrievedModelNumber
+//            }
+//            .assign(to: &$name)
         
         model.$fanCharacteristics
             .receive(on: DispatchQueue.main)
@@ -204,20 +205,14 @@ extension FanViewModel {
             })
             .store(in: &bag)
         
-        House.shared.$displayedAlarms
+        model.$commError
             .receive(on: DispatchQueue.main)
-            .map { $0.intersection(Alarm.houseAlarms) }
-            .sink(receiveValue: { [weak self] alarm in
-                self?.displayedAlarms.remove(Alarm.houseAlarms)
-                self?.raiseAlarm(forCondition: alarm)
-            })
-            .store(in: &bag)
+            .assign(to: &$commError)
         }
     }
 
 extension FanViewModel {
     private func setDisplayMotor(toSpeed: Int) {
-//        defer {print("out of scope")}
         guard displayedMotorSpeed != toSpeed else { return }
         let scaleFactor = 3.5
         displayedMotorSpeed = toSpeed

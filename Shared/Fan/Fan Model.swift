@@ -14,6 +14,7 @@ class FanModel: ObservableObject {
     var ipAddr: String
     @Published var fanCharacteristics = FanCharacteristics()
     @Published var targetSpeed: Int?
+    @Published var commError: Bool = false
     private var targetTimer: Int?
     private var lastReportedSpeed: Int?
     private var lastReportedTimer: Int?
@@ -39,10 +40,6 @@ class FanModel: ObservableObject {
         let baseTime = lastReportedTimer ?? 0 > (60 * 12) - 10 ? (60 * 12) : (hours * 60) - 10 //allow a 10 minutes buffer unless current time's already within 10 minutes of 12 hours
         self.targetTimer = (lastReportedTimer ?? 0) + baseTime
         getFanStatus(sendingCommand: .refresh)
-    }
-
-    func getView () -> some View {
-        FanViewModel(forModel: self).getView()
     }
 }
 
@@ -262,7 +259,7 @@ extension FanModel {
     }
     
     private func fanCommFailed(withError commErr: Error) {
-        House.shared.lostFan(fanModel: self)
+        
     }
 
     private func connectFanSubscribers () {
@@ -307,11 +304,6 @@ extension FanModel {
             }, receiveValue: { [weak self] speed in
                 guard let self = self else { return }
                 defer { self.lastReportedSpeed = speed }
-                if speed > 0 {
-                    House.shared.runningFans.update(with: self)
-                } else {
-                    House.shared.runningFans.remove(self)
-                }
                 guard let target = self.targetSpeed, speed != target else {
                     self.targetSpeed = nil
                     return

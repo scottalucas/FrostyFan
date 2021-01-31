@@ -10,14 +10,13 @@ import SwiftUI
 import Combine
 
 class House: ObservableObject {
-    static let shared = House()
-    @Published var fansAt = Set<FanModel>() //IP addresses
-    @Published var runningFans = Set<FanModel>()
-    @Published var scanning: Bool = false
-    @Published var displayedAlarms = Alarm()
+    typealias IPAddr = String
+    @Published var fans = Set<FanCharacteristics>() //IP addresses
+//    @Published var chars = Set<FanCharacteristics>()
+    @Published var scanning = false
     private var bag = Set<AnyCancellable>()
     
-    private init () {
+    init () {
         scanForFans()
     }
     
@@ -25,7 +24,7 @@ class House: ObservableObject {
         guard !scanning else { return }
         print("start scanning")
         scanning = true
-        fansAt.removeAll()
+        fans.removeAll()
         scanner
             .sink(receiveCompletion: { [weak self] comp in
                 self?.scanning = false
@@ -37,34 +36,9 @@ class House: ObservableObject {
                 }
             }, receiveValue: { [weak self] (ipAddr, chars) in
                 print ("Found fan addr: \(ipAddr)")
-                let newFan = FanModel.init(forAddress: ipAddr, usingChars: chars)
-                self?.fansAt.update(with: newFan)
+                self?.fans.update(with: chars)
             })
             .store(in: &bag)
-    }
-    
-    func getView (usingHouse house: House? = nil) -> some View {
-        HouseViewModel().getView()
-    }
-    
-    func lostFan(fanModel: FanModel) {
-        fansAt.remove(fanModel)
-    }
-    
-    func raiseAlarm(forCondition condition: Alarm) {
-        guard !condition.isDisjoint(with: Storage.shared.configuredAlarms) else {
-            clearAlarm(forCondition: condition)
-            return
-        }
-        displayedAlarms.update(with: condition)
-    }
-    
-    func clearAlarm(forCondition condition: Alarm? = nil) {
-        if let cond = condition {
-            displayedAlarms.remove(cond)
-        } else {
-            displayedAlarms = []
-        }
     }
 }
 
@@ -84,6 +58,5 @@ extension House {
                     .timeout(.seconds(5), scheduler: DispatchQueue.main)
                     .eraseToAnyPublisher()
             })
-//            .collect()
             .eraseToAnyPublisher()
     }}

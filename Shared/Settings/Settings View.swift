@@ -10,8 +10,8 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject var weather: Weather
     @EnvironmentObject var location: Location
-    @AppStorage(StorageKey.temperatureAlert.key()) var temperatureAlertsEnabled: Bool = false
-    @AppStorage(StorageKey.interlockAlert.key()) var interlockAlertsEnabled: Bool = false
+    @AppStorage(StorageKey.temperatureAlert.key) var temperatureAlertsEnabled: Bool = false
+    @AppStorage(StorageKey.interlockAlert.key) var interlockAlertsEnabled: Bool = false
     @Environment(\.scenePhase) var scenePhase
     private var coordinatesAvailable: Bool {
         return (location.latStr == nil || location.lonStr == nil) ? false : true
@@ -178,8 +178,8 @@ struct SettingsView: View {
 }
 
 struct TemperatureSelector: View {
-    @AppStorage(StorageKey.lowTempLimit.key()) var lowTemp: Double = 55
-    @AppStorage(StorageKey.highTempLimit.key()) var highTemp: Double = 75
+    @AppStorage(StorageKey.lowTempLimit.key) var lowTemp: Double = 55
+    @AppStorage(StorageKey.highTempLimit.key) var highTemp: Double = 75
     private let min = 40.0
     private let max = 85.0
     

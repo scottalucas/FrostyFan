@@ -11,14 +11,15 @@ import Combine
 import SwiftUI
 
 class Weather: ObservableObject {
-    @AppStorage(StorageKey.lowTempLimit.key()) var lowTempLimit: Double = 55
-    @AppStorage(StorageKey.highTempLimit.key()) var highTempLimit: Double = 75
-    @AppStorage(StorageKey.temperatureAlert.key()) var temperatureAlertsEnabled: Bool = false
-    @AppStorage(StorageKey.locationAvailable.key()) var locationAvailability: Location.LocationStatus = .unknown
-    @AppStorage(StorageKey.locLat.key()) var latitude: Double?
-    @AppStorage(StorageKey.locLon.key()) var longitude: Double?
-    @AppStorage(StorageKey.lastForecastUpdate.key()) var lastUpdate: Double?
-    @AppStorage(StorageKey.forecast.key()) var forecastData: Data?
+    @AppStorage(StorageKey.lowTempLimit.key) var lowTempLimit: Double = 55
+    @AppStorage(StorageKey.highTempLimit.key) var highTempLimit: Double = 75
+    @AppStorage(StorageKey.temperatureAlert.key) var temperatureAlertsEnabled: Bool = false
+    @AppStorage(StorageKey.locationAvailable.key) var locationAvailability: Location.LocationStatus = .unknown
+    @AppStorage(StorageKey.locLat.key) var latitude: Double?
+    @AppStorage(StorageKey.locLon.key) var longitude: Double?
+    @AppStorage(StorageKey.lastForecastUpdate.key) var lastUpdate: Double?
+    @AppStorage(StorageKey.forecast.key) var forecastData: Data?
+    @Published var fansRunning: Bool = false
     @Published private (set) var currentTempStr: String?
     private var currentTemp: Double? {
         willSet {
@@ -61,7 +62,7 @@ class Weather: ObservableObject {
                 guard let self = self else { return }
                 let lastUpdate = self.lastUpdate.map { Date(timeIntervalSince1970: $0) } ?? .distantPast
                 self.updateCurrentTemp()
-                let nextUpdate = WeatherCheckInterval.nextRecommendedDate(forTemp: self.currentTemp, fromLastUpdate: lastUpdate, highTempLimitSet: self.highTempLimit, lowTempLimitSet: self.lowTempLimit, tempAlarmSet: self.temperatureAlertsEnabled)
+                let nextUpdate = WeatherCheckInterval.nextRecommendedDate(forTemp: self.currentTemp, fromLastUpdate: lastUpdate, highTempLimitSet: self.highTempLimit, lowTempLimitSet: self.lowTempLimit, tempAlarmSet: self.temperatureAlertsEnabled, fansRunning: self.fansRunning)
                 if Date() > nextUpdate {
                     self.load()
                 }
@@ -142,16 +143,15 @@ enum WeatherCheckInterval: Int {
     case occasional = 3600 //1 hour
     case rarely = 43200 //12 hours
     
-    static func nextRecommendedDate (forTemp temp: Double?, fromLastUpdate lastUpdate: Date, highTempLimitSet: Double?, lowTempLimitSet: Double?, tempAlarmSet: Bool) -> Date {
+    static func nextRecommendedDate (forTemp temp: Double?, fromLastUpdate lastUpdate: Date, highTempLimitSet: Double?, lowTempLimitSet: Double?, tempAlarmSet: Bool, fansRunning: Bool) -> Date {
         guard let temp = temp else {
             return .distantPast
         }
-        let fanOn = House.shared.runningFans.count > 0 ? true : false
         let highTempLimitRange = highTempLimitSet.map { Range<Int>((Int($0 * 10) - 30) ... (Int($0 * 10) + 30)) }
         let lowTempLimitRange = lowTempLimitSet.map { Range<Int>((Int($0 * 10) - 30) ... (Int($0 * 10) + 30)) }
         let tempInProximity = highTempLimitRange.map { $0 ~= Int(temp * 10) } ?? false || lowTempLimitRange.map { $0 ~= Int(temp * 10) } ?? false
         
-        switch (fanOn, tempAlarmSet, tempInProximity) {
+        switch (fansRunning, tempAlarmSet, tempInProximity) {
         case (false, _, _):
             let interval = TimeInterval(self.rarely.rawValue)
             return Date(timeInterval: interval, since: lastUpdate)

@@ -9,10 +9,11 @@ import SwiftUI
 
 struct NameSheet: View {
     @ObservedObject var fanViewModel: FanViewModel
-    @State var newName: String
+//    @State var newName: String
+    @AppStorage var newName: String
     var body: some View {
         ZStack {
-            NameSheetBackground(viewModel: fanViewModel)
+            NameSheetBackground(name: newName)
             VStack {
                 Spacer()
                 VStack (alignment: .leading, spacing: 8.0) {
@@ -32,19 +33,16 @@ struct NameSheet: View {
                 Spacer()
             }
         }
-        .onDisappear(perform: {
-            fanViewModel.setFan(name: newName)
-        })
      }
     
-    init (viewModel model: FanViewModel) {
-        fanViewModel = model
-        _newName = State<String>.init(initialValue: model.name)
+    init (viewModel: FanViewModel) {
+        fanViewModel = viewModel
+        _newName = AppStorage(wrappedValue: viewModel.model.fanCharacteristics.airspaceFanModel, viewModel.model.fanCharacteristics.macAddr)
     }
 }
 
 struct NameSheetBackground: View {
-    var viewModel: FanViewModel
+    var name: String
     var body: some View {
         ZStack {
             Color.main
@@ -53,7 +51,7 @@ struct NameSheetBackground: View {
                 HStack (alignment: .firstTextBaseline) {
                     Text("Fan Name").font(.largeTitle)
                     Spacer()
-                    Text(viewModel.name)
+                    Text(name)
                 }
                 .foregroundColor(Color.background)
                 Divider()
