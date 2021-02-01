@@ -11,54 +11,27 @@ import Combine
 
 class FanViewModel: ObservableObject {
     @ObservedObject var model: FanModel
+    @ObservedObject var house: House
+    @ObservedObject var weather: Weather
     @Published var fanRotationDuration: Double = 0.0
     @Published var displayedSegmentNumber: Int = -1
-    @Published var opening: String = "No"
     @Published var airspaceFanModel: String?
-    @Published var macAddr: String = "BEEF"
-//    @Published var name = ""
     @Published var controllerSegments: [String] = ["Off", "On"]
-    @Published var interlocked: Bool = false
     @Published var timer = 0
     @Published var offDateTxt = ""
-    @Published var testText: String?
     @Published var physicalFanSpeed: Int?
-    @Published var bladeColor: UIColor = .main
-    @Published var commError: Bool = false
-    @Published var displayedAlarms = Alarm(rawValue: 0)
+    @Published var displayedLamps = Lamps()
     private var displayedMotorSpeed: Int?
     private var displayMotor = PassthroughSubject<AnyPublisher<Double, Never>, Never>()
     
     private var bag = Set<AnyCancellable>()
     
-    init (atAddr addr: String, usingChars chars: FanCharacteristics) {
+    init (atAddr addr: String, usingChars chars: FanCharacteristics, inHouse house: House, weather: Weather) {
         print("view model init")
+        self.house = house
+        self.weather = weather
         self.model = FanModel(forAddress: addr, usingChars: chars)
         startSubscribers()
-    }
-//    
-//    func refresh () {
-//        model.setFan()
-//    }
-    
-    func raiseAlarm (forCondition condition: Alarm) {
-        guard !condition.isDisjoint(with: Storage.shared.configuredAlarms) else {
-            clearAlarm(forCondition: condition)
-            return
-        }
-        displayedAlarms.update(with: condition)
-        bladeColor = displayedAlarms.isDisjoint(with: Alarm.redColorAlarms) ? .main : .alarm
-    }
-
-    func clearAlarm (forCondition cond: Alarm? = nil) {
-        if let condition = cond {
-            displayedAlarms.remove(condition)
-            bladeColor = displayedAlarms.isDisjoint(with: Alarm.redColorAlarms) ? .main : .alarm
-
-        } else {
-            displayedAlarms = []
-            bladeColor = .main
-        }
     }
 }
 
@@ -66,6 +39,7 @@ extension FanViewModel {
     static var speedTable: [String:Int]  = [
         "3.5e" : 7,
         "4.4e" : 7,
+        
         "5.0e" : 7,
         "2.5e" : 5,
         "3200" : 10,
@@ -94,11 +68,6 @@ extension FanViewModel {
         
         model.$fanCharacteristics
             .receive(on: DispatchQueue.main)
-            .map { $0.macAddr }
-            .assign(to: &$macAddr)
-        
-        model.$fanCharacteristics
-            .receive(on: DispatchQueue.main)
             .map { $0.timer }
             .map { timeTillOff in
                 guard timeTillOff > 0 else { return "" }
@@ -117,10 +86,11 @@ extension FanViewModel {
             .receive(on: DispatchQueue.main)
             .map { $0.speed }
             .sink(receiveValue: { [weak self] actualSpeed in
-                if self?.physicalFanSpeed == nil { self?.displayedSegmentNumber = actualSpeed } //should only happen first time through
-                self?.physicalFanSpeed = actualSpeed
-                self?.setDisplayMotor(toSpeed: actualSpeed)
-                if actualSpeed == 0 { self?.clearAlarm() }
+                guard let self = self else { return }
+                if self.physicalFanSpeed == nil { self.displayedSegmentNumber = actualSpeed } //should only happen first time through
+                self.physicalFanSpeed = actualSpeed
+                self.setDisplayMotor(toSpeed: actualSpeed)
+                if actualSpeed == 0 && self.displayedLamps.isDisjoint(with: .showPhysicalSpeed) { self.displayedLamps = [] }
             })
             .store(in: &bag)
         
@@ -149,9 +119,21 @@ extension FanViewModel {
             .map { $0.0 || $0.1 }
             .sink(receiveValue: { [weak self] alarm in
                 if alarm {
-                    self?.raiseAlarm(forCondition: .interlock)
+                    self?.displayedLamps.insert(.interlock)
                 } else {
-                    self?.clearAlarm(forCondition: .interlock)
+                    self?.displayedLamps.remove(.interlock)
+                }
+            })
+            .store(in: &bag)
+        
+        model.$fanCharacteristics
+            .receive(on: DispatchQueue.main)
+            .map { $0.damper }
+            .sink(receiveValue: { [weak self] damper in
+                if damper {
+                    self?.displayedLamps.insert(.damperOpening)
+                } else {
+                    self?.displayedLamps.remove(.damperOpening)
                 }
             })
             .store(in: &bag)
@@ -161,16 +143,30 @@ extension FanViewModel {
             .map { $0 == nil ? false : true }
             .sink(receiveValue: { [weak self] adjusting in
                 if adjusting {
-                    self?.raiseAlarm(forCondition: .adjustingSpeed)
+                    self?.displayedLamps.insert(.speedAdjusting)
                 } else {
-                    self?.clearAlarm(forCondition: .adjustingSpeed)
+                    self?.displayedLamps.remove(.speedAdjusting)
                 }
             })
             .store(in: &bag)
         
         model.$commError
             .receive(on: DispatchQueue.main)
-            .assign(to: &$commError)
+            .filter { $0 != nil }
+            .sink(receiveValue: { [weak self] err in
+                print("Comm error: \(err.debugDescription)")
+                self?.house.fans.remove(self!.model.fanCharacteristics)
+            })
+            .store(in: &bag)
+        
+        weather.$currentTempStr
+            .receive(on: DispatchQueue.main)
+            .sink(receiveValue: { [weak self] _ in
+                guard let self = self else { return }
+                if self.weather.tooCold { self.displayedLamps.insert(.tooCold) } else { self.displayedLamps.remove(.tooCold) }
+                if self.weather.tooHot { self.displayedLamps.insert(.tooHot) } else { self.displayedLamps.remove(.tooHot) }
+            })
+            .store(in: &bag)
         }
     }
 

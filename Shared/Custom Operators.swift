@@ -54,6 +54,20 @@ extension Array where Element == (String, String?) {
         return data
     }
 }
+
+
+//
+//extension Lamps: RawRepresentable {
+//    public typealias RawValue = Int
+//    public init(rawValue: Int) {
+//        var retValue = Lamps()
+//        for (index, alert) in Lamps.allCases.enumerated() {
+//            let mask = 2^index
+//            if mask | rawValue > 0 { retValue.insert(alert) }
+//        }
+//        self = retValue
+//    }
+//}
 //
 //extension View {
 //    @ViewBuilder

@@ -11,16 +11,19 @@ import Combine
 import SwiftUI
 
 class Weather: ObservableObject {
+    @ObservedObject var house: House
     @AppStorage(StorageKey.lowTempLimit.key) var lowTempLimit: Double = 55
     @AppStorage(StorageKey.highTempLimit.key) var highTempLimit: Double = 75
-    @AppStorage(StorageKey.temperatureAlert.key) var temperatureAlertsEnabled: Bool = false
+//    @AppStorage var houseConfiguredAlarms: Alarm.House
+    @AppStorage(StorageKey.temperatureAlarmEnabled.key) var tempAlarmSet = false
     @AppStorage(StorageKey.locationAvailable.key) var locationAvailability: Location.LocationStatus = .unknown
     @AppStorage(StorageKey.locLat.key) var latitude: Double?
     @AppStorage(StorageKey.locLon.key) var longitude: Double?
     @AppStorage(StorageKey.lastForecastUpdate.key) var lastUpdate: Double?
     @AppStorage(StorageKey.forecast.key) var forecastData: Data?
-    @Published var fansRunning: Bool = false
     @Published private (set) var currentTempStr: String?
+    @Published private (set) var tooHot: Bool = false
+    @Published private (set) var tooCold: Bool = false
     private var currentTemp: Double? {
         willSet {
             guard let t = newValue else {
@@ -50,7 +53,8 @@ class Weather: ObservableObject {
         }
     }
     
-    init () {
+    init (house: House) {
+        self.house = house
         let decoder = JSONDecoder()
         let forecastD = forecastData ?? Data()
         let forecastObj = (try? decoder.decode(WeatherObject.self, from: forecastD)).map { $0.hourly } ?? nil
@@ -62,7 +66,13 @@ class Weather: ObservableObject {
                 guard let self = self else { return }
                 let lastUpdate = self.lastUpdate.map { Date(timeIntervalSince1970: $0) } ?? .distantPast
                 self.updateCurrentTemp()
-                let nextUpdate = WeatherCheckInterval.nextRecommendedDate(forTemp: self.currentTemp, fromLastUpdate: lastUpdate, highTempLimitSet: self.highTempLimit, lowTempLimitSet: self.lowTempLimit, tempAlarmSet: self.temperatureAlertsEnabled, fansRunning: self.fansRunning)
+                let nextUpdate = WeatherCheckInterval.nextRecommendedDate(
+                    forTemp: self.currentTemp,
+                    fromLastUpdate: lastUpdate,
+                    highTempLimitSet: self.highTempLimit,
+                    lowTempLimitSet: self.lowTempLimit,
+                    tempAlarmSet: self.tempAlarmSet,
+                    fansRunning: self.house.runningFans)
                 if Date() > nextUpdate {
                     self.load()
                 }
@@ -92,12 +102,6 @@ class Weather: ObservableObject {
                 self.forecastData = weatherObj.data()
                 self.lastUpdate = Date().timeIntervalSince1970
                 self.updateCurrentTemp()
-//                self.storage.weatherStorageValue = self.storage.weatherStorageValue.map {
-//                    var newWeatherStorageValue = $0
-//                    newWeatherStorageValue.lastUpdate = Date()
-//                    newWeatherStorageValue.rawForecast = weatherObj
-//                    return newWeatherStorageValue
-//                } ?? Storage.WeatherStorageValue.init(lastUpdate: Date(), rawForecast: weatherObj)
             })
             .store(in: &bag)
         return
@@ -117,6 +121,11 @@ class Weather: ObservableObject {
         currentTemp = forecast.reduce((.distantPast, 0.0)) { (last, next) in
             return (abs(Date().timeIntervalSince(last.0)) > abs(Date().timeIntervalSince(next.0))) ? next : last
         }.1
+        currentTemp.map {
+            tooCold = $0 <= lowTempLimit ? true : false
+            tooHot = $0 >= highTempLimit ? true : false
+        }
+        
     }
     
     struct WeatherLoader {

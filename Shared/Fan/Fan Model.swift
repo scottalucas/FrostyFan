@@ -14,7 +14,7 @@ class FanModel: ObservableObject {
     var ipAddr: String
     @Published var fanCharacteristics = FanCharacteristics()
     @Published var targetSpeed: Int?
-    @Published var commError: Bool = false
+    @Published var commError: ConnectionError?
     private var targetTimer: Int?
     private var lastReportedSpeed: Int?
     private var lastReportedTimer: Int?
@@ -257,7 +257,7 @@ extension FanModel {
                 loaderPublisher.send (loader)
             }
         } else {
-            commError = true
+            commError = .badUrl
         }
     }
 
@@ -268,8 +268,8 @@ extension FanModel {
             .switchToLatest()
 //            .print("char loader")
             .sink(receiveCompletion: { [weak self] (comp) in
-                if case .failure = comp {
-                    self?.commError = true
+                if case .failure(let err) = comp {
+                    self?.commError = err
                 }
                 print("Unexpected completion in characteristics listener \(comp)")
             }, receiveValue: { [weak self] chars in
@@ -293,18 +293,19 @@ extension FanModel {
                 self?.getFanStatus(sendingCommand: .refresh)
             })
             .store(in: &bag)
-        
+
         //speed setter
         loaderPublisher
             .switchToLatest()
-            .map { $0.speed }
+            .map { ($0.speed, $0.damper) }
 //            .print("speed controller \(self.targetSpeed.debugDescription)")
             .sink(receiveCompletion: { comp in
-            }, receiveValue: { [weak self] speed in
+            }, receiveValue: { [weak self] (speed, damper) in
                 guard let self = self else { return }
                 defer { self.lastReportedSpeed = speed }
                 guard let target = self.targetSpeed, speed != target else {
                     self.targetSpeed = nil
+                    if damper { self.getFanStatus(sendingCommand: .refresh, withDelay: 1.0) }
                     return
                 }
                 guard target != 0 else { self.getFanStatus(sendingCommand: .off); return}

@@ -11,17 +11,14 @@ struct FanView: View {
     typealias IPAddr = String
     @Environment(\.scenePhase) var scenePhase
     @StateObject var fanViewModel: FanViewModel
-//    @AppStorage("test") var name: String = ""
     @AppStorage var name: String?
     @State private var angle: Angle = .zero
-    @State private var showPhysicalSpeedIndicator: Bool = false
     @State private var activeSheet: Sheet?
-    @State private var hoursToAdd: Int = 0
-    @Binding var fanAddrs: Set<FanCharacteristics>
-    @Binding var runningFans: Set<FanCharacteristics>
-    private var maxKeypresses: Int {
-        13 - (Int(fanViewModel.timer/60) + (fanViewModel.timer%60 != 0 ? 1 : 0)) + 1
-    }
+//    @State private var hoursToAdd: Int = 0
+
+//    private var maxKeypresses: Int {
+//        13 - (Int(fanViewModel.timer/60) + (fanViewModel.timer%60 != 0 ? 1 : 0)) + 1
+//    }
     
     enum Sheet: Identifiable {
         var id: Int {
@@ -35,7 +32,7 @@ struct FanView: View {
             case .fanName:
                 return NameSheet(viewModel: view.fanViewModel).eraseToAnyView()
             case .timer:
-                return TimerSheet(hoursToAdd: view.$hoursToAdd, fanViewModel: view.fanViewModel) .eraseToAnyView()
+                return TimerSheet(fanViewModel: view.fanViewModel) .eraseToAnyView()
             case .detail:
                 return DetailSheet(fanViewModel: view.fanViewModel).eraseToAnyView()
             }
@@ -64,7 +61,7 @@ struct FanView: View {
                         }
                         .padding(.bottom, 15)
                     })
-                SpeedController(displayedSegmentNumber: $fanViewModel.displayedSegmentNumber, controllerSegments: $fanViewModel.controllerSegments, showPhysicalSpeedIndicator: $showPhysicalSpeedIndicator, bladeColor: $fanViewModel.bladeColor, physicalFanSpeed: $fanViewModel.physicalFanSpeed)
+                SpeedController(viewModel: fanViewModel)
                     .padding([.leading, .trailing], 20)
             }
             VStack() {
@@ -72,7 +69,7 @@ struct FanView: View {
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .rotationEffect(angle)
-                    .foregroundColor(Color(fanViewModel.bladeColor))
+                    .foregroundColor(Color(fanViewModel.displayedLamps.isDisjoint(with: .useAlarmColor) ? .main : .alarm))
                     .opacity(/*@START_MENU_TOKEN@*/0.8/*@END_MENU_TOKEN@*/)
                     .blur(radius: 10.0)
                     .scaleEffect(1.5)
@@ -81,11 +78,12 @@ struct FanView: View {
                             fanViewModel.model.setFan()
                             activeSheet = .detail
                         }, label: {
-                                if fanViewModel.displayedAlarms.isEmpty {
+                            let labels = fanViewModel.displayedLamps.labels
+                            if labels.isEmpty {
                                     AnyView(Color.clear)
                                 }
                                 else {
-                                    ForEach (Alarm.labels(forOptions: fanViewModel.displayedAlarms), id: \.self) { item in
+                                    ForEach (labels, id: \.self) { item in
                                         AnyView(Text(item).foregroundColor(.alarm))
                                     }
                                     .frame(width: nil, height: nil, alignment: .center)
@@ -120,21 +118,20 @@ struct FanView: View {
                 self.angle = .degrees(179.99)
             }
         }
-        .onReceive(fanViewModel.$commError) { err in
-            if err {
-                fanAddrs.remove(fanViewModel.model.fanCharacteristics)
-            }
-        }
-        .onReceive(fanViewModel.$physicalFanSpeed) { spd in
-            spd.map {
-                showPhysicalSpeedIndicator = spd != fanViewModel.displayedSegmentNumber ? true : false
-                if $0 > 0 {
-                    runningFans.update(with: fanViewModel.model.fanCharacteristics)
-                } else {
-                    runningFans.remove(fanViewModel.model.fanCharacteristics)
-                }
-            }
-        }
+//        .onReceive(fanViewModel.$commError) { err in
+//            if err {
+//                fanAddrs.remove(fanViewModel.model.fanCharacteristics)
+//            }
+//        }
+//        .onReceive(fanViewModel.$physicalFanSpeed) { spd in
+//            spd.map {
+//                if $0 > 0 {
+//                    runningFans.update(with: fanViewModel.model.fanCharacteristics)
+//                } else {
+//                    runningFans.remove(fanViewModel.model.fanCharacteristics)
+//                }
+//            }
+//        }
         .onChange(of: scenePhase, perform: { scene in
             switch scene {
             case .background, .inactive:
@@ -147,52 +144,43 @@ struct FanView: View {
         })
     }
     
-    init (addr: String, chars: FanCharacteristics, allFans fans: Binding<Set<FanCharacteristics>>, runningFans running: Binding<Set<FanCharacteristics>>) {
-        _fanAddrs = fans
-        _runningFans = running
-        _fanViewModel = StateObject(wrappedValue: FanViewModel(atAddr: addr, usingChars: chars))
-        _name = AppStorage<String?>(chars.macAddr)
+    init (addr: String, chars: FanCharacteristics, house: House, weather: Weather) {
+        _name = AppStorage<String?>(StorageKey.fanName(chars.macAddr).key)
+        _fanViewModel = StateObject(wrappedValue: FanViewModel(atAddr: addr, usingChars: chars, inHouse: house, weather: weather))
     }
 }
 
 struct SpeedController: View {
-    @Binding var displayedSegmentNumber: Int
-    @Binding var controllerSegments: [String]
-    @Binding var showPhysicalSpeedIndicator: Bool
-    @Binding var bladeColor: UIColor
-    @Binding var physicalFanSpeed: Int?
+    @ObservedObject var viewModel: FanViewModel
     
     var body: some View {
-            Picker (selection: $displayedSegmentNumber, label: Text("Picker")) {
-                ForEach (0..<controllerSegments.count, id: \.self) { segmentIndex in
-                    Text(controllerSegments[segmentIndex]).tag(segmentIndex)
+        Picker (selection: $viewModel.displayedSegmentNumber, label: Text("Picker")) {
+            ForEach (0..<viewModel.controllerSegments.count, id: \.self) { segmentIndex in
+                Text(viewModel.controllerSegments[segmentIndex]).tag(segmentIndex)
                 }
             }
             .pickerStyle(SegmentedPickerStyle())
-            .modifier(PhysicalSpeedIndicator(showPhysicalSpeedIndicator: $showPhysicalSpeedIndicator, bladeColor: $bladeColor, controllerSegments: $controllerSegments, physicalFanSpeed: $physicalFanSpeed))
+            .modifier(PhysicalSpeedIndicator(viewModel: viewModel))
     }
 }
 
 struct PhysicalSpeedIndicator: ViewModifier {
-    @Binding var showPhysicalSpeedIndicator: Bool
-    @Binding var bladeColor: UIColor
-    @Binding var controllerSegments: [String]
-    @Binding var physicalFanSpeed: Int?
+    @ObservedObject var viewModel: FanViewModel
     
     func body(content: Content) -> some View {
         content
             .overlay (
-                showPhysicalSpeedIndicator ?
+                !viewModel.displayedLamps.isDisjoint(with: .showPhysicalSpeed) ?
                 GeometryReader { geo2 in
                     Image(systemName: "arrowtriangle.up.fill")
                         .resizable()
-                        .foregroundColor(Color(bladeColor))
+                        .foregroundColor(Color(viewModel.displayedLamps.isDisjoint(with: .useAlarmColor) ? .main : .alarm))
                         .alignmentGuide(.top, computeValue: { dimension in
                             -geo2.size.height + dimension.height/CGFloat(2)
                         })
                         .alignmentGuide(HorizontalAlignment.center, computeValue: { dimension in
-                            let oneSegW = geo2.size.width/CGFloat(controllerSegments.count)
-                            let offs = oneSegW/2.0 + (oneSegW * CGFloat(physicalFanSpeed ?? 0)) - dimension.width
+                            let oneSegW = geo2.size.width/CGFloat(viewModel.controllerSegments.count)
+                            let offs = oneSegW/2.0 + (oneSegW * CGFloat(viewModel.physicalFanSpeed ?? 0)) - dimension.width
                             return -offs
                         })
                         .animation(.easeInOut)
@@ -208,7 +196,9 @@ struct FanView_Previews: PreviewProvider {
     @State static var fans: Set<FanCharacteristics> = [FanCharacteristics()]
     @State static var runningFans = Set<FanCharacteristics>()
     static var chars = FanCharacteristics()
+    static var house = House()
     static var previews: some View {
-        FanView(addr: "0.0.0.0:8181", chars: chars, allFans: $fans, runningFans: $runningFans)
+        FanView(addr: "0.0.0.0:8181", chars: chars, house: house, weather: Weather(house: house))
     }
 }
+

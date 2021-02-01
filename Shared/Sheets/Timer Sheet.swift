@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct TimerSheet: View {
-    @Binding var hoursToAdd: Int
+    @State private var hoursToAdd: Int = 0
     var fanViewModel: FanViewModel
     var maxKeypresses: Int {
         13 - (Int(fanViewModel.timer/60) + (fanViewModel.timer%60 != 0 ? 1 : 0)) + 1

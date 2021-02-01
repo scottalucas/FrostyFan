@@ -12,8 +12,10 @@ import Combine
 class House: ObservableObject {
     typealias IPAddr = String
     @Published var fans = Set<FanCharacteristics>() //IP addresses
-//    @Published var chars = Set<FanCharacteristics>()
     @Published var scanning = false
+    var runningFans: Bool {
+        fans.filter { chars in chars.speed > 0}.count > 0 ? true : false
+    }
     private var bag = Set<AnyCancellable>()
     
     init () {

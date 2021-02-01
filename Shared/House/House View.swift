@@ -10,12 +10,7 @@ import SwiftUI
 struct HouseView: View {
     typealias IPAddr = String
     @EnvironmentObject var weather: Weather
-    @StateObject var house: House = House()
-    @State private var runningFans = Set<FanCharacteristics>() {
-        didSet {
-            weather.fansRunning = runningFans.count > 0 ? true : false
-        }
-    }
+    @EnvironmentObject var house: House
     @State private var currentTab: Int = 0
     @State private var info: String = ""
     @State private var tap: Bool = false
@@ -31,7 +26,7 @@ struct HouseView: View {
                     Spacer()
                 }
                 VStack {
-                    FanViewPageContainer(fanChars: $house.fans, fanCharsRunning: $runningFans)
+                    FanViewPageContainer(house: house, weather: weather)
                         .ignoresSafeArea(.container, edges: .top)
                     Spacer()
                 }
@@ -56,20 +51,20 @@ struct HouseView: View {
 
 struct FanViewPageContainer: View {
     typealias IPAddr = String
-    @Binding var fanChars: Set<FanCharacteristics>
-    @Binding var fanCharsRunning: Set<FanCharacteristics>
+    @ObservedObject var house: House
+    @ObservedObject var weather: Weather
     @State private var selectedFan: Int = 0
     
     var body: some View {
-        if fanChars.count == 0 {
+        if house.fans.count == 0 {
             Text("No fans connected")
-        } else if fanChars.count == 1 {
-            FanView(addr: fanChars.first!.ipAddr ?? "not found", chars: fanChars.first!, allFans: $fanChars, runningFans: $fanCharsRunning)
+        } else if house.fans.count == 1 {
+            FanView(addr: house.fans.first!.ipAddr ?? "not found", chars: house.fans.first!, house: house, weather: weather)
                 .padding(.bottom, 35)
         } else {
             TabView (selection: $selectedFan) {
-                ForEach (Array(fanChars), id: \.self) { fanAddr in
-                    FanView(addr: fanAddr.ipAddr ?? "not found", chars: fanAddr, allFans: $fanChars, runningFans: $fanCharsRunning)
+                ForEach (Array(house.fans), id: \.self) { fanAddr in
+                    FanView(addr: fanAddr.ipAddr ?? "not found", chars: fanAddr, house: house, weather: weather)
                         .padding(.bottom, 100)
                 }
             }
