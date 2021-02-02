@@ -12,31 +12,29 @@ import SwiftUI
 
 class Location: NSObject, ObservableObject {
     private var mgr: CLLocationManager
-    @Published var latStr: String?
-    @Published var lonStr: String?
+    @AppStorage(StorageKey.locLat.key) var latStr: String?
+    @AppStorage(StorageKey.locLon.key) var lonStr: String?
     @AppStorage(StorageKey.locationAvailable.key) private var locationPermission: LocationPermission = .unknown
-    @AppStorage(StorageKey.coordinatesAvailable.key) private var coordinatesAvailable: Bool = false
-    @AppStorage(StorageKey.locLat.key) private var latitude: Double? {
+
+    private var latitude: Double? {
         willSet {
             if let lat = newValue {
                 let formatter = NumberFormatter()
                 formatter.positiveFormat = "##0.00\u{00B0} N"
                 formatter.negativeFormat = "##0.00\u{00B0} S"
                 latStr = formatter.string(from: NSNumber(value: lat))
-                if latStr == nil || lonStr == nil { coordinatesAvailable = false } else { coordinatesAvailable = true }
             } else {
                 latStr = nil
             }
         }
     }
-    @AppStorage(StorageKey.locLon.key) private var longitude: Double? {
+    private var longitude: Double? {
         willSet {
             if let lon = newValue {
                 let formatter = NumberFormatter()
                 formatter.positiveFormat = "##0.00\u{00B0} E"
                 formatter.negativeFormat = "##0.00\u{00B0} W"
                 lonStr = formatter.string(from: NSNumber(value: lon))
-                if latStr == nil || lonStr == nil { coordinatesAvailable = false } else { coordinatesAvailable = true }
             } else {
                 lonStr = nil
             }
@@ -51,17 +49,14 @@ class Location: NSObject, ObservableObject {
         mgr = CLLocationManager()
         super.init()
         mgr.delegate = self
-        getLocationPermission()
-        if locationPermission != .appAllowed {
-            mgr.requestWhenInUseAuthorization()
-        }
+        if locationPermission == .unknown { getLocationPermission() }
         print("Location services are enabled: \(CLLocationManager.locationServicesEnabled())")
+        print("Device location enabled: \(mgr.authorizationStatus.rawValue)")
+        print("Stored \(locationPermission)")
     }
 
     func updateLocation () {
-        if locationPermission != .appAllowed {
-            mgr.requestWhenInUseAuthorization()
-        }
+        mgr.requestWhenInUseAuthorization()
         mgr.startUpdatingLocation()
     }
     
@@ -96,7 +91,6 @@ extension Location: CLLocationManagerDelegate {
         case (_, .authorizedAlways), (_, .authorizedWhenInUse):
             locationPermission = .appAllowed
         case (_, .notDetermined):
-            mgr.requestWhenInUseAuthorization()
             locationPermission = .unknown
         default:
             longitude = nil

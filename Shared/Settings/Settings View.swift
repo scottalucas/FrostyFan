@@ -13,9 +13,14 @@ struct SettingsView: View {
     @Environment(\.scenePhase) var scenePhase
     @AppStorage(StorageKey.temperatureAlarmEnabled.key) var temperatureAlertsEnabled: Bool = false
     @AppStorage(StorageKey.interlockAlarmEnabled.key) var interlockAlertsEnabled: Bool = false
-    @AppStorage(StorageKey.locationAvailable.key) var locationAvailable: Location.LocationPermission = .unknown
-    @AppStorage(StorageKey.coordinatesAvailable.key) var coordinatesAvailable: Bool = false
-
+    @AppStorage(StorageKey.locationAvailable.key) var locationPermission: Location.LocationPermission = .unknown
+    @AppStorage(StorageKey.locLat.key) var latStr: String?
+    @AppStorage(StorageKey.locLon.key) var lonStr: String?
+    
+    private var coordinatesAvailable: Bool {
+        latStr != nil && lonStr != nil
+    }
+    
     var body: some View {
         ZStack {
             Color.main
@@ -23,8 +28,7 @@ struct SettingsView: View {
             VStack {
                 SettingsBackgound()
                 List {
-                    if true {
-//                        if locationAvailable == .deviceProhibited {
+                    if locationPermission == .deviceProhibited {
                         Section(header: Text("Location")) {
                             HStack {
                                 Text("Location off for this device")
@@ -41,8 +45,7 @@ struct SettingsView: View {
                             }
                         }
                     }
-                    else if true {
-//                        else if locationAvailable == .appProhibited {
+                    else if locationPermission == .appProhibited {
                         Section(header: Text("Location")) {
                             HStack {
                                 Text("Location disabled for Toasty")
@@ -59,8 +62,7 @@ struct SettingsView: View {
                             }
                         }
                     }
-                    else if true {
-//                        else if locationAvailable == .appAllowed, !coordinatesAvailable {
+                    else if (locationPermission == .appAllowed || locationPermission == .unknown), !coordinatesAvailable {
                         Section(header: Text("Location")) {
                             HStack {
                                 Text("Status: not set")
@@ -77,8 +79,7 @@ struct SettingsView: View {
                             }
                         }
                     }
-                    else if true {
-//                        else if locationAvailable == .appAllowed, coordinatesAvailable {
+                    else if (locationPermission == .appAllowed || locationPermission == .unknown), coordinatesAvailable {
                         Section(header: Text("Location")) {
                             HStack {
                                 Text("Status: available")
@@ -102,9 +103,9 @@ struct SettingsView: View {
                                     .foregroundColor(.main)
                                 Spacer()
                                 Button(action: {
-                                    UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!)
+                                    location.updateLocation()
                                 }, label: {
-                                    Text("Change Settings")
+                                    Text("Set Location")
                                         .padding(5)
                                         .background(Color.main)
                                         .clipShape(RoundedRectangle(cornerRadius: 5.0))
@@ -115,7 +116,7 @@ struct SettingsView: View {
                     Section(header: Text("Alerts")) {
                         VStack {
                             if
-                                location.status == .appAllowed, coordinatesAvailable {
+                                locationPermission == .appAllowed, coordinatesAvailable {
                                 HStack {
                                     Text("Temperature")
                                         .foregroundColor(.main)
@@ -131,7 +132,7 @@ struct SettingsView: View {
                         .toggleStyle(SwitchToggleStyle(tint: .main))
                     }
                     if
-                        location.status == .appAllowed, coordinatesAvailable, temperatureAlertsEnabled {
+                        locationPermission == .appAllowed, coordinatesAvailable, temperatureAlertsEnabled {
                         Section(header: Text("temperature alert range")) {
                             VStack {
                                 TemperatureSelector()
@@ -150,9 +151,9 @@ struct SettingsView: View {
                                 .foregroundColor(.white)
                                 .italic()
                         }
-                        if location.status == .appAllowed, coordinatesAvailable
+                        if (locationPermission == .appAllowed || locationPermission == .unknown), coordinatesAvailable
                         {
-                            Text("Location: \(location.latStr!), \(location.lonStr!)")
+                            Text("Location: \(latStr!), \(lonStr!)")
                                 .foregroundColor(.white)
                                 .italic()
                         }
@@ -164,19 +165,16 @@ struct SettingsView: View {
             }
         }
         .listStyle(GroupedListStyle())
-        .onAppear {
-            location.getLocationPermission()
-        }
-        .onChange(of: scenePhase, perform: { scene in
-            switch scene {
-            case .background, .inactive:
-                break
-            case .active:
-                location.getLocationPermission()
-            @unknown default:
-                break
-            }
-        })
+//        .onChange(of: scenePhase, perform: { scene in
+//            switch scene {
+//            case .background, .inactive:
+//                break
+//            case .active:
+//                location.getLocationPermission()
+//            @unknown default:
+//                break
+//            }
+//        })
     }
 }
 
