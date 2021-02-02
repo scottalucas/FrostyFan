@@ -16,7 +16,7 @@ class Weather: ObservableObject {
     @AppStorage(StorageKey.highTempLimit.key) var highTempLimit: Double = 75
 //    @AppStorage var houseConfiguredAlarms: Alarm.House
     @AppStorage(StorageKey.temperatureAlarmEnabled.key) var tempAlarmSet = false
-    @AppStorage(StorageKey.locationAvailable.key) var locationAvailability: Location.LocationStatus = .unknown
+    @AppStorage(StorageKey.locationAvailable.key) var locationPermission: Location.LocationPermission = .unknown
     @AppStorage(StorageKey.locLat.key) var latitude: Double?
     @AppStorage(StorageKey.locLon.key) var longitude: Double?
     @AppStorage(StorageKey.lastForecastUpdate.key) var lastUpdate: Double?

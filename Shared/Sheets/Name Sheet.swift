@@ -37,7 +37,7 @@ struct NameSheet: View {
     
     init (viewModel: FanViewModel) {
         fanViewModel = viewModel
-        _newName = AppStorage(wrappedValue: viewModel.model.fanCharacteristics.airspaceFanModel, viewModel.model.fanCharacteristics.macAddr)
+        _newName = AppStorage(wrappedValue: viewModel.model.fanCharacteristics.airspaceFanModel, StorageKey.fanName(viewModel.model.fanCharacteristics.macAddr).key)
     }
 }
 

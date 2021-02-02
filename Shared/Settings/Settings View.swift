@@ -13,10 +13,8 @@ struct SettingsView: View {
     @Environment(\.scenePhase) var scenePhase
     @AppStorage(StorageKey.temperatureAlarmEnabled.key) var temperatureAlertsEnabled: Bool = false
     @AppStorage(StorageKey.interlockAlarmEnabled.key) var interlockAlertsEnabled: Bool = false
-
-    private var coordinatesAvailable: Bool {
-        return (location.latStr == nil || location.lonStr == nil) ? false : true
-    }
+    @AppStorage(StorageKey.locationAvailable.key) var locationAvailable: Location.LocationPermission = .unknown
+    @AppStorage(StorageKey.coordinatesAvailable.key) var coordinatesAvailable: Bool = false
 
     var body: some View {
         ZStack {
@@ -25,7 +23,8 @@ struct SettingsView: View {
             VStack {
                 SettingsBackgound()
                 List {
-                    if location.status == .deviceProhibited {
+                    if true {
+//                        if locationAvailable == .deviceProhibited {
                         Section(header: Text("Location")) {
                             HStack {
                                 Text("Location off for this device")
@@ -42,7 +41,8 @@ struct SettingsView: View {
                             }
                         }
                     }
-                    else if location.status == .appProhibited {
+                    else if true {
+//                        else if locationAvailable == .appProhibited {
                         Section(header: Text("Location")) {
                             HStack {
                                 Text("Location disabled for Toasty")
@@ -59,7 +59,8 @@ struct SettingsView: View {
                             }
                         }
                     }
-                    else if location.status == .appAllowed, !coordinatesAvailable {
+                    else if true {
+//                        else if locationAvailable == .appAllowed, !coordinatesAvailable {
                         Section(header: Text("Location")) {
                             HStack {
                                 Text("Status: not set")
@@ -76,7 +77,8 @@ struct SettingsView: View {
                             }
                         }
                     }
-                    else if location.status == .appAllowed, coordinatesAvailable {
+                    else if true {
+//                        else if locationAvailable == .appAllowed, coordinatesAvailable {
                         Section(header: Text("Location")) {
                             HStack {
                                 Text("Status: available")
@@ -163,14 +165,14 @@ struct SettingsView: View {
         }
         .listStyle(GroupedListStyle())
         .onAppear {
-            location.getLocationStatus()
+            location.getLocationPermission()
         }
         .onChange(of: scenePhase, perform: { scene in
             switch scene {
             case .background, .inactive:
                 break
             case .active:
-                location.getLocationStatus()
+                location.getLocationPermission()
             @unknown default:
                 break
             }

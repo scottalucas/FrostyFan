@@ -11,21 +11,11 @@ import Combine
 import SwiftUI
 
 class Location: NSObject, ObservableObject {
-//    static let shared = LocationManager()
-//    static func mock (usingMgr mgr: LocationManagerProtocol) -> LocationManager {
-//        LocationManager(locManager: mgr)
-//    }
     private var mgr: CLLocationManager
-    
     @Published var latStr: String?
     @Published var lonStr: String?
-    @Published var status: LocationStatus = .unknown
-    
-    @AppStorage(StorageKey.locationAvailable.key) private var locationStatus: LocationStatus = .unknown {
-        didSet {
-            status = locationStatus
-        }
-    }
+    @AppStorage(StorageKey.locationAvailable.key) private var locationPermission: LocationPermission = .unknown
+    @AppStorage(StorageKey.coordinatesAvailable.key) private var coordinatesAvailable: Bool = false
     @AppStorage(StorageKey.locLat.key) private var latitude: Double? {
         willSet {
             if let lat = newValue {
@@ -33,6 +23,7 @@ class Location: NSObject, ObservableObject {
                 formatter.positiveFormat = "##0.00\u{00B0} N"
                 formatter.negativeFormat = "##0.00\u{00B0} S"
                 latStr = formatter.string(from: NSNumber(value: lat))
+                if latStr == nil || lonStr == nil { coordinatesAvailable = false } else { coordinatesAvailable = true }
             } else {
                 latStr = nil
             }
@@ -45,13 +36,14 @@ class Location: NSObject, ObservableObject {
                 formatter.positiveFormat = "##0.00\u{00B0} E"
                 formatter.negativeFormat = "##0.00\u{00B0} W"
                 lonStr = formatter.string(from: NSNumber(value: lon))
+                if latStr == nil || lonStr == nil { coordinatesAvailable = false } else { coordinatesAvailable = true }
             } else {
                 lonStr = nil
             }
         }
     }
     
-    enum LocationStatus: String {
+    enum LocationPermission: String {
         case deviceProhibited, appProhibited, appAllowed, unknown
     }
     
@@ -59,15 +51,15 @@ class Location: NSObject, ObservableObject {
         mgr = CLLocationManager()
         super.init()
         mgr.delegate = self
-        getLocationStatus()
-        if locationStatus != .appAllowed {
+        getLocationPermission()
+        if locationPermission != .appAllowed {
             mgr.requestWhenInUseAuthorization()
         }
         print("Location services are enabled: \(CLLocationManager.locationServicesEnabled())")
     }
 
     func updateLocation () {
-        if locationStatus != .appAllowed {
+        if locationPermission != .appAllowed {
             mgr.requestWhenInUseAuthorization()
         }
         mgr.startUpdatingLocation()
@@ -92,63 +84,24 @@ extension Location: CLLocationManagerDelegate {
     }
     
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        getLocationStatus()
+        getLocationPermission()
     }
     
-    func getLocationStatus() {
+    func getLocationPermission() {
         switch (CLLocationManager.locationServicesEnabled(), mgr.authorizationStatus) {
         case (false, _):
             longitude = nil
             latitude = nil
-            locationStatus = .deviceProhibited
+            locationPermission = .deviceProhibited
         case (_, .authorizedAlways), (_, .authorizedWhenInUse):
-            locationStatus = .appAllowed
+            locationPermission = .appAllowed
         case (_, .notDetermined):
             mgr.requestWhenInUseAuthorization()
-            locationStatus = .unknown
+            locationPermission = .unknown
         default:
             longitude = nil
             latitude = nil
-            locationStatus = .appProhibited
+            locationPermission = .appProhibited
         }
     }
 }
-
-//extension Location: LocationProtocol {
-//    var latStrPublished: Published<String?> { _latStr }
-//    var latStrPublisher: Published<String?>.Publisher { $latStr }
-//
-//    var lonStrPublished: Published<String?> { _lonStr }
-//    var lonStrPublisher: Published<String?>.Publisher { $lonStr }
-//    
-//    var statusPublished: Published<Location.LocationStatus> { _status }
-//    var statusPublisher: Published<Location.LocationStatus>.Publisher { $status }
-//}
-//
-//protocol LocationProtocol: ObservableObject {
-//    var latStr: String? { get }
-//    var latStrPublished: Published<String?> { get }
-//    var latStrPublisher: Published<String?>.Publisher { get }
-//
-//    var lonStr: String? { get }
-//    var lonStrPublished: Published<String?> { get }
-//    var lonStrPublisher: Published<String?>.Publisher { get }
-//
-//    var status: Location.LocationStatus { get }
-//    var statusPublished: Published<Location.LocationStatus> { get }
-//    var statusPublisher: Published<Location.LocationStatus>.Publisher { get }
-//    
-//    func updateLocation ()
-//    func clearLocation()
-//}
-//
-//protocol LocationManagerProtocol {
-//    var delegate: CLLocationManagerDelegate? { get set }
-//    var authorizationStatus: CLAuthorizationStatus { get }
-//    func requestWhenInUseAuthorization () -> Void
-//    func startUpdatingLocation () -> Void
-//    func stopUpdatingLocation () -> Void
-//    static func locationServicesEnabled () -> Bool
-//}
-//
-//extension CLLocationManager: LocationManagerProtocol { }

@@ -56,7 +56,7 @@ struct FanView: View {
                             if fanViewModel.offDateTxt.count > 0 {
                                 Text(fanViewModel.offDateTxt)
                                     .font(.subheadline)
-                                    .foregroundColor(.main)
+//                                    .foregroundColor(.main)
                             }
                         }
                         .padding(.bottom, 15)
@@ -69,10 +69,11 @@ struct FanView: View {
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .rotationEffect(angle)
-                    .foregroundColor(Color(fanViewModel.displayedLamps.isDisjoint(with: .useAlarmColor) ? .main : .alarm))
+//                    .foregroundColor(Color(fanViewModel.displayedLamps.isDisjoint(with: .useAlarmColor) ? .main : .alarm))
                     .opacity(/*@START_MENU_TOKEN@*/0.8/*@END_MENU_TOKEN@*/)
                     .blur(radius: 10.0)
                     .scaleEffect(1.5)
+                    .allowsHitTesting(false)
                     .overlay(
                         Button(action: {
                             fanViewModel.model.setFan()
@@ -84,8 +85,9 @@ struct FanView: View {
                                 }
                                 else {
                                     ForEach (labels, id: \.self) { item in
-                                        AnyView(Text(item).foregroundColor(.alarm))
-                                    }
+                                        AnyView(Text(item)
+//                                                    .foregroundColor(fanViewModel.displayedLamps.isDisjoint(with: .useAlarmColor) ? .main : .alarm)
+                                    )}
                                     .frame(width: nil, height: nil, alignment: .center)
                                 }
                         })
@@ -99,7 +101,8 @@ struct FanView: View {
             }
             VStack (alignment: /*@START_MENU_TOKEN@*/.center/*@END_MENU_TOKEN@*/, spacing: 0) {
                 HStack (alignment: .firstTextBaseline) {
-                    Text(name ?? fanViewModel.model.fanCharacteristics.airspaceFanModel).font(.largeTitle).foregroundColor(.main)
+                    Text(name ?? fanViewModel.model.fanCharacteristics.airspaceFanModel).font(.largeTitle)
+//                        .foregroundColor(.main)
                         .onLongPressGesture {
                             activeSheet = .fanName
                         }
@@ -111,6 +114,7 @@ struct FanView: View {
             .padding([.leading, .trailing], 20.0)
             .padding(.top, 40.0)
         }
+        .foregroundColor(fanViewModel.displayedLamps.isDisjoint(with: .useAlarmColor) ? .main : .alarm)
         .sheet(item: $activeSheet) { $0.view(view: self) }
         .onReceive(fanViewModel.$fanRotationDuration) { val in
             self.angle = .zero
@@ -118,30 +122,17 @@ struct FanView: View {
                 self.angle = .degrees(179.99)
             }
         }
-//        .onReceive(fanViewModel.$commError) { err in
-//            if err {
-//                fanAddrs.remove(fanViewModel.model.fanCharacteristics)
+
+//        .onChange(of: scenePhase, perform: { scene in
+//            switch scene {
+//            case .background, .inactive:
+//                break
+//            case .active:
+//                fanViewModel.model.setFan()
+//            @unknown default:
+//                break
 //            }
-//        }
-//        .onReceive(fanViewModel.$physicalFanSpeed) { spd in
-//            spd.map {
-//                if $0 > 0 {
-//                    runningFans.update(with: fanViewModel.model.fanCharacteristics)
-//                } else {
-//                    runningFans.remove(fanViewModel.model.fanCharacteristics)
-//                }
-//            }
-//        }
-        .onChange(of: scenePhase, perform: { scene in
-            switch scene {
-            case .background, .inactive:
-                break
-            case .active:
-                fanViewModel.model.setFan()
-            @unknown default:
-                break
-            }
-        })
+//        })
     }
     
     init (addr: String, chars: FanCharacteristics, house: House, weather: Weather) {
@@ -159,7 +150,8 @@ struct SpeedController: View {
                 Text(viewModel.controllerSegments[segmentIndex]).tag(segmentIndex)
                 }
             }
-            .pickerStyle(SegmentedPickerStyle())
+        .pickerStyle(SegmentedPickerStyle())
+        .foregroundColor(.blue)
             .modifier(PhysicalSpeedIndicator(viewModel: viewModel))
     }
 }
