@@ -14,12 +14,6 @@ struct FanView: View {
     @AppStorage var name: String?
     @State private var angle: Angle = .zero
     @State private var activeSheet: Sheet?
-//    @State private var hoursToAdd: Int = 0
-
-//    private var maxKeypresses: Int {
-//        13 - (Int(fanViewModel.timer/60) + (fanViewModel.timer%60 != 0 ? 1 : 0)) + 1
-//    }
-    
     enum Sheet: Identifiable {
         var id: Int {
             hashValue
@@ -32,7 +26,7 @@ struct FanView: View {
             case .fanName:
                 return NameSheet(viewModel: view.fanViewModel).eraseToAnyView()
             case .timer:
-                return TimerSheet(fanViewModel: view.fanViewModel) .eraseToAnyView()
+                return TimerSheet(fanViewModel: view.fanViewModel).eraseToAnyView()
             case .detail:
                 return DetailSheet(fanViewModel: view.fanViewModel).eraseToAnyView()
             }
@@ -69,7 +63,6 @@ struct FanView: View {
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .rotationEffect(angle)
-//                    .foregroundColor(Color(fanViewModel.displayedLamps.isDisjoint(with: .useAlarmColor) ? .main : .alarm))
                     .opacity(/*@START_MENU_TOKEN@*/0.8/*@END_MENU_TOKEN@*/)
                     .blur(radius: 10.0)
                     .scaleEffect(1.5)
@@ -86,7 +79,6 @@ struct FanView: View {
                                 else {
                                     ForEach (labels, id: \.self) { item in
                                         AnyView(Text(item)
-//                                                    .foregroundColor(fanViewModel.displayedLamps.isDisjoint(with: .useAlarmColor) ? .main : .alarm)
                                     )}
                                     .frame(width: nil, height: nil, alignment: .center)
                                 }
@@ -102,7 +94,6 @@ struct FanView: View {
             VStack (alignment: /*@START_MENU_TOKEN@*/.center/*@END_MENU_TOKEN@*/, spacing: 0) {
                 HStack (alignment: .firstTextBaseline) {
                     Text(name ?? fanViewModel.model.fanCharacteristics.airspaceFanModel).font(.largeTitle)
-//                        .foregroundColor(.main)
                         .onLongPressGesture {
                             activeSheet = .fanName
                         }
@@ -122,17 +113,6 @@ struct FanView: View {
                 self.angle = .degrees(179.99)
             }
         }
-
-//        .onChange(of: scenePhase, perform: { scene in
-//            switch scene {
-//            case .background, .inactive:
-//                break
-//            case .active:
-//                fanViewModel.model.setFan()
-//            @unknown default:
-//                break
-//            }
-//        })
     }
     
     init (addr: String, chars: FanCharacteristics, house: House, weather: Weather) {
