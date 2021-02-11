@@ -127,12 +127,12 @@ struct SpeedController: View {
     var body: some View {
         Picker (selection: $viewModel.displayedSegmentNumber, label: Text("Picker")) {
             ForEach (0..<viewModel.controllerSegments.count, id: \.self) { segmentIndex in
-                Text(viewModel.controllerSegments[segmentIndex]).tag(segmentIndex)
+                Text(viewModel.controllerSegments[segmentIndex])
+                    .tag(segmentIndex)
                 }
             }
         .pickerStyle(SegmentedPickerStyle())
-        .foregroundColor(.blue)
-            .modifier(PhysicalSpeedIndicator(viewModel: viewModel))
+        .modifier(PhysicalSpeedIndicator(viewModel: viewModel))
     }
 }
 

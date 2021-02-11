@@ -26,15 +26,24 @@ extension Image {
 }
 
 extension UIColor {
-    static var main = #colorLiteral(red: 0.2745098174, green: 0.4862745106, blue: 0.1411764771, alpha: 1)
-    static var alarm = #colorLiteral(red: 0.6840745905, green: 0.0425841135, blue: 0.1318473293, alpha: 0.7751843718)
-    static var background = #colorLiteral(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
+    static var main = UIColor(named: "main")!
+    static var segmentControllerText = UIColor(named: "segmentControllerText")!
+    static var segmentControllerBackground = UIColor(named: "segmentControllerBackground")!
+    
+    static var alarm = UIColor(named: "alarm")!
+    static var pageBackground = UIColor(named: "pageBackground")!
+    static var controlsTint = UIColor(named: "controlsTint")!
+    static var controlsBackground = UIColor(named: "controlsBackground")!
 }
 
 extension Color {
-    static var main = Color(UIColor.main)
-    static var alarm = Color(UIColor.alarm)
-    static var background = Color(UIColor.background)
+    static var main = Color(.main)
+    static var segmentControllerText = Color(.segmentControllerText)
+    static var segmentControllerBackground = Color(.segmentControllerBackground)
+    static var alarm = Color(.alarm)
+    static var background = Color(.pageBackground)
+    static var controlsTint = Color(.controlsTint)
+    static var controlsBackground = Color(.controlsBackground)
 }
 
 

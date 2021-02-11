@@ -77,5 +77,8 @@ struct FanViewPageContainer: View {
 struct HouseViewPreviews: PreviewProvider {
     static var previews: some View {
         HouseView()
+            .environmentObject(House())
+            .environmentObject(Weather(house: House()))
+        
     }
 }

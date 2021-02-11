@@ -8,16 +8,19 @@
 import SwiftUI
 
 struct ContentView: View {
+    @Environment(\.colorScheme) var colorScheme
+
     var body: some View {
         HouseView()
+            .background(Color.background)
     }
     
     init () {
         let app = UISegmentedControl.appearance()
-        app.backgroundColor = .background
-        app.selectedSegmentTintColor = .main
-        app.setTitleTextAttributes([.foregroundColor: UIColor.main], for: .normal)
-        app.setTitleTextAttributes([.foregroundColor: UIColor.background], for: .selected)
+        app.backgroundColor = .controlsBackground
+        app.selectedSegmentTintColor = .controlsTint
+        app.setTitleTextAttributes([.foregroundColor: UIColor.controlsTint], for: .normal)
+        app.setTitleTextAttributes([.foregroundColor: UIColor.segmentControllerBackground], for: .selected)
 //        House.shared.fansAt.insert(FanModel())
 //        Timer.scheduledTimer(withTimeInterval: 5, repeats: false) { _ in
 //            House.shared.lostFan(atIp: "0.0.0.0:8181")
