@@ -16,12 +16,9 @@ struct ContentView: View {
     }
     
     init () {
-        let app = UISegmentedControl.appearance()
-        app.backgroundColor = .controlsBackground
-        app.selectedSegmentTintColor = .controlsTint
-        app.setTitleTextAttributes([.foregroundColor: UIColor.controlsTint], for: .normal)
-        app.setTitleTextAttributes([.foregroundColor: UIColor.segmentControllerBackground], for: .selected)
-//        House.shared.fansAt.insert(FanModel())
+        UISegmentedControl.appearance().selectedSegmentTintColor = .main
+        
+        //        House.shared.fansAt.insert(FanModel())
 //        Timer.scheduledTimer(withTimeInterval: 5, repeats: false) { _ in
 //            House.shared.lostFan(atIp: "0.0.0.0:8181")
 //        }

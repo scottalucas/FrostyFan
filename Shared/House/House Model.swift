@@ -19,7 +19,7 @@ class House: ObservableObject {
     private var bag = Set<AnyCancellable>()
     
     init () {
-        scanForFans()
+//        scanForFans()
     }
     
     func scanForFans () {
@@ -28,6 +28,7 @@ class House: ObservableObject {
         scanning = true
         fans.removeAll()
         scanner
+            .timeout(.seconds(5), scheduler: DispatchQueue.main)
             .sink(receiveCompletion: { [weak self] comp in
                 self?.scanning = false
                 if case .finished = comp {
@@ -59,7 +60,6 @@ extension House {
                         Empty.init(completeImmediately: false)
                     })
                     .map { [host] chars in (host, chars) }
-                    .timeout(.seconds(5), scheduler: DispatchQueue.main)
                     .eraseToAnyPublisher()
             })
             .eraseToAnyPublisher()

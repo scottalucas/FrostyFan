@@ -50,14 +50,14 @@ extension Color {
 struct RefreshableScrollView<Content: View>: View {
     @State private var previousScrollOffset: CGFloat = 0
     @State private var scrollOffset: CGFloat = 0
-    @State private var frozen: Bool = false
+    @State private var frozen: Bool = true
     @State private var rotation: Angle = .degrees(0)
-    
-    var threshold: CGFloat = 80
     @Binding var refreshing: Bool
+    
+    var threshold: CGFloat
     let content: Content
 
-    init(height: CGFloat = 80, refreshing: Binding<Bool>, @ViewBuilder content: () -> Content) {
+    init(height: CGFloat = 50, refreshing: Binding<Bool>, @ViewBuilder content: () -> Content) {
         self.threshold = height
         self._refreshing = refreshing
         self.content = content()
@@ -65,21 +65,26 @@ struct RefreshableScrollView<Content: View>: View {
     }
     
     var body: some View {
-        return VStack {
-            ScrollView {
-                ZStack(alignment: .top) {
-                    MovingView()
-                    
-                    VStack { self.content }.alignmentGuide(.top, computeValue: { d in (self.refreshing && self.frozen) ? -self.threshold : 0.0 })
-                    
-                    SymbolView(height: self.threshold, loading: self.refreshing, frozen: self.frozen, rotation: self.rotation)
+        return
+//            VStack {
+            GeometryReader { geo in
+                ScrollView {
+                    ZStack(alignment: .top) {
+                        MovingView()
+                        self.content
+                            .frame(minHeight: geo.frame(in: .global).height)
+                            .alignmentGuide(.top, computeValue: { d in (self.refreshing && self.frozen) ? -self.threshold : 0.0 })
+                            .ignoresSafeArea()
+                        SymbolView(scrollOffset: $scrollOffset, height: self.threshold, loading: self.refreshing, frozen: self.frozen, rotation: self.rotation)
+                    }
                 }
+                .background(FixedView())
+                .onPreferenceChange(RefreshableKeyTypes.PrefKey.self) { values in
+                    self.refreshLogic(values: values)
+                }
+                
             }
-            .background(FixedView())
-            .onPreferenceChange(RefreshableKeyTypes.PrefKey.self) { values in
-                self.refreshLogic(values: values)
-            }
-        }
+//        }
     }
     
     func refreshLogic(values: [RefreshableKeyTypes.PrefData]) {
@@ -129,6 +134,7 @@ struct RefreshableScrollView<Content: View>: View {
     }
     
     struct SymbolView: View {
+        @Binding var scrollOffset: CGFloat
         var height: CGFloat
         var loading: Bool
         var frozen: Bool
@@ -142,16 +148,21 @@ struct RefreshableScrollView<Content: View>: View {
                         Spacer()
                         ActivityRep()
                         Spacer()
-                    }.frame(height: height).fixedSize()
-                        .offset(y: -height + (self.loading && self.frozen ? height : 0.0))
+                    }
+                    .frame(height: height)
+                    .fixedSize()
+                    .offset(y: (self.loading && self.frozen) ? 0.0 : height)
+//                    .offset(y: height - (self.loading && self.frozen) ? height : 0.0)
                 } else {
                     Image(systemName: "arrow.down") // If not loading, show the arrow
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .frame(width: height * 0.25, height: height * 0.25).fixedSize()
+                        .frame(width: scrollOffset > 0 ? height * 0.5 : 0, height: scrollOffset > 0 ? height * 0.5 : 0)
+                        .fixedSize()
                         .padding(height * 0.375)
                         .rotationEffect(rotation)
-                        .offset(y: -height + (loading && frozen ? +height : 0.0))
+                        .offset(y: -height + (loading && frozen ? height : 0.0))
+                        .foregroundColor(.main)
                 }
             }
         }
@@ -449,31 +460,38 @@ extension RangeSlider {
 struct Utilities_Previews: PreviewProvider {
     @State static var lowVal: Double = 50
     @State static var highVal: Double = 80
+    @State static var refreshing: Bool = false
+    @State static var blah: String = "start"
 
     static var previews: some View {
-
-        RangeSlider(
-            selectedLow: $lowVal,
-            selectedHigh: $highVal,
-            minimum: 50,
-            maximum: 85,
-            barFormatter: { style in
-                style.barInsideFill = .main
-            },
-            rightHandleFormatter: { style in
-                style.strokeColor = .red
-                style.labelStyle = RangeSlider.LabelStyle()
-                style.labelStyle?
-                    .numberFormat
-                    .positiveFormat = "2\u{00B0}"
-            },
-            leftHandleFormatter: { style in
-                style.strokeColor = .blue
-                style.labelStyle = RangeSlider.LabelStyle()
-                style.labelStyle?
-                    .numberFormat
-                    .positiveFormat = "2\u{00B0}"
-            }
-        )
+            RefreshableScrollView(refreshing: $refreshing) {
+                Text(blah)
+        }
+            .onChange(of: refreshing, perform: { value in
+                blah = value ? "blah" : "no blah"
+            })
+//        RangeSlider(
+//            selectedLow: $lowVal,
+//            selectedHigh: $highVal,
+//            minimum: 50,
+//            maximum: 85,
+//            barFormatter: { style in
+//                style.barInsideFill = .main
+//            },
+//            rightHandleFormatter: { style in
+//                style.strokeColor = .red
+//                style.labelStyle = RangeSlider.LabelStyle()
+//                style.labelStyle?
+//                    .numberFormat
+//                    .positiveFormat = "2\u{00B0}"
+//            },
+//            leftHandleFormatter: { style in
+//                style.strokeColor = .blue
+//                style.labelStyle = RangeSlider.LabelStyle()
+//                style.labelStyle?
+//                    .numberFormat
+//                    .positiveFormat = "2\u{00B0}"
+//            }
+//        )
     }
 }

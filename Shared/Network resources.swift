@@ -71,23 +71,38 @@ struct NetworkAddress {
             }
             freeifaddrs(ifaddr)
         }
-        let arr = addresses[0].ip.split(separator: ".").compactMap({ UInt8.init($0) })
-        guard
-            arr.count == 4,
-            (0..<255).contains(arr[0]),
-            (0..<255).contains(arr[1]),
-            (0..<255).contains(arr[2]),
-            (0..<255).contains(arr[3]) else { return nil }
-        let finalAddr = UInt32(arr.reduce(0) { $0 << 8 | Int($1) })
+        //        let arr = addresses[0].ip.split(separator: ".").compactMap({ UInt8.init($0) })
+        let firstIP4Addr = addresses
+            .first(where: { netInfo in netInfo.ip.split(separator: ".").count == 4 })
         
-        let m = addresses[0].netmask.split(separator: ".").compactMap({ UInt8.init($0) })
+        let firstIP4AddrArr =
+            firstIP4Addr?
+            .ip
+            .split(separator: ".")
+            .compactMap({ UInt8.init($0) }) ?? []
+        
+        let firstIP4MaskArr =
+            firstIP4Addr?
+            .netmask
+            .split(separator: ".")
+            .compactMap({ UInt8.init($0) }) ?? []
+        
         guard
-            m.count == 4,
-            (0...255).contains(m[0]),
-            (0...255).contains(m[1]),
-            (0...255).contains(m[2]),
-            (0...255).contains(m[3]) else { return nil }
-        let finalMask = UInt32(m.reduce(0) { $0 << 8 | Int($1) })
+            firstIP4AddrArr.count == 4,
+            (0..<255).contains(firstIP4AddrArr[0]),
+            (0..<255).contains(firstIP4AddrArr[1]),
+            (0..<255).contains(firstIP4AddrArr[2]),
+            (0..<255).contains(firstIP4AddrArr[3]) else { return nil }
+        let finalAddr = UInt32(firstIP4AddrArr.reduce(0) { $0 << 8 | Int($1) })
+        
+//        let firstIP4MaskArr = addresses[0].netmask.split(separator: ".").compactMap({ UInt8.init($0) })
+        guard
+            firstIP4MaskArr.count == 4,
+            (0...255).contains(firstIP4MaskArr[0]),
+            (0...255).contains(firstIP4MaskArr[1]),
+            (0...255).contains(firstIP4MaskArr[2]),
+            (0...255).contains(firstIP4MaskArr[3]) else { return nil }
+        let finalMask = UInt32(firstIP4MaskArr.reduce(0) { $0 << 8 | Int($1) })
         
         return (finalAddr, finalMask)
     }

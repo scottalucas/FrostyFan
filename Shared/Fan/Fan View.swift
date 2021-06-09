@@ -113,6 +113,9 @@ struct FanView: View {
                 self.angle = .degrees(179.99)
             }
         }
+        .onAppear {
+            fanViewModel.model.setFan()
+        }
     }
     
     init (addr: String, chars: FanCharacteristics, house: House, weather: Weather) {
@@ -135,6 +138,7 @@ struct SpeedController: View {
         .modifier(PhysicalSpeedIndicator(viewModel: viewModel))
     }
 }
+
 
 struct PhysicalSpeedIndicator: ViewModifier {
     @ObservedObject var viewModel: FanViewModel
@@ -171,6 +175,7 @@ struct FanView_Previews: PreviewProvider {
     static var house = House()
     static var previews: some View {
         FanView(addr: "0.0.0.0:8181", chars: chars, house: house, weather: Weather(house: house))
+            .preferredColorScheme(.light)
     }
 }
 

@@ -19,7 +19,6 @@ class FanModel: ObservableObject {
     private var lastReportedSpeed: Int?
     private var lastReportedTimer: Int?
     private var loaderPublisher = PassthroughSubject<AnyPublisher<FanCharacteristics, ConnectionError>, Never>()
-    private var fanContactTimer = Timer()
     private var bag = Set<AnyCancellable>()
 
     init(forAddress address: String, usingChars chars: FanCharacteristics? = nil) {
@@ -278,21 +277,21 @@ extension FanModel {
             .store(in: &bag)
         
         //watchdog
-        loaderPublisher
-            .switchToLatest()
-            .map { _ in "query"}
-            .merge(with: Timer.publish(every: 20, on: .main, in: .common)
-                    .autoconnect()
-                    .map { _ in "watchdog"}
-                    .setFailureType(to: ConnectionError.self)
-                    .eraseToAnyPublisher())
-//            .print("watchdog")
-            .collect(.byTime(DispatchQueue.main, .seconds(60)))
-            .filter({ !$0.contains("query") })
-            .sink(receiveCompletion: {_ in}, receiveValue: { [weak self] _ in
-                self?.getFanStatus(sendingCommand: .refresh)
-            })
-            .store(in: &bag)
+//        loaderPublisher
+//            .switchToLatest()
+//            .map { _ in "query"}
+//            .merge(with: Timer.publish(every: 20, on: .main, in: .common)
+//                    .autoconnect()
+//                    .map { _ in "watchdog"}
+//                    .setFailureType(to: ConnectionError.self)
+//                    .eraseToAnyPublisher())
+////            .print("watchdog")
+//            .collect(.byTime(DispatchQueue.main, .seconds(60)))
+//            .filter({ !$0.contains("query") })
+//            .sink(receiveCompletion: {_ in}, receiveValue: { [weak self] _ in
+//                self?.getFanStatus(sendingCommand: .refresh)
+//            })
+//            .store(in: &bag)
 
         //speed setter
         loaderPublisher

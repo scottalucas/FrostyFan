@@ -15,21 +15,19 @@ struct HouseView: View {
     @State private var info: String = ""
     @State private var tap: Bool = false
     @State private var fanLabel: String?
+    @State private var refresh: Bool = false
     
     var body: some View {
         
         TabView (selection: $currentTab) {
-            ZStack {
-                VStack {
-                    RefreshableScrollView(height: 40, refreshing: $house.scanning) {}
-                        .frame(width: nil, height: 75, alignment: .top)
-                    Spacer()
-                }
-                VStack {
+            VStack {
+            RefreshableScrollView(refreshing: $refresh) {
                     FanViewPageContainer(house: house, weather: weather)
                         .ignoresSafeArea(.container, edges: .top)
-                    Spacer()
                 }
+            }
+            .onAppear {
+                refresh = true
             }
             .tabItem {
                 Image.fanIcon
@@ -39,13 +37,21 @@ struct HouseView: View {
             VStack {
                 SettingsView()
             }
-                .tabItem {
-                    Image.bell
-                    Text("Alarms")
-                }
-                .tag(2)
+            .tabItem {
+                Image.bell
+                Text("Alarms")
+            }
+            .tag(2)
         }
         .accentColor(.main)
+        .onChange(of: refresh) { go in
+            if !house.scanning && go {
+                house.scanForFans()
+            }
+        }
+        .onChange(of: house.scanning) { scanning in
+            if !scanning { refresh = false }
+        }
     }
 }
 
@@ -65,7 +71,7 @@ struct FanViewPageContainer: View {
             TabView (selection: $selectedFan) {
                 ForEach (Array(house.fans), id: \.self) { fanAddr in
                     FanView(addr: fanAddr.ipAddr ?? "not found", chars: fanAddr, house: house, weather: weather)
-                        .padding(.bottom, 100)
+                        .padding(.bottom, 75)
                 }
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))
@@ -77,6 +83,7 @@ struct FanViewPageContainer: View {
 struct HouseViewPreviews: PreviewProvider {
     static var previews: some View {
         HouseView()
+            .preferredColorScheme(.dark)
             .environmentObject(House())
             .environmentObject(Weather(house: House()))
         
