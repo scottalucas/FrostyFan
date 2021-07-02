@@ -13,6 +13,7 @@ class FanViewModel: ObservableObject {
     @ObservedObject var model: FanModel
     @ObservedObject var house: House
     @ObservedObject var weather: Weather
+    @Published var fanLamps = FanLamps()
     @Published var fanRotationDuration: Double = 0.0
     @Published var displayedSegmentNumber: Int = -1
     @Published var airspaceFanModel: String?
@@ -20,7 +21,7 @@ class FanViewModel: ObservableObject {
     @Published var timer = 0
     @Published var offDateTxt = ""
     @Published var physicalFanSpeed: Int?
-    @Published var displayedLamps = Lamps()
+    @Published var displayedLamps = ApplicationLamps()
     @Published var timeToAdd: Int?
     @Published var updatedName: String?
 
@@ -79,8 +80,11 @@ extension FanViewModel {
         model.$fanCharacteristics
             .compactMap { $0?.timer }
             .receive(on: DispatchQueue.main)
-            .map { timeTillOff in
-                guard timeTillOff > 0 else { return "" }
+            .map { [weak self] timeTillOff in
+                guard timeTillOff > 0 else {
+                    self?.fanLamps.remove(.nonZeroTimeRemaining)
+                    return "" }
+                self?.fanLamps.insert(.nonZeroTimeRemaining)
                 let formatter = DateFormatter()
                 formatter.dateFormat = "h:mm a"
                 return "Off at \(formatter.string(from: Date(timeIntervalSinceNow: TimeInterval(timeTillOff * 60))))"
@@ -101,7 +105,6 @@ extension FanViewModel {
                 if self.physicalFanSpeed == nil { self.displayedSegmentNumber = actualSpeed } //should only happen first time through
                 self.physicalFanSpeed = actualSpeed
                 self.setDisplayMotor(toSpeed: actualSpeed)
-                if actualSpeed == 0 && self.displayedLamps.isDisjoint(with: .showPhysicalSpeed) { self.displayedLamps = [] }
             })
             .store(in: &bag)
         
@@ -130,9 +133,9 @@ extension FanViewModel {
             .receive(on: DispatchQueue.main)
             .sink(receiveValue: { [weak self] alarm in
                 if alarm {
-                    self?.displayedLamps.insert(.interlock)
+                    self?.fanLamps.insert(.interlockActive)
                 } else {
-                    self?.displayedLamps.remove(.interlock)
+                    self?.fanLamps.remove(.interlockActive)
                 }
             })
             .store(in: &bag)
@@ -147,36 +150,36 @@ extension FanViewModel {
                 }
             })
             .store(in: &bag)
-        
-        model.$timerBusy
-            .receive(on: DispatchQueue.main)
-            .sink (receiveValue: { [weak self] flags in
-                if flags.contains(.damperOperating) {
-                    self?.displayedLamps.insert(.damperOpening)
-                } else {
-                    self?.displayedLamps.remove(.damperOpening)
-                }
-                
-                if flags.contains(.speedAdjusting) {
-                    self?.displayedLamps.insert(.speedAdjusting)
-                } else {
-                    self?.displayedLamps.remove(.speedAdjusting)
-                }
-                
-                if flags.contains(.timerAdjusting) {
-                    self?.displayedLamps.insert(.timerActive)
-                } else {
-                    self?.displayedLamps.remove(.timerActive)
-                }
-                
-                if flags.contains(.fanOff) {
-                    self?.displayedLamps.insert(.fanOff)
-                } else {
-                    self?.displayedLamps.remove(.fanOff)
-                }
-                
-            })
-            .store(in: &bag)
+//        
+//        model.$timerBusy
+//            .receive(on: DispatchQueue.main)
+//            .sink (receiveValue: { [weak self] flags in
+//                if flags.contains(.damperOperating) {
+//                    self?.displayedLamps.insert(.damperOpening)
+//                } else {
+//                    self?.displayedLamps.remove(.damperOpening)
+//                }
+//                
+//                if flags.contains(.speedAdjusting) {
+//                    self?.displayedLamps.insert(.speedAdjusting)
+//                } else {
+//                    self?.displayedLamps.remove(.speedAdjusting)
+//                }
+//                
+//                if flags.contains(.timerAdjusting) {
+//                    self?.displayedLamps.insert(.timerActive)
+//                } else {
+//                    self?.displayedLamps.remove(.timerActive)
+//                }
+//                
+//                if flags.contains(.fanOff) {
+//                    self?.displayedLamps.insert(.fanOff)
+//                } else {
+//                    self?.displayedLamps.remove(.fanOff)
+//                }
+//                
+//            })
+//            .store(in: &bag)
         
         weather.$currentTempStr
             .receive(on: DispatchQueue.main)

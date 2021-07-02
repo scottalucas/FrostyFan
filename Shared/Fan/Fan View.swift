@@ -10,7 +10,8 @@ import SwiftUI
 struct FanView: View {
     typealias IPAddr = String
     @Environment(\.scenePhase) var scenePhase
-    @StateObject var fanViewModel: FanViewModel
+    @EnvironmentObject var applicationLamps: ApplicationLamps
+    @StateObject var viewModel: FanViewModel
     @AppStorage var name: String
     @State private var angle: Angle = .zero
     @State private var activeSheet: Sheet?
@@ -44,26 +45,26 @@ struct FanView: View {
     
     var body: some View {
         ZStack {
-            ControllerRender(fanViewModel: fanViewModel, speed: $fanViewModel.model.currentSpeed, activeSheet: $activeSheet)
-            FanImageRender(angle: $angle, activeSheet: $activeSheet, fanViewModel: fanViewModel)
-            FanNameRender(activeSheet: $activeSheet, name: $name, fanViewModel: fanViewModel)
-            OverlaySheetRender(fanViewModel: fanViewModel, activeSheet: $activeSheet, requestedKeypresses: $requestedKeypresses)
+            ControllerRender(viewModel: viewModel, speed: $viewModel.model.currentSpeed, activeSheet: $activeSheet)
+            FanImageRender(angle: $angle, activeSheet: $activeSheet, fanViewModel: viewModel)
+            FanNameRender(activeSheet: $activeSheet, name: $name, fanViewModel: viewModel)
+            OverlaySheetRender(fanViewModel: viewModel, activeSheet: $activeSheet, requestedKeypresses: $requestedKeypresses)
         }
-        .foregroundColor(fanViewModel.displayedLamps.isDisjoint(with: .useAlarmColor) ? .main : .alarm)
-        .onReceive(fanViewModel.$fanRotationDuration) { val in
+        .foregroundColor(viewModel.fanLamps.useAlarmColor || applicationLamps.useAlarmColor ? .alarm : .main)
+        .onReceive(viewModel.$fanRotationDuration) { val in
             self.angle = .zero
             withAnimation(Animation.linear(duration: val)) {
                 self.angle = .degrees(179.99)
             }
         }
         .onAppear {
-            fanViewModel.model.refreshFan()
+            viewModel.model.refreshFan()
         }
     }
     
     init (addr: String, chars: FanCharacteristics, house: House, weather: Weather) {
         _name = AppStorage(wrappedValue: "\(chars.airspaceFanModel)", StorageKey.fanName(chars.macAddr).key)
-        _fanViewModel = StateObject(wrappedValue: FanViewModel(atAddr: addr, usingChars: chars, inHouse: house, weather: weather))
+        _viewModel = StateObject(wrappedValue: FanViewModel(atAddr: addr, usingChars: chars, inHouse: house, weather: weather))
     }
 }
 
@@ -83,14 +84,14 @@ struct SpeedController: View {
 }
 
 struct ControllerRender: View {
-    var fanViewModel: FanViewModel
+    var viewModel: FanViewModel
     @Binding var speed: Int?
     @Binding var activeSheet: FanView.Sheet?
     
     var body: some View {
         VStack {
             Spacer()
-            if fanViewModel.displayedLamps.intersection([.damperOpening, .speedAdjusting, .fanOff]).isEmpty {
+            if viewModel.fanLamps.showTimerIcon {
                 VStack {
                     Button(
                         action: {
@@ -102,23 +103,23 @@ struct ControllerRender: View {
                                     .foregroundColor(.main)
                                     .scaledToFit()
                                     .frame(width: nil, height: 40)
-                                if fanViewModel.offDateTxt.count > 0 {
-                                    Text(fanViewModel.offDateTxt)
+                                if viewModel.fanLamps.showTimeRemainingText {
+                                    Text(viewModel.offDateTxt)
                                         .font(.subheadline)
                                 }
                             }
                             .padding(.bottom, 15)
                         })
-                    ForEach (fanViewModel.displayedLamps.labels, id: \.self) { element in
+                    ForEach (viewModel.displayedLamps.labels, id: \.self) { element in
                      Text(element)
                     }
                 }
             } else {
-                ForEach (fanViewModel.displayedLamps.labels, id: \.self) { element in
+                ForEach (viewModel.displayedLamps.labels, id: \.self) { element in
                  Text(element)
                 }
             }
-            SpeedController(viewModel: fanViewModel)
+            SpeedController(viewModel: viewModel)
                 .padding([.leading, .trailing], 20)
         }
     }
@@ -215,15 +216,16 @@ struct OverlaySheetRender: View {
 
 struct PhysicalSpeedIndicator: ViewModifier {
     @ObservedObject var viewModel: FanViewModel
+    @EnvironmentObject var applicationLamps: ApplicationLamps
     
     func body(content: Content) -> some View {
         content
             .overlay (
-                !viewModel.displayedLamps.isDisjoint(with: .showPhysicalSpeed) ?
+                viewModel.fanLamps.showPhysicalSpeedIndicator ?
                     GeometryReader { geo2 in
                         Image(systemName: "arrowtriangle.up.fill")
                             .resizable()
-                            .foregroundColor(Color(viewModel.displayedLamps.isDisjoint(with: .useAlarmColor) ? .main : .alarm))
+                            .foregroundColor(Color(viewModel.fanLamps.useAlarmColor || applicationLamps.useAlarmColor ? .main : .alarm))
                             .alignmentGuide(.top, computeValue: { dimension in
                                 -geo2.size.height + dimension.height/CGFloat(2)
                             })

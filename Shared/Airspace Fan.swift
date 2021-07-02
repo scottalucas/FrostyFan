@@ -13,6 +13,7 @@ import Combine
 struct AirspaceFanApp: App {
     let house = House()
     let location = Location()
+    let lamps = ApplicationLamps.shared
     let weather: Weather
     
     var body: some Scene {
@@ -21,6 +22,7 @@ struct AirspaceFanApp: App {
                 .environmentObject(weather)
                 .environmentObject(location)
                 .environmentObject(house)
+                .environmentObject(lamps)
         }
     }
     
