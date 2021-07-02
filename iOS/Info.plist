@@ -36,11 +36,6 @@
 	<true/>
 	<key>UILaunchScreen</key>
 	<dict>
-		<key>UITabBar</key>
-		<dict>
-			<key>UIImageName</key>
-			<string></string>
-		</dict>
 		<key>UIImageName</key>
 		<string>Fan.png</string>
 		<key>UIImageRespectsSafeAreaInsets</key>

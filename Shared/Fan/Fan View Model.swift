@@ -21,6 +21,9 @@ class FanViewModel: ObservableObject {
     @Published var offDateTxt = ""
     @Published var physicalFanSpeed: Int?
     @Published var displayedLamps = Lamps()
+    @Published var timeToAdd: Int?
+    @Published var updatedName: String?
+
     private var displayedMotorSpeed: Int?
     private var displayMotor = PassthroughSubject<AnyPublisher<Double, Never>, Never>()
     
@@ -33,13 +36,20 @@ class FanViewModel: ObservableObject {
         self.model = FanModel(forAddress: addr, usingChars: chars)
         startSubscribers()
     }
+    
+    convenience init () {
+        let house = House()
+        let weather = Weather(house: house)
+        let chars = FanCharacteristics()
+        let addr = "Test"
+        self.init(atAddr: addr, usingChars: chars, inHouse: house, weather: weather)
+    }
 }
 
 extension FanViewModel {
     static var speedTable: [String:Int]  = [
         "3.5e" : 7,
         "4.4e" : 7,
-        
         "5.0e" : 7,
         "2.5e" : 5,
         "3200" : 10,
@@ -67,8 +77,8 @@ extension FanViewModel {
             .store(in: &bag)
         
         model.$fanCharacteristics
+            .compactMap { $0?.timer }
             .receive(on: DispatchQueue.main)
-            .map { $0.timer }
             .map { timeTillOff in
                 guard timeTillOff > 0 else { return "" }
                 let formatter = DateFormatter()
@@ -78,11 +88,12 @@ extension FanViewModel {
             .assign(to: &$offDateTxt)
 
         model.$fanCharacteristics
+            .compactMap { $0?.timer }
             .receive(on: DispatchQueue.main)
-            .map { $0.timer }
             .assign(to: &$timer)
 
         model.$fanCharacteristics
+            .compactMap { $0 }
             .receive(on: DispatchQueue.main)
             .map { $0.speed }
             .sink(receiveValue: { [weak self] actualSpeed in
@@ -100,8 +111,8 @@ extension FanViewModel {
             .assign(to: &$fanRotationDuration)
         
         model.$fanCharacteristics
+            .compactMap { $0?.airspaceFanModel }
             .receive(on: DispatchQueue.main)
-            .map { $0.airspaceFanModel }
             .map {
                 FanViewModel.speedTable[String($0.prefix(4))] ?? 1 }
             .map { count -> [String] in Range(0...count).map { String($0) } }
@@ -114,9 +125,9 @@ extension FanViewModel {
             .assign(to: &$controllerSegments)
         
         model.$fanCharacteristics
+            .compactMap { $0 }
+            .map { ($0.interlock1 || $0.interlock2) }
             .receive(on: DispatchQueue.main)
-            .map { ($0.interlock1, $0.interlock2) }
-            .map { $0.0 || $0.1 }
             .sink(receiveValue: { [weak self] alarm in
                 if alarm {
                     self?.displayedLamps.insert(.interlock)
@@ -126,36 +137,44 @@ extension FanViewModel {
             })
             .store(in: &bag)
         
-        model.$fanCharacteristics
-            .receive(on: DispatchQueue.main)
-            .map { $0.damper }
-            .sink(receiveValue: { [weak self] damper in
-                if damper {
-                    self?.displayedLamps.insert(.damperOpening)
-                } else {
-                    self?.displayedLamps.remove(.damperOpening)
-                }
-            })
-            .store(in: &bag)
-        
-        model.$targetSpeed
-            .receive(on: DispatchQueue.main)
-            .map { $0 == nil ? false : true }
-            .sink(receiveValue: { [weak self] adjusting in
-                if adjusting {
-                    self?.displayedLamps.insert(.speedAdjusting)
-                } else {
-                    self?.displayedLamps.remove(.speedAdjusting)
-                }
-            })
-            .store(in: &bag)
-        
         model.$commError
             .receive(on: DispatchQueue.main)
             .filter { $0 != nil }
             .sink(receiveValue: { [weak self] err in
                 print("Comm error: \(err.debugDescription)")
-                self?.house.fans.remove(self!.model.fanCharacteristics)
+                if let house = self?.house, let chars = self?.model.fanCharacteristics {
+                    house.fans.remove(chars)
+                }
+            })
+            .store(in: &bag)
+        
+        model.$timerBusy
+            .receive(on: DispatchQueue.main)
+            .sink (receiveValue: { [weak self] flags in
+                if flags.contains(.damperOperating) {
+                    self?.displayedLamps.insert(.damperOpening)
+                } else {
+                    self?.displayedLamps.remove(.damperOpening)
+                }
+                
+                if flags.contains(.speedAdjusting) {
+                    self?.displayedLamps.insert(.speedAdjusting)
+                } else {
+                    self?.displayedLamps.remove(.speedAdjusting)
+                }
+                
+                if flags.contains(.timerAdjusting) {
+                    self?.displayedLamps.insert(.timerActive)
+                } else {
+                    self?.displayedLamps.remove(.timerActive)
+                }
+                
+                if flags.contains(.fanOff) {
+                    self?.displayedLamps.insert(.fanOff)
+                } else {
+                    self?.displayedLamps.remove(.fanOff)
+                }
+                
             })
             .store(in: &bag)
         

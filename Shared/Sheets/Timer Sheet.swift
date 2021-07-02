@@ -6,23 +6,26 @@
 //
 
 import SwiftUI
-
+//(initialValue: String, key: String)
 struct TimerSheet: View {
-    @State private var hoursToAdd: Int = 0
-    var fanViewModel: FanViewModel
+    @Binding var wheelPosition: Int
+    var timeOnTimer: Int
+    var offText: String = ""
+//    var fanViewModel: FanViewModel
     var maxKeypresses: Int {
-        13 - (Int(fanViewModel.timer/60) + (fanViewModel.timer%60 != 0 ? 1 : 0)) + 1
+        13 - (Int(timeOnTimer/60) + (timeOnTimer%60 != 0 ? 1 : 0))
     }
-    var offTimeMinutes: Int {
-        fanViewModel.timer
-    }
-    var offDateText: String {
-        fanViewModel.offDateTxt
-    }
+//    var offTimeMinutes: Int {
+//        timeOnTimer
+//    }
+//    var offDateText: String {
+////        fanViewModel.offDateTxt
+//        return "test"
+//    }
     
     var body: some View {
         ZStack {
-            TimerSheetBackground(timeText: offDateText)
+            TimerSheetBackground(timeText: offText)
             VStack {
                 if (maxKeypresses == 0) {
                     Color.background
@@ -30,18 +33,12 @@ struct TimerSheet: View {
                         .frame(width: nil, height: 60)
                 } else if maxKeypresses == 1 {
                     Color.background
-                        .overlay(Button(action: { hoursToAdd = 1 }) {
+                        .overlay(Button(action: { wheelPosition = 1 }) {
                             Text("Set to 12 hours").font(.largeTitle).foregroundColor(Color.main)
                         })
                         .frame(width: nil, height: 60)
                 } else {
-                    Picker(selection: $hoursToAdd, label: Text("Picker")) {
-                        ForEach(TimerPickerDataSource(pressRange: (0..<maxKeypresses)).data, id: \.id) { element in
-                            HStack {
-                                Text(element.text).tag(element.id)
-                            }
-                        }
-                    }
+                    TimerSheetSpinner(hoursToAdd: $wheelPosition, maxKeypresses: maxKeypresses)
                     .background(Color.background)
                 }
             }
@@ -49,11 +46,6 @@ struct TimerSheet: View {
             .padding()
             .shadow(radius: /*@START_MENU_TOKEN@*/10/*@END_MENU_TOKEN@*/)
         }
-        .onDisappear(perform: {
-            if hoursToAdd != 0 {
-                fanViewModel.model.setFan(addHours: hoursToAdd)
-            }
-        })
     }
 }
 
@@ -63,7 +55,7 @@ struct TimerPickerDataSource {
         var text: String
     }
     var pressRange: Range<Int>
-    var data: [Element] {
+    var elements: [Element] {
         pressRange.map { idx in
             switch idx {
             case 0:
@@ -101,6 +93,28 @@ struct TimerSheetBackground: View {
         }
     }
 }
+
+struct TimerSheetSpinner: View {
+    @Binding var hoursToAdd: Int
+    var maxKeypresses: Int
+    
+    var body: some View {
+        Picker(selection: $hoursToAdd, label: Text("Picker")) {
+            ForEach(TimerPickerDataSource(pressRange: (0..<maxKeypresses)).elements, id: \.id) { element in
+                HStack {
+                    Text(element.text).tag(element.id)
+                }
+            }
+        }
+    }
+}
+
+//extension TimerSheetSpinner: Equatable {
+//    static func == (lhs: TimerSheetSpinner, rhs: TimerSheetSpinner) -> Bool {
+//        print("check")
+//        return true
+//    }
+//}
 
 struct Timer_View_Previews: PreviewProvider {
     static var previews: some View {

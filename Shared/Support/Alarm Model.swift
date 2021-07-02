@@ -51,6 +51,7 @@ struct Lamps: OptionSet, RawRepresentable {
     static var speedAdjusting = Lamps(rawValue: 1 << 3)
     static var damperOpening = Lamps(rawValue: 1 << 4)
     static var timerActive = Lamps(rawValue: 1 << 5)
+    static var fanOff = Lamps(rawValue: 1 << 6)
     
     static var useAlarmColor: Lamps = [.interlock]
     static var showPhysicalSpeed: Lamps = [.interlock, .speedAdjusting]
@@ -62,6 +63,9 @@ struct Lamps: OptionSet, RawRepresentable {
         if self.contains(.tooCold) { retVal.append("It's cold outside") }
         if self.contains(.damperOpening) { retVal.append("Fan starting") }
         if self.contains(.timerActive) { retVal.append("Timer running")}
+        if self.contains(.fanOff) {
+            retVal.append("Fan is off")
+        }
         return retVal
     }
 }

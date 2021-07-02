@@ -28,7 +28,7 @@ class House: ObservableObject {
         scanning = true
         fans.removeAll()
         scanner
-            .timeout(.seconds(5), scheduler: DispatchQueue.main)
+            .timeout(.seconds(15), scheduler: DispatchQueue.main)
             .sink(receiveCompletion: { [weak self] comp in
                 self?.scanning = false
                 if case .finished = comp {
@@ -49,11 +49,12 @@ class House: ObservableObject {
 
 extension House {
     var scanner: AnyPublisher<(String, FanCharacteristics), ConnectionError> {
+        typealias HostAddr = String
         return
             NetworkAddress.hosts.publisher
-            .prepend("0.0.0.0:8181") //testing
+            .prepend("192.168.1.240:8181") //testing
             .setFailureType(to: ConnectionError.self)
-                .flatMap ({ host -> AnyPublisher<(String, FanCharacteristics), ConnectionError> in
+            .flatMap ({ host -> AnyPublisher<(HostAddr, FanCharacteristics), ConnectionError> in
                 guard let loader = FanStatusLoader(addr: host, action: .refresh) else { return Empty.init(completeImmediately: false).eraseToAnyPublisher() }
                 return loader.loadResults
                     .catch({ _ in

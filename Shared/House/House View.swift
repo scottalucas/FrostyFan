@@ -13,7 +13,7 @@ struct HouseView: View {
     @EnvironmentObject var house: House
     @State private var currentTab: Int = 0
     @State private var info: String = ""
-    @State private var tap: Bool = false
+//    @State private var tap: Bool = false
     @State private var fanLabel: String?
     @State private var refresh: Bool = false
     
