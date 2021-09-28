@@ -97,9 +97,9 @@ extension FanViewModel {
             .assign(to: &$timer)
 
         model.$fanCharacteristics
-            .compactMap { $0 }
             .receive(on: DispatchQueue.main)
-            .map { $0.speed }
+            .compactMap { $0?.speed }
+            .print("in view model")
             .sink(receiveValue: { [weak self] actualSpeed in
                 guard let self = self else { return }
                 if self.physicalFanSpeed == nil { self.displayedSegmentNumber = actualSpeed } //should only happen first time through

@@ -70,6 +70,7 @@ final class FanLamps: OptionSet, RawRepresentable {
     }
     
     var showPhysicalSpeedIndicator: Bool {
+//        self.contains(.speedAdjusting)
         self.contains(.physicalSpeedMismatchToRequested) && !self.contains(.fanOff)
     }
     

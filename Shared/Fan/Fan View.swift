@@ -45,10 +45,10 @@ struct FanView: View {
     
     var body: some View {
         ZStack {
-            ControllerRender(viewModel: viewModel, speed: $viewModel.model.currentSpeed, activeSheet: $activeSheet)
-            FanImageRender(angle: $angle, activeSheet: $activeSheet, fanViewModel: viewModel)
+            ControllerRender(viewModel: viewModel, speed: $viewModel.model.physicalSpeed, activeSheet: $activeSheet)
+            FanImageRender(angle: $angle, activeSheet: $activeSheet, viewModel: viewModel)
             FanNameRender(activeSheet: $activeSheet, name: $name, fanViewModel: viewModel)
-            OverlaySheetRender(fanViewModel: viewModel, activeSheet: $activeSheet, requestedKeypresses: $requestedKeypresses)
+            OverlaySheetRender(viewModel: viewModel, activeSheet: $activeSheet)
         }
         .foregroundColor(viewModel.fanLamps.useAlarmColor || applicationLamps.useAlarmColor ? .alarm : .main)
         .onReceive(viewModel.$fanRotationDuration) { val in
@@ -129,7 +129,7 @@ struct ControllerRender: View {
 struct FanImageRender: View {
     @Binding var angle: Angle
     @Binding var activeSheet: FanView.Sheet?
-    var fanViewModel: FanViewModel
+    var viewModel: FanViewModel
     
     var body: some View {
         VStack() {
@@ -143,9 +143,11 @@ struct FanImageRender: View {
                 .allowsHitTesting(false)
                 .overlay(
                     Button(action: {
-                        activeSheet = .detail
+                        if viewModel.model.fanCharacteristics != nil {
+                            activeSheet = .detail
+                        }
                     }, label: {
-                        let labels = fanViewModel.displayedLamps.labels
+                        let labels = viewModel.displayedLamps.labels
                         if labels.isEmpty {
                             AnyView(Color.clear)
                         }
@@ -190,27 +192,39 @@ struct FanNameRender: View {
 }
 
 struct OverlaySheetRender: View {
-    var fanViewModel: FanViewModel
     @Binding var activeSheet: FanView.Sheet?
-    @Binding var requestedKeypresses: Int
+    var viewModel: FanViewModel
+    var chars: FanCharacteristics?
+    var timeOnTimer: Int = 0
+    private var macAddr: String = ""
+
     @State private var wheelPosition: Int = 0
     var body: some View {
         Color.clear
             .sheet(item: $activeSheet, onDismiss: {
                 defer { wheelPosition = 0 }
                 if wheelPosition > 0 {
-                    fanViewModel.model.setFan(addHours: wheelPosition)
+                    viewModel.model.setFan(addHours: wheelPosition)
                 }
             }) {
                 switch $0 {
                 case .detail:
-                    Text("detail sheet")
+                    DetailSheet(chars: chars ?? FanCharacteristics())
                 case .fanName:
-                    Text("name sheet")
+                    NameSheet(storageKey: StorageKey.fanName(macAddr))
                 case .timer:
-                    TimerSheet(wheelPosition: $wheelPosition, timeOnTimer: fanViewModel.model.fanCharacteristics?.timer ?? 0).eraseToAnyView()
+                    TimerSheet(wheelPosition: $wheelPosition, timeOnTimer: timeOnTimer).eraseToAnyView()
                 }
             }
+    }
+    init (viewModel: FanViewModel, activeSheet: Binding<FanView.Sheet?>) {
+        self.viewModel = viewModel
+        self._activeSheet = activeSheet
+        chars = viewModel.model.fanCharacteristics
+        viewModel.model.fanCharacteristics.map { c in
+            self.macAddr = c.macAddr
+            self.timeOnTimer = c.timer
+        }
     }
 }
 
@@ -250,7 +264,8 @@ struct FanView_Previews: PreviewProvider {
     static var house = House()
     static var previews: some View {
         FanView(addr: "0.0.0.0:8181", chars: chars, house: house, weather: Weather(house: house))
-            .preferredColorScheme(.light)
+            .preferredColorScheme(.dark)
+            .environmentObject(ApplicationLamps.shared)
     }
 }
 

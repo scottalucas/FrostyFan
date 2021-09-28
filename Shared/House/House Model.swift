@@ -52,7 +52,7 @@ extension House {
         typealias HostAddr = String
         return
             NetworkAddress.hosts.publisher
-            .prepend("192.168.1.240:8181") //testing
+            .prepend("192.168.1.67:8080") //testing
             .setFailureType(to: ConnectionError.self)
             .flatMap ({ host -> AnyPublisher<(HostAddr, FanCharacteristics), ConnectionError> in
                 guard let loader = FanStatusLoader(addr: host, action: .refresh) else { return Empty.init(completeImmediately: false).eraseToAnyPublisher() }
