@@ -17,16 +17,13 @@ enum AdjustmentError: Error {
     case retrievalError(ConnectionError)
     case parentOutOfScope
     case speedDidNotChange
+    case timerDidNotChange
     case missingKeys
     case notFound
     case upstream (Error)
     
     static func cast(_ error: Error) -> AdjustmentError {
         .upstream(error)
-    }
-    
-    func publisher<V> (valueType value: V.Type) -> AnyPublisher<V, E> {
-        return Fail.init(outputType: value, failure: self).eraseToAnyPublisher()
     }
 }
 
@@ -35,20 +32,10 @@ enum ConnectionError: Error {
     static func cast(_ error: Error) -> ConnectionError {
         return .upstream(error)
     }
-    
-    func publisher<V> (valueType value: V.Type) -> AnyPublisher<V, E> {
-        return Fail.init(outputType: value, failure: self).eraseToAnyPublisher()
-    }
-    
     case badUrl
     case timeout
     case networkError (String)
     case serverError (String)
     case decodeError (String)
     case upstream (Error)
-    
-    static func publisher<T> (ofType type: T.Type, withError error: Error) -> AnyPublisher<T, ConnectionError> {
-        let err: ConnectionError = error as? ConnectionError ?? .upstream(error)
-        return Fail<T, ConnectionError>.init(error: err).eraseToAnyPublisher()
-    }
 }

@@ -28,7 +28,8 @@ class House: ObservableObject {
         scanning = true
         fans.removeAll()
         scanner
-            .timeout(.seconds(15), scheduler: DispatchQueue.main)
+            .timeout(.seconds(15), scheduler: DispatchQueue.global())
+            .receive(on: DispatchQueue.main)
             .sink(receiveCompletion: { [weak self] comp in
                 self?.scanning = false
                 if case .finished = comp {

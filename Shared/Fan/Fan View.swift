@@ -14,43 +14,23 @@ struct FanView: View {
     @StateObject var viewModel: FanViewModel
     @AppStorage var name: String
     @State private var angle: Angle = .zero
+    @State private var timerWheelPosition: Int = .zero
     @State private var activeSheet: Sheet?
-    @State private var requestedKeypresses: Int = 0
     enum Sheet: Identifiable {
         var id: Int { hashValue }
         case fanName
         case timer
         case detail
-        
-        func view (for viewModel: FanViewModel) -> AnyView {
-            Text("test").eraseToAnyView()
-//            switch self {
-//            case .fanName:
-//                guard let addr = viewModel.model.fanCharacteristics?.macAddr else {
-//                    return EmptyView().allowsHitTesting(false).eraseToAnyView()
-//                }
-//                return NameSheet(storageKey: StorageKey.fanName(addr)).eraseToAnyView()
-//            case .timer:
-//                break
-//                //                return TimerSheet(fanViewModel: viewModel).eraseToAnyView()
-////                return TimerSheet(hoursToAdd: $newTime).eraseToAnyView()
-//            case .detail:
-//                guard let chars = viewModel.model.fanCharacteristics else {
-//                    return EmptyView().allowsHitTesting(false).eraseToAnyView()
-//                }
-//                return DetailSheet(chars: chars).eraseToAnyView()
-//            }
-        }
     }
     
     var body: some View {
         ZStack {
-            ControllerRender(viewModel: viewModel, speed: $viewModel.model.physicalSpeed, activeSheet: $activeSheet)
+            ControllerRender(viewModel: viewModel, speed: $viewModel.physicalFanSpeed, activeSheet: $activeSheet)
             FanImageRender(angle: $angle, activeSheet: $activeSheet, viewModel: viewModel)
             FanNameRender(activeSheet: $activeSheet, name: $name, fanViewModel: viewModel)
-            OverlaySheetRender(viewModel: viewModel, activeSheet: $activeSheet)
         }
         .foregroundColor(viewModel.fanLamps.useAlarmColor || applicationLamps.useAlarmColor ? .alarm : .main)
+        .modifier(OverlaySheetRender(viewModel: viewModel, activeSheet: $activeSheet))
         .onReceive(viewModel.$fanRotationDuration) { val in
             self.angle = .zero
             withAnimation(Animation.linear(duration: val)) {
@@ -110,12 +90,12 @@ struct ControllerRender: View {
                             }
                             .padding(.bottom, 15)
                         })
-                    ForEach (viewModel.displayedLamps.labels, id: \.self) { element in
+                    ForEach (viewModel.displayedAppLamps.labels, id: \.self) { element in
                      Text(element)
                     }
                 }
             } else {
-                ForEach (viewModel.displayedLamps.labels, id: \.self) { element in
+                ForEach (viewModel.displayedAppLamps.labels, id: \.self) { element in
                  Text(element)
                 }
             }
@@ -147,7 +127,7 @@ struct FanImageRender: View {
                             activeSheet = .detail
                         }
                     }, label: {
-                        let labels = viewModel.displayedLamps.labels
+                        let labels = viewModel.displayedAppLamps.labels
                         if labels.isEmpty {
                             AnyView(Color.clear)
                         }
@@ -191,20 +171,20 @@ struct FanNameRender: View {
     }
 }
 
-struct OverlaySheetRender: View {
+struct OverlaySheetRender: ViewModifier {
     @Binding var activeSheet: FanView.Sheet?
-    var viewModel: FanViewModel
-    var chars: FanCharacteristics?
-    var timeOnTimer: Int = 0
+    @State var wheelPosition: Int = 0
+    private var viewModel: FanViewModel
+    private var chars: FanCharacteristics?
+    private var timeOnTimer: Int = 0
     private var macAddr: String = ""
 
-    @State private var wheelPosition: Int = 0
-    var body: some View {
-        Color.clear
+    func body (content: Content) -> some View {
+        content
             .sheet(item: $activeSheet, onDismiss: {
                 defer { wheelPosition = 0 }
                 if wheelPosition > 0 {
-                    viewModel.model.setFan(addHours: wheelPosition)
+                    viewModel.setTimer(addHours: wheelPosition)
                 }
             }) {
                 switch $0 {

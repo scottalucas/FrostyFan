@@ -42,13 +42,15 @@ final class FanLamps: OptionSet, RawRepresentable {
     var rawValue: Int
     
     static var interlockActive = FanLamps(rawValue: 1)
-    static var physicalSpeedMismatchToRequested = FanLamps(rawValue: 1 << 1)
+    static var physicalSpeedMismatchToRequested = FanLamps(rawValue: 1 << 1) //may not need
     static var damperOperating = FanLamps(rawValue: 1 << 2)
     static var speedAdjusting = FanLamps(rawValue: 1 << 3)
     static var nonZeroTimeRemaining = FanLamps(rawValue: 1 << 4)
     static var timerAdjusting = FanLamps(rawValue: 1 << 5)
     static var fanOff = FanLamps(rawValue: 1 << 6)
-        
+    static var speedAdjustmentFailed = FanLamps(rawValue: 1 << 7)
+    static var timerAdjustmentFailed = FanLamps(rawValue: 1 << 8)
+
     var labels: [String] {
         var retVal = Array<String>()
         if self.contains(.interlockActive) { retVal.append("Interlock active") }
@@ -58,6 +60,8 @@ final class FanLamps: OptionSet, RawRepresentable {
         if self.contains(.nonZeroTimeRemaining) { retVal.append("Time remaining not zero") }
         if self.contains(.timerAdjusting) { retVal.append("Timer adjusting") }
         if self.contains(.fanOff) { retVal.append("Zero speed") }
+        if self.contains(.speedAdjustmentFailed) { retVal.append("Speed adjustment failed")}
+        if self.contains(.timerAdjustmentFailed) { retVal.append("Timer adjustment failed.")}
         return retVal
     }
     
@@ -70,8 +74,7 @@ final class FanLamps: OptionSet, RawRepresentable {
     }
     
     var showPhysicalSpeedIndicator: Bool {
-//        self.contains(.speedAdjusting)
-        self.contains(.physicalSpeedMismatchToRequested) && !self.contains(.fanOff)
+        self.contains(.speedAdjusting) && (!self.contains(.fanOff) || self.contains(.damperOperating))
     }
     
     var useAlarmColor: Bool {
