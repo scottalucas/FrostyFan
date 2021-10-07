@@ -18,8 +18,10 @@ enum AdjustmentError: Error {
     case parentOutOfScope
     case speedDidNotChange
     case timerDidNotChange
+    case fanNotResponsive
     case missingKeys
     case notFound
+    case notAtTarget
     case upstream (Error)
     
     static func cast(_ error: Error) -> AdjustmentError {

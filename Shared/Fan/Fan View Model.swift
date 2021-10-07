@@ -16,16 +16,16 @@ class FanViewModel: ObservableObject {
 //    @Published var chars: FanCharacteristics?
     @Published var controllerSegments = Array<String>()
     @Published var offDateTxt = ""
-    @Published var displayedSegmentNumber: Int = 0
+    @Published var displayedSegment: Int = 0
     @Published var fanLamps = FanLamps()
     @Published var fanRotationDuration: Double = 0.0
-    @Published var physicalFanSpeed: Int?
+    @Published var currentMotorSpeed: Int?
     @Published var displayedAppLamps = ApplicationLamps.shared
-    @Published var displayedFanLamps = FanLamps()
     private var displayedMotorSpeed: Int?
     private var displayMotor = PassthroughSubject<AnyPublisher<Double, Never>, Never>()
     
-    private var bag = Set<AnyCancellable>()
+    private var longTermBag = Set<AnyCancellable>()
+    private var monitorBag = Set<AnyCancellable>()
     
     init (atAddr addr: String, usingChars chars: FanCharacteristics, inHouse house: House, weather: Weather) {
         print("view model init")
@@ -36,7 +36,7 @@ class FanViewModel: ObservableObject {
         controllerSegments = updateControllerSegments(forModel: chars.airspaceFanModel)
         offDateTxt = updateOffDate(minutesLeft: chars.timer)
         updatePhysicalSpeed(toNewSpeed: chars.speed)
-        displayedSegmentNumber = chars.speed
+        displayedSegment = chars.speed
     }
     
     convenience init () {
@@ -59,9 +59,9 @@ class FanViewModel: ObservableObject {
     }
     
     private func updatePhysicalSpeed (toNewSpeed speed: Int) {
-        defer { physicalFanSpeed = speed }
-        if physicalFanSpeed == nil { displayedSegmentNumber = speed } //should only happen first time through
-        if speed != displayedSegmentNumber {
+        defer { currentMotorSpeed = speed }
+        if currentMotorSpeed == nil { displayedSegment = speed } //should only happen first time through
+        if speed != displayedSegment {
             fanLamps.insert(.physicalSpeedMismatchToRequested)
         } else {
             fanLamps.remove(.physicalSpeedMismatchToRequested)
@@ -82,14 +82,31 @@ class FanViewModel: ObservableObject {
         } else {
             fanLamps.remove(.interlockActive)
         }
+        
+    }
+
+    private func killAllAdjustments () {
+        monitorBag.forEach { $0.cancel() }
+        monitorBag.removeAll()
+        fanLamps.remove(.speedAdjusting)
+        fanLamps.remove(.timerAdjusting)
     }
     
     func setTimer(addHours: Int) {
+        killAllAdjustments()
         fanLamps.insert(.timerAdjusting)
         model.setFan(addHours: addHours)
             .receive(on: DispatchQueue.main)
+            .handleEvents(receiveCompletion: { comp in
+                if case .failure (_) = comp {
+                    self.fanLamps.insert(.fanNotResponsive)
+                }
+            })
+            .print("retry before")
+            .retry(2)
+            .print("retry after")
             .sink(receiveCompletion: { [weak self] comp in
-                self?.fanLamps.remove(.timerAdjusting)
+                self?.fanLamps.remove([.timerAdjusting, .fanNotResponsive])
                 if case .failure(let err) = comp {
                     print ("Set fan timer failed \(err)")
                     self?.fanLamps.insert(.timerAdjustmentFailed)
@@ -98,7 +115,7 @@ class FanViewModel: ObservableObject {
                     self?.fanLamps.remove(.timerAdjustmentFailed)
                 }
             }, receiveValue: { _ in })
-            .store(in: &bag)
+            .store(in: &monitorBag)
     }
 }
 
@@ -120,30 +137,49 @@ extension FanViewModel {
 extension FanViewModel {
     func startSubscribers (using chars: Published<FanCharacteristics?>.Publisher) {
         
-        $displayedSegmentNumber
+        $displayedSegment
             .filter { $0 != -1 }
-            .filter { [weak self] dSpeed in
-                guard let self = self, let pSpeed = self.physicalFanSpeed else { return false }
-                return dSpeed != pSpeed
+            .filter { [weak self] _ in
+                let failed = self?.fanLamps.contains(.speedAdjustmentFailed) ?? true
+                return !failed
+            }
+            .filter { [weak self] displayedSpeed in
+                guard let self = self, let motorSpeed = self.currentMotorSpeed else { return false }
+                return displayedSpeed != motorSpeed
             }
             .sink(receiveValue: { [weak self] newSpeed in
                 guard let self = self else { return }
+                self.killAllAdjustments()
                 self.fanLamps.insert(.speedAdjusting)
                 self.model.setFan(toSpeed: newSpeed)
                     .receive(on: DispatchQueue.main)
+                    .retry(2)
+                    .handleEvents(receiveCompletion: { comp in
+                        if case .failure (_) = comp {
+                            self.fanLamps.insert(.fanNotResponsive)
+                        }
+                    })
                     .sink(receiveCompletion: { [weak self] comp in
-                        self?.fanLamps.remove(.speedAdjusting)
+                        self?.fanLamps.remove([.speedAdjusting, .fanNotResponsive])
                         if case .failure(let err) = comp {
                             print ("Set fan speed failed \(err)")
                             self?.fanLamps.insert(.speedAdjustmentFailed)
+                            DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(10)) { [weak self] in
+                                DispatchQueue.main.async {
+                                    self?.fanLamps.remove(.speedAdjustmentFailed)
+                                    self?.displayedSegment = self?.currentMotorSpeed ?? -1
+                                    print("timeout failure recovered\r\tDisplayed segment: \(self.map { String($0.displayedSegment) } ?? "Nil")\r\tFlag: \(self.map { $0.fanLamps.contains(.speedAdjustmentFailed) }?.description ?? "Nil")\r\tLast speed detected: \(self.map { $0.currentMotorSpeed?.description ?? "Nil" } ?? "Nil")")
+                                }
+                            }
+                            self?.displayedSegment = self?.currentMotorSpeed ?? -1
                         } else {
                             print("Set fan speed completed")
                             self?.fanLamps.remove(.speedAdjustmentFailed)
                         }
                     }, receiveValue: { _ in })
-                    .store(in: &self.bag)
+                    .store(in: &self.monitorBag)
             })
-            .store(in: &bag)
+            .store(in: &longTermBag)
         
         chars
             .compactMap { $0?.timer }
@@ -152,22 +188,23 @@ extension FanViewModel {
                 guard let self = self else { return "" }
                 return self.updateOffDate(minutesLeft: timeTillOff)
             }
+            .print()
             .assign(to: &$offDateTxt)
 
         chars
             .compactMap { $0?.speed }
-            .print("in view model \(model.ipAddr)")
             .receive(on: DispatchQueue.main)
             .sink(receiveValue: { [weak self] actualSpeed in
                 guard let self = self else { return }
                 if actualSpeed == 0 {
                     self.fanLamps.insert(.fanOff)
+                    self.fanLamps.remove(.nonZeroTimeRemaining)
                 } else {
                     self.fanLamps.remove(.fanOff)
                 }
                 self.updatePhysicalSpeed(toNewSpeed: actualSpeed)
             })
-            .store(in: &bag)
+            .store(in: &longTermBag)
         
         chars
             .compactMap { $0?.damper }
@@ -179,7 +216,7 @@ extension FanViewModel {
                     self?.fanLamps.remove(.damperOperating)
                 }
             })
-            .store(in: &bag)
+            .store(in: &longTermBag)
         
         chars
             .compactMap { $0?.airspaceFanModel }
@@ -197,7 +234,7 @@ extension FanViewModel {
                 guard let self = self else { return }
                 self.updateInterlock(interlock1: chars.interlock1, interlock2: chars.interlock2)
             })
-            .store(in: &bag)
+            .store(in: &longTermBag)
 
         displayMotor
             .switchToLatest()
@@ -213,7 +250,7 @@ extension FanViewModel {
                     house.fans.remove(chars)
                 }
             })
-            .store(in: &bag)
+            .store(in: &longTermBag)
         
         weather.$currentTempStr
             .receive(on: DispatchQueue.main)
@@ -222,13 +259,13 @@ extension FanViewModel {
                 if self.weather.tooCold { self.displayedAppLamps.insert(.tooCold) } else { self.displayedAppLamps.remove(.tooCold) }
                 if self.weather.tooHot { self.displayedAppLamps.insert(.tooHot) } else { self.displayedAppLamps.remove(.tooHot) }
             })
-            .store(in: &bag)
+            .store(in: &longTermBag)
         }
     }
 
 extension FanViewModel {
     private func setDisplayMotor(toSpeed: Int) {
-        guard physicalFanSpeed != toSpeed else { return }
+        guard currentMotorSpeed != toSpeed else { return }
 //        defer { displayedMotorSpeed = toSpeed }
         let scaleFactor = 3.5
         guard toSpeed != 0 else {

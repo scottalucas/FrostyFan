@@ -25,7 +25,7 @@ struct FanView: View {
     
     var body: some View {
         ZStack {
-            ControllerRender(viewModel: viewModel, speed: $viewModel.physicalFanSpeed, activeSheet: $activeSheet)
+            ControllerRender(viewModel: viewModel, activeSheet: $activeSheet)
             FanImageRender(angle: $angle, activeSheet: $activeSheet, viewModel: viewModel)
             FanNameRender(activeSheet: $activeSheet, name: $name, fanViewModel: viewModel)
         }
@@ -52,7 +52,7 @@ struct SpeedController: View {
     @ObservedObject var viewModel: FanViewModel
     
     var body: some View {
-        Picker (selection: $viewModel.displayedSegmentNumber, label: Text("Picker")) {
+        Picker (selection: $viewModel.displayedSegment, label: Text("Picker")) {
             ForEach (0..<viewModel.controllerSegments.count, id: \.self) { segmentIndex in
                 Text(viewModel.controllerSegments[segmentIndex])
                     .tag(segmentIndex)
@@ -65,7 +65,6 @@ struct SpeedController: View {
 
 struct ControllerRender: View {
     var viewModel: FanViewModel
-    @Binding var speed: Int?
     @Binding var activeSheet: FanView.Sheet?
     
     var body: some View {
@@ -225,7 +224,7 @@ struct PhysicalSpeedIndicator: ViewModifier {
                             })
                             .alignmentGuide(HorizontalAlignment.center, computeValue: { dimension in
                                 let oneSegW = geo2.size.width/CGFloat(viewModel.controllerSegments.count)
-                                let offs = oneSegW/2.0 + (oneSegW * CGFloat(viewModel.physicalFanSpeed ?? 0)) - dimension.width
+                                let offs = oneSegW/2.0 + (oneSegW * CGFloat(viewModel.currentMotorSpeed ?? 0)) - dimension.width
                                 return -offs
                             })
                             .animation(.easeInOut)

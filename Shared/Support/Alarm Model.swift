@@ -50,6 +50,7 @@ final class FanLamps: OptionSet, RawRepresentable {
     static var fanOff = FanLamps(rawValue: 1 << 6)
     static var speedAdjustmentFailed = FanLamps(rawValue: 1 << 7)
     static var timerAdjustmentFailed = FanLamps(rawValue: 1 << 8)
+    static var fanNotResponsive = FanLamps(rawValue: 1 << 9)
 
     var labels: [String] {
         var retVal = Array<String>()
@@ -61,7 +62,8 @@ final class FanLamps: OptionSet, RawRepresentable {
         if self.contains(.timerAdjusting) { retVal.append("Timer adjusting") }
         if self.contains(.fanOff) { retVal.append("Zero speed") }
         if self.contains(.speedAdjustmentFailed) { retVal.append("Speed adjustment failed")}
-        if self.contains(.timerAdjustmentFailed) { retVal.append("Timer adjustment failed.")}
+        if self.contains(.timerAdjustmentFailed) { retVal.append("Timer adjustment failed")}
+        if self.contains(.fanNotResponsive) { retVal.append("Fan unresponsive")}
         return retVal
     }
     
