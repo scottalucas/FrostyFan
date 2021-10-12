@@ -11,27 +11,31 @@ import Combine
 
 class House: ObservableObject {
     typealias IPAddr = String
+    static let shared = House()
     @Published var fans = Set<FanCharacteristics>() //IP addresses
-    @Published var scanning = false
-    var runningFans: Bool {
-        fans.filter { chars in chars.speed > 0}.count > 0 ? true : false
-    }
+    @Published var status = HouseStatus()
+//    @Published var scanning = false
+//    var runningFans: Bool {
+//        fans.filter { chars in chars.speed > 0}.count > 0 ? true : false
+//    }
     private var bag = Set<AnyCancellable>()
     
-    init () {
+    private init () {
 //        scanForFans()
     }
     
     func scanForFans () {
-        guard !scanning else { return }
+        guard !status.contains(.scanning) else { return }
         print("start scanning")
-        scanning = true
+        status.insert(.scanning)
+        status.insert(.noFansAvailable)
         fans.removeAll()
         scanner
             .timeout(.seconds(15), scheduler: DispatchQueue.global())
             .receive(on: DispatchQueue.main)
             .sink(receiveCompletion: { [weak self] comp in
-                self?.scanning = false
+                guard let self = self else { return }
+                self.status.remove(.scanning)
                 if case .finished = comp {
                     print ("scan complete")
                 }
@@ -43,6 +47,7 @@ class House: ObservableObject {
                 var modChars = chars
                 modChars.ipAddr = ipAddr
                 self?.fans.update(with: modChars)
+                self?.status.remove(.noFansAvailable)
             })
             .store(in: &bag)
     }
@@ -50,18 +55,16 @@ class House: ObservableObject {
 
 extension House {
     var scanner: AnyPublisher<(String, FanCharacteristics), ConnectionError> {
-        typealias HostAddr = String
         return
             NetworkAddress.hosts.publisher
             .prepend("192.168.1.67:8080") //testing
             .setFailureType(to: ConnectionError.self)
-            .flatMap ({ host -> AnyPublisher<(HostAddr, FanCharacteristics), ConnectionError> in
-//                guard let loader = FanStatusLoader(addr: host) else { return Empty.init(completeImmediately: false).eraseToAnyPublisher() }
-                return FanStatusLoader(addr: host).loadResults(action: .refresh)
+            .flatMap ({ addr -> AnyPublisher<(IPAddr, FanCharacteristics), ConnectionError> in
+                return FanStatusLoader(addr: addr).loadResults(action: .refresh)
                     .catch({ _ in
                         Empty.init(completeImmediately: false)
                     })
-                    .map { [host] chars in (host, chars) }
+                    .map { [addr] chars in (addr, chars) }
                     .eraseToAnyPublisher()
             })
             .eraseToAnyPublisher()

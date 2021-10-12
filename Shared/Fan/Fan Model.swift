@@ -12,26 +12,32 @@ import SwiftUI
 class FanModel: ObservableObject {
     var ipAddr: String
     @EnvironmentObject var house: House
-    @Published var motor: Motor?
     @Published var fanCharacteristics: FanCharacteristics?
-    @Published var commError: ConnectionError?
-    @Published var fanLamps = FanLamps()
+//    @Published var commError: ConnectionError?
+    @Published var fanStatus = FanStatus()
+    private var motor: MotorDelegate!
+    private var timer: TimerDelegate!
     private var bag = Set<AnyCancellable>()
+    private var refreshBag = Set<AnyCancellable>()
     
     init(forAddress address: String, usingChars chars: FanCharacteristics? = nil) {
         ipAddr = address
-        motor = Motor(fan: self)
+        motor = Motor(chars: &fanCharacteristics, addr: ipAddr)
+        timer = FanTimer(chars: &fanCharacteristics, addr: ipAddr)
+
         if let c = chars {
             fanCharacteristics = c
         } else {
-            getFanStatus(sendingCommand: .refresh)
+            FanStatusLoader(addr: self.ipAddr).loadResults(action: .refresh)
                 .receive(on: DispatchQueue.main)
                 .sink(receiveCompletion: { [weak self] comp in
                     if case .failure(let err) = comp {
-                        print("Error \(err), removing fan from house.")
-                        if let myFanFromHouse = self?.house.fans.first(where: { chars in chars.ipAddr == self!.ipAddr }) {
-                            self!.house.fans.remove(myFanFromHouse)
-                        }
+
+                        print ("Error while refreshing fan at \(self.map { $0.ipAddr } ?? "unknown address"), error: \(err)")
+                        self?.fanStatus = []
+                        self?.fanStatus.insert(.fanNotResponsive)
+
+
                     }
                 }, receiveValue: { [weak self] chars in
                     self?.fanCharacteristics = chars
@@ -41,34 +47,182 @@ class FanModel: ObservableObject {
         print("init fan model \(ipAddr) chars \(chars == nil ? "not " : "")available")
     }
     
-    func setFan(toSpeed finalTarget: Int) -> Future<(), AdjustmentError> {
+    func setFan(toSpeed finalTarget: Int) {
+        guard fanCharacteristics != nil else { fanStatus.insert(.speedAdjustmentFailed); return }
+        stopFanRefresh()
+        fanStatus.insert(.speedAdjusting)
+        fanStatus.remove(.speedAdjustmentFailed)
         print("set speed to \(finalTarget)")
-        guard let motor = motor else {
-            return Future<(), AdjustmentError> { promise in promise(.failure(.parentOutOfScope))}
-        }
-        return motor.setSpeed(to: finalTarget)
+        motor.setSpeed(to: finalTarget)
+            .retry(2)
+            .sink(receiveCompletion: { [weak self] comp in
+                self?.fanStatus.remove(.speedAdjusting)
+                self?.startFanRefresh()
+                if case .failure(let err) = comp {
+                    print(err.description)
+                    self?.fanStatus.insert(.speedAdjustmentFailed)
+                    switch err {
+                        case .fanNotResponsive, .notFound:
+                            if let chars = self?.fanCharacteristics {
+                                self?.house.fans.remove(chars)
+                            }
+                        default:
+                            break
+                    }
+                } else {
+                    self?.fanStatus.remove(.speedAdjustmentFailed)
+                    if let spd = self?.fanCharacteristics?.speed {
+                        if spd == 0 {
+                            self?.fanStatus.insert(.fanOff)
+                            self?.fanStatus.remove(.nonZeroTimeRemaining)
+                        } else {
+                            self?.fanStatus.remove(.fanOff)
+                        }
+                    }
+                }
+            }, receiveValue: { })
+            .store(in: &bag)
     }
     
-    func setFan(addHours hours: Int) -> Future<(), AdjustmentError> {
-        guard let motor = motor else {
-            return Future<(), AdjustmentError> { promise in promise(.failure(.parentOutOfScope)) }
-        }
-        let current = fanCharacteristics.map { $0.timer } ?? 0
+    func setFan(addHours hours: Int) {
+        guard let chars = fanCharacteristics, hours > 0 else { fanStatus.insert(.timerAdjustmentFailed); return }
+        stopFanRefresh()
+        fanStatus.insert(.nonZeroTimeRemaining)
+        fanStatus.insert(.timerAdjusting)
+        fanStatus.remove(.timerAdjustmentFailed)
+        let current = chars.timer
         let target = min (current + hours * 60, 12 * 60) - 10
         print("timer target \(target)")
-        return motor.setTimer(to: target)
+        timer.setTimer(to: target)
+            .sink(receiveCompletion: { [weak self] comp in
+                self?.fanStatus.remove(.timerAdjusting)
+                self?.startFanRefresh()
+                if case .failure(let err) = comp {
+                    print (err.description)
+                    self?.fanStatus.insert(.timerAdjustmentFailed)
+                    self?.fanStatus.remove(.nonZeroTimeRemaining)
+                } else {
+                    self?.fanStatus.remove(.timerAdjustmentFailed)
+                }
+            }, receiveValue: { })
+            .store(in: &bag)
     }
     
     func refreshFan () {
-        getFanStatus(sendingCommand: .refresh)
-            .sink(receiveCompletion: { _ in }, receiveValue: { [weak self] chars in
+        FanStatusLoader(addr: self.ipAddr).loadResults(action: .refresh)
+            .sink(receiveCompletion: { [weak self] comp in
+                if case .failure(let err) = comp {
+                    print ("Error while refreshing fan at \(self.map { $0.ipAddr } ?? "unknown address"), error: \(err)")
+                    self?.fanStatus = []
+                    self?.fanStatus.insert(.fanNotResponsive)
+                }
+            }, receiveValue: { [weak self] chars in
                 self?.fanCharacteristics = chars
             })
-            .store(in: &bag)
+            .store(in: &self.refreshBag)
+    }
+    
+    private func stopFanRefresh () {
+        refreshBag.forEach({ $0.cancel() })
+        refreshBag.removeAll()
+    }
+    
+    private func startFanRefresh () {
+        guard refreshBag.isEmpty else { return }
+        Timer
+            .publish(every: 300.0, on: .main, in: .common)
+            .autoconnect()
+            .sink(receiveValue: { [weak self] _ in
+//                guard let self = self else { return }
+                self?.refreshFan()
+//                FanStatusLoader(addr: self.ipAddr).loadResults(action: .refresh)
+//                    .sink(receiveCompletion: { [weak self] comp in
+//                        if case .failure(let err) = comp {
+//                            print ("Error while refreshing fan at \(self.map { $0.ipAddr } ?? "unknown address"), error: \(err)")
+//                            self?.fanStatus = []
+//                            self?.fanStatus.insert(.fanNotResponsive)
+//                        }
+//                    }, receiveValue: { [weak self] chars in
+//                        self?.fanCharacteristics = chars
+//                    })
+//                    .store(in: &self.refreshBag)
+            })
+            .store(in: &refreshBag)
     }
 }
 
-
+extension FanModel {
+    private func startSubscribers () {
+        $fanStatus
+            .filter { $0.contains(.fanNotResponsive) }
+            .sink(receiveValue: { _ in
+                print("Fan not responsive, removing from house.")
+                if let myFanFromHouse = self.house.fans.first(where: { chars in chars.ipAddr == self.ipAddr }) {
+                    self.house.fans.remove(myFanFromHouse)
+                }
+            })
+            .store(in: &bag)
+        
+        $fanStatus
+            .filter { $0.contains(.speedAdjusting) || $0.contains(.timerAdjusting) }
+            .sink(receiveValue: { _ in
+                self.stopFanRefresh()
+            })
+            .store(in: &bag)
+        
+        $fanStatus
+            .filter { !$0.contains(.speedAdjusting) }
+            .filter { !$0.contains(.timerAdjusting) }
+            .sink(receiveValue: { _ in
+                self.startFanRefresh()
+            })
+            .store(in: &bag)
+        
+        $fanCharacteristics
+            .compactMap { $0?.speed }
+            .sink (receiveValue: { spd in
+                if spd == 0 {self.fanStatus.insert(.fanOff)
+                } else {
+                    self.fanStatus.remove(.fanOff)
+                }
+            })
+            .store(in: &bag)
+        
+        $fanCharacteristics
+            .compactMap { $0 }
+            .map { ($0.interlock1 || $0.interlock2) }
+            .sink(receiveCompletion: { _ in }, receiveValue: { active in
+                if active {
+                    self.fanStatus.insert(.interlockActive)
+                } else {
+                    self.fanStatus.remove(.interlockActive)
+                }
+            })
+            .store(in: &bag)
+        
+        $fanCharacteristics
+            .compactMap { $0 }
+            .map { $0.damper == .operating }
+            .sink(receiveCompletion: { _ in }, receiveValue: { operating in
+                if operating {
+                    self.fanStatus.insert(.damperOperating)
+                } else {
+                    self.fanStatus.remove(.damperOperating)
+                }
+            })
+            .store(in: &bag)
+        
+        $fanCharacteristics
+            .sink(receiveCompletion: { _ in }, receiveValue: { optChars in
+                if optChars == nil {
+                    self.fanStatus.insert(.noFanCharacteristics)
+                } else {
+                    self.fanStatus.remove(.noFanCharacteristics)
+                }
+            })
+        .store(in: &bag)
+    }
+}
 
 extension FanModel {
     convenience init () {
@@ -119,23 +273,23 @@ extension FanModel {
         }
     }
 }
-
-extension FanModel {
-    fileprivate func getFanStatus(sendingCommand command: FanModel.Action) -> Future<FanCharacteristics, ConnectionError> {
-        return Future<FanCharacteristics, ConnectionError> { promise in
-            FanStatusLoader(addr: self.ipAddr)
-                .loadResults(action: command)
-                .sink(receiveCompletion: { comp in
-                    if case .failure (let err) = comp {
-                        promise(.failure(err))
-                    }
-                }, receiveValue: { chars in
-                    promise(.success(chars))
-                })
-                .store(in: &self.bag)
-        }
-    }
-}
+//
+//extension FanModel {
+//    fileprivate func getFanStatus(sendingCommand command: FanModel.Action) -> Future<FanCharacteristics, ConnectionError> {
+//        return Future<FanCharacteristics, ConnectionError> { promise in
+//            FanStatusLoader(addr: self.ipAddr)
+//                .loadResults(action: command)
+//                .sink(receiveCompletion: { comp in
+//                    if case .failure (let err) = comp {
+//                        promise(.failure(err))
+//                    }
+//                }, receiveValue: { chars in
+//                    promise(.success(chars))
+//                })
+//                .store(in: &self.bag)
+//        }
+//    }
+//}
 
 struct FanCharacteristics: Decodable, Hashable {
     var ipAddr: String?
@@ -298,50 +452,46 @@ struct FanStatusLoader {
     }
 }
 
-class Motor {
-    enum Context { case adjust, standby }
-    private var fan: FanModel
+final class Motor: MotorDelegate {
+    enum Context { case adjusting, standby }
+    private var chars: FanCharacteristics?
+    private var addr: String
     private var context: Context {
         didSet {
-            switch context {
-                case .standby:
-                    adjusterBag.forEach { $0.cancel() }
-                    adjusterBag.removeAll()
-                    watchdogTimer.cancel()
-                    refreshTimer = Timer
-                        .publish(every: 300.0, on: .main, in: .common)
-                        .autoconnect()
-                        .sink(receiveValue: { [weak self] _ in
-                            self?.fan.refreshFan()
-                        })
-                case .adjust:
-                    refreshTimer.cancel()
+            if case .standby = context {
+                adjusterBag.forEach { $0.cancel() }
+                adjusterBag.removeAll()
+                watchdogTimer.cancel()
             }
         }
     }
     private var lastSpeed: Int?
-    private var lastTimer: Int?
     private var adjusterBag = Set<AnyCancellable>()
-    private var refreshTimer = AnyCancellable({ })
     private var watchdogTimer = AnyCancellable({ })
     private var loaderEmitter = PassthroughSubject<FanStatusLoader.OutputPublisher, Never>()
-    private var fanLoader: FanStatusLoader
     
-    init (fan: FanModel) {
-        self.fan = fan
-        fanLoader = FanStatusLoader(addr: fan.ipAddr)
+    required init (chars: inout FanCharacteristics?, addr: String) {
+        self.chars = chars
+        self.addr = addr
         context = .standby
     }
-
+    
+    
     func setSpeed(to target: Int) -> Future<(), AdjustmentError> {
-        context = .adjust
-        let initialSpeed = fan.fanCharacteristics?.speed
-        return Future<(), AdjustmentError> { [fanLoader, initialSpeed] promise in
-            guard let initialSpeed = initialSpeed else {
-                promise(.failure(.notReady("No initial fan speed")))
+        
+        return Future<(), AdjustmentError> { [weak self, addr] promise in
+            guard let self = self else {
+                promise(.failure(.parentOutOfScope))
                 return
             }
-
+            guard let initialSpeed = self.chars?.speed else {
+                promise(.failure(.missingKeys))
+                return
+            }
+            self.context = .adjusting
+            
+            let loader = FanStatusLoader(addr: addr)
+            
             self.watchdogTimer =
             Timer.publish(every: 120, on: .main, in: .common)
                 .sink(receiveValue: { [weak self] _ in
@@ -353,11 +503,11 @@ class Motor {
                 didSet {
                     if maxRefreshTries == 0 {
                         self.context = .standby
-                        promise(.failure(AdjustmentError.speedDidNotChange))
+                        promise(.failure(.speedDidNotChange))
                     }
                 }
             }
-
+            
             func getDirection(forSpeed spd: Int) -> FanModel.Action {
                 if target == 0 { return .off }
                 switch target - spd {
@@ -369,7 +519,7 @@ class Motor {
                         return .refresh
                 }
             }
-
+            
             self.loaderEmitter
                 .flatMap { $0 }
                 .mapError({ AdjustmentError.cast($0) })
@@ -384,7 +534,7 @@ class Motor {
                     }
                 }, receiveValue: { [weak self] chars in
                     guard let self = self else { return }
-                    self.fan.fanCharacteristics = chars
+                    self.chars = chars
                     defer { self.lastSpeed = chars.speed }
                     if chars.speed == target { // finished
                         print("speed eq target")
@@ -395,28 +545,60 @@ class Motor {
                     let responsive = chars.speed != self.lastSpeed
                     let delay = responsive ? 0.5 : 2.0
                     if !responsive { maxRefreshTries -= 1 }
-                    let dir:FanModel.Action = responsive ? getDirection(forSpeed: chars.speed) : .refresh
-                    self.loaderEmitter.send(
+                    let dir: FanModel.Action = responsive ? getDirection(forSpeed: chars.speed) : .refresh
+                    self.loaderEmitter.send (
                         Just((delay, dir))
                             .flatMap( { (delay, dir) in
                                 Just(dir)
                                     .delay(for: .seconds(delay), scheduler: DispatchQueue.global())
                             } )
                             .flatMap { dir in
-                                fanLoader.loadResults(action: dir)
+                                loader.loadResults(action: dir)
                             }
                             .eraseToAnyPublisher()
                     )
                 })
                 .store(in: &self.adjusterBag)
             
-            self.loaderEmitter.send(fanLoader.loadResults(action: getDirection(forSpeed: initialSpeed)).eraseToAnyPublisher())
+            self.loaderEmitter.send(loader.loadResults(action: getDirection(forSpeed: initialSpeed)).eraseToAnyPublisher())
         }
     }
     
+}
+
+final class FanTimer: TimerDelegate {
+    enum Context { case adjusting, standby }
+    private var chars: FanCharacteristics?
+    private var addr: String
+    private var context: Context {
+        didSet {
+            if case .standby = context {
+                adjusterBag.forEach { $0.cancel() }
+                adjusterBag.removeAll()
+                watchdogTimer.cancel()
+            }
+        }
+    }
+    private var lastTimer: Int?
+    private var adjusterBag = Set<AnyCancellable>()
+    private var watchdogTimer = AnyCancellable({ })
+    private var loaderEmitter = PassthroughSubject<FanStatusLoader.OutputPublisher, Never>()
+//    private var fanLoader: FanStatusLoader
+    
+    required init (chars: inout FanCharacteristics?, addr: String) {
+        self.chars = chars
+        self.addr = addr
+        context = .standby
+    }
+    
     func setTimer(to target: Int) -> Future<(), AdjustmentError> {
-        context = .adjust
-        return Future<(), AdjustmentError> { [fanLoader] promise in
+        context = .adjusting
+        let loader = FanStatusLoader(addr: addr)
+        return Future<(), AdjustmentError> { [weak self] promise in
+            guard let self = self else {
+                promise(.failure(.parentOutOfScope))
+                return
+            }
             
             self.watchdogTimer =
             Timer.publish(every: 120, on: .main, in: .common)
@@ -448,7 +630,7 @@ class Motor {
                     }
                 }, receiveValue: { [weak self] chars in
                     guard let self = self else { return }
-                    self.fan.fanCharacteristics = chars
+                    self.chars = chars
                     defer { self.lastTimer = chars.timer }
                     if chars.timer >= target { // finished
                         print("speed eq target")
@@ -467,67 +649,24 @@ class Motor {
                                     .delay(for: .seconds(delay), scheduler: DispatchQueue.global())
                             } )
                             .flatMap { dir in
-                                fanLoader.loadResults(action: dir)
+                                loader.loadResults(action: dir)
                             }
                             .eraseToAnyPublisher()
                     )
                 })
                 .store(in: &self.adjusterBag)
             
-            self.loaderEmitter.send(fanLoader.loadResults(action: .timer).eraseToAnyPublisher())
+            self.loaderEmitter.send(loader.loadResults(action: .timer).eraseToAnyPublisher())
         }
-//            self.timerWatchdog
-//                .subscribe(on: DispatchQueue.global())
-//                .collect(.byTimeOrCount(DispatchQueue.global(), .seconds(7.5), 5))
-//                .timeout(.seconds(8), scheduler: DispatchQueue.global(), customError: { .notReady("Timed out") })
-//                .tryMap { changeTrackerArr in
-//                    guard changeTrackerArr.contains(true) else {
-//                        throw AdjustmentError.timerDidNotChange
-//                    }
-//                }
-//                .mapError { $0 as? AdjustmentError ?? AdjustmentError.cast($0) }
-//                .sink (receiveCompletion: { [weak self] comp in
-//                    self?.lastTimer = nil
-//                    self?.adjusterBag.removeAll()
-//                    self?.startRefresher()
-//                    if case .failure (let err) = comp {
-//                        promise(.failure(err))
-//                    } else {
-//                        promise(.success(()))
-//                    }
-//                }, receiveValue: { _ in })
-//                .store(in: &self.adjusterBag)
-//
-//            self.fan.$fanCharacteristics
-//                .subscribe(on: DispatchQueue.global())
-//                .compactMap { $0?.timer }
-//                .print("in timer adjust")
-//                .map { [weak self] currentTimer -> AnyPublisher<FanModel.Action, Never> in
-//                    guard let self = self else {
-//                        return Empty.init(completeImmediately: true, outputType: FanModel.Action.self, failureType: Never.self).eraseToAnyPublisher()
-//                    }
-//                    defer { self.lastTimer = currentTimer }
-//                    let timerDidChange = self.lastTimer.map { lastTime in
-//                        let timeRange = (lastTime - 2)...(lastTime + 2)
-//                        return !timeRange.contains(currentTimer) } ?? false
-//
-//                    self.timerWatchdog.send(timerDidChange)
-//
-//                    switch () {
-//                        case _ where target <= currentTimer: //finished
-//                            self.timerWatchdog.send(completion: .finished)
-//                            return Empty.init(completeImmediately: true, outputType: FanModel.Action.self, failureType: Never.self).eraseToAnyPublisher()
-//                        default: //adjust
-//                            return Just ( .timer ).delay(for: .seconds(!timerDidChange ? 3.0 : 1.0), scheduler: DispatchQueue.global()).eraseToAnyPublisher()
-//                    }
-//                }
-//                .switchToLatest()
-//                .sink (
-//                    receiveValue: { [weak self] action in
-//                        self?.fan.getFanStatus(sendingCommand: action)
-//                    })
-//                .store(in: &self.adjusterBag)
-//        }
     }
 }
 
+protocol MotorDelegate {
+    func setSpeed(to: Int) -> Future<(), AdjustmentError>
+    init(chars: inout FanCharacteristics?, addr: String)
+}
+
+protocol TimerDelegate {
+    func setTimer(to: Int) -> Future<(), AdjustmentError>
+    init(chars: inout FanCharacteristics?, addr: String)
+}

@@ -11,23 +11,23 @@ import Combine
 
 @main
 struct AirspaceFanApp: App {
-    let house = House()
+    let house = House.shared
     let location = Location()
-    let lamps = ApplicationLamps.shared
+//    let appStatus = ApplicationStatus.shared
     let weather: Weather
     
     var body: some Scene {
         WindowGroup {
             ContentView()
+//                .environmentObject(appStatus)
                 .environmentObject(weather)
                 .environmentObject(location)
                 .environmentObject(house)
-                .environmentObject(lamps)
         }
     }
     
     init () {
-        weather = Weather(house: house)
+        weather = Weather()
         UITableView.appearance().backgroundColor = .main
         UITableView.appearance().separatorColor = .main
     }

@@ -240,10 +240,10 @@ struct SettingsBackgound: View {
 }
 
 struct Settings_View_Previews: PreviewProvider {
-    static var house = House()
+    static var house = House.shared
     static var previews: some View {
         SettingsView()
-            .environmentObject(Weather(house: house))
+            .environmentObject(Weather())
             .environmentObject(Location())
     }
 }

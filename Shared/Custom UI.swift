@@ -46,7 +46,6 @@ extension Color {
     static var controlsBackground = Color(.controlsBackground)
 }
 
-
 struct RefreshableScrollView<Content: View>: View {
     @State private var previousScrollOffset: CGFloat = 0
     @State private var scrollOffset: CGFloat = 0
@@ -457,41 +456,53 @@ extension RangeSlider {
     }
 }
 
-struct Utilities_Previews: PreviewProvider {
-    @State static var lowVal: Double = 50
-    @State static var highVal: Double = 80
-    @State static var refreshing: Bool = false
-    @State static var blah: String = "start"
-
-    static var previews: some View {
-            RefreshableScrollView(refreshing: $refreshing) {
-                Text(blah)
+struct TargetSegmentedPicker: View {
+    @Binding var segments: Int
+    @Binding var colorIndicatorOffset: Int
+    var body: some View {
+        GeometryReader { geo in
+            let width = geo.size.width
+            let height = (20...40) ~= geo.size.height ? geo.size.height : 30
+            let cornerRadius = height * 0.3
+            let cellWidth = width / CGFloat(segments)
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .size(CGSize(width: width, height: height))
+                .foregroundColor(Color(UIColor.controlsBackground))
+                .overlay(
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .inset(by: 2.0)
+                        .size(CGSize(width: cellWidth, height: height))
+                        .foregroundColor(Color(UIColor.controlsTint))
+//                        .stroke()
+                        .shadow(color: .gray, radius: 0.75, x: 0.5, y: 0.5)
+                        .offset(CGSize(width: cellWidth * CGFloat(colorIndicatorOffset), height: 0))
+                )
+                .overlay (
+                    Line ()
+                        .stroke()
+                        .foregroundColor(.red)
+                        .offset(CGSize(width: cellWidth, height: 0))
+                )
         }
-            .onChange(of: refreshing, perform: { value in
-                blah = value ? "blah" : "no blah"
-            })
-//        RangeSlider(
-//            selectedLow: $lowVal,
-//            selectedHigh: $highVal,
-//            minimum: 50,
-//            maximum: 85,
-//            barFormatter: { style in
-//                style.barInsideFill = .main
-//            },
-//            rightHandleFormatter: { style in
-//                style.strokeColor = .red
-//                style.labelStyle = RangeSlider.LabelStyle()
-//                style.labelStyle?
-//                    .numberFormat
-//                    .positiveFormat = "2\u{00B0}"
-//            },
-//            leftHandleFormatter: { style in
-//                style.strokeColor = .blue
-//                style.labelStyle = RangeSlider.LabelStyle()
-//                style.labelStyle?
-//                    .numberFormat
-//                    .positiveFormat = "2\u{00B0}"
-//            }
-//        )
+    }
+}
+
+struct Line: Shape {
+    func path(in rect: CGRect) -> Path {
+        Path { path in
+            path.move(to: CGPoint(x: 0, y: 0))
+            path.addLine(to: CGPoint(x: 0, y: rect.height))
+        }
+    }
+    
+    
+}
+
+struct Utilities_Previews: PreviewProvider {
+    
+    static var previews: some View {
+        TargetSegmentedPicker(segments: Binding<Int>.constant(3), colorIndicatorOffset: Binding<Int>.constant(0))
+            .frame(width: 350, height: 30, alignment: .bottom)
+        //        .fixedSize(horizontal: false, vertical: true)
     }
 }

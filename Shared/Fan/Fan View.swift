@@ -10,7 +10,7 @@ import SwiftUI
 struct FanView: View {
     typealias IPAddr = String
     @Environment(\.scenePhase) var scenePhase
-    @EnvironmentObject var applicationLamps: ApplicationLamps
+//    private var applicationLamps: HouseLamps
     @StateObject var viewModel: FanViewModel
     @AppStorage var name: String
     @State private var angle: Angle = .zero
@@ -29,7 +29,7 @@ struct FanView: View {
             FanImageRender(angle: $angle, activeSheet: $activeSheet, viewModel: viewModel)
             FanNameRender(activeSheet: $activeSheet, name: $name, fanViewModel: viewModel)
         }
-        .foregroundColor(viewModel.fanLamps.useAlarmColor || applicationLamps.useAlarmColor ? .alarm : .main)
+        .foregroundColor(viewModel.fanLamps.contains(.useAlarmColor) || HouseViewModel.shared.indicators.contains(.useAlarmColor) ? .alarm : .main)
         .modifier(OverlaySheetRender(viewModel: viewModel, activeSheet: $activeSheet))
         .onReceive(viewModel.$fanRotationDuration) { val in
             self.angle = .zero
@@ -38,13 +38,13 @@ struct FanView: View {
             }
         }
         .onAppear {
-            viewModel.model.refreshFan()
+            viewModel.refreshFan()
         }
     }
     
-    init (addr: String, chars: FanCharacteristics, house: House, weather: Weather) {
+    init (addr: IPAddr, chars: FanCharacteristics) {
         _name = AppStorage(wrappedValue: "\(chars.airspaceFanModel)", StorageKey.fanName(chars.macAddr).key)
-        _viewModel = StateObject(wrappedValue: FanViewModel(atAddr: addr, usingChars: chars, inHouse: house, weather: weather))
+        _viewModel = StateObject(wrappedValue: FanViewModel(atAddr: addr, usingChars: chars))
     }
 }
 
@@ -59,7 +59,7 @@ struct SpeedController: View {
             }
         }
         .pickerStyle(SegmentedPickerStyle())
-        .modifier(PhysicalSpeedIndicator(viewModel: viewModel))
+        .modifier(TargetSpeedIndicator(viewModel: viewModel))
     }
 }
 
@@ -70,7 +70,7 @@ struct ControllerRender: View {
     var body: some View {
         VStack {
             Spacer()
-            if viewModel.fanLamps.showTimerIcon {
+            if viewModel.fanLamps.contains(.showTimerIcon) {
                 VStack {
                     Button(
                         action: {
@@ -82,19 +82,19 @@ struct ControllerRender: View {
                                     .foregroundColor(.main)
                                     .scaledToFit()
                                     .frame(width: nil, height: 40)
-                                if viewModel.fanLamps.showTimeRemainingText {
+                                if viewModel.fanLamps.contains(.showTimeLeft) {
                                     Text(viewModel.offDateTxt)
                                         .font(.subheadline)
                                 }
                             }
                             .padding(.bottom, 15)
                         })
-                    ForEach (viewModel.displayedAppLamps.labels, id: \.self) { element in
+                    ForEach (viewModel.fanLamps.diplayedLabels, id: \.self) { element in
                      Text(element)
                     }
                 }
             } else {
-                ForEach (viewModel.displayedAppLamps.labels, id: \.self) { element in
+                ForEach (HouseViewModel.shared.indicators.diplayedLabels, id: \.self) { element in
                  Text(element)
                 }
             }
@@ -122,11 +122,11 @@ struct FanImageRender: View {
                 .allowsHitTesting(false)
                 .overlay(
                     Button(action: {
-                        if viewModel.model.fanCharacteristics != nil {
+                        if !viewModel.fanLamps.contains(.showNoCharsIndicator) {
                             activeSheet = .detail
                         }
                     }, label: {
-                        let labels = viewModel.displayedAppLamps.labels
+                        let labels = HouseViewModel.shared.indicators.diplayedLabels
                         if labels.isEmpty {
                             AnyView(Color.clear)
                         }
@@ -207,18 +207,18 @@ struct OverlaySheetRender: ViewModifier {
     }
 }
 
-struct PhysicalSpeedIndicator: ViewModifier {
+struct TargetSpeedIndicator: ViewModifier {
     @ObservedObject var viewModel: FanViewModel
-    @EnvironmentObject var applicationLamps: ApplicationLamps
+    @ObservedObject var appLamps = HouseViewModel.shared
     
     func body(content: Content) -> some View {
         content
             .overlay (
-                viewModel.fanLamps.showPhysicalSpeedIndicator ?
+                viewModel.fanLamps.contains(.showPhysicalSpeedIndicator) ?
                     GeometryReader { geo2 in
                         Image(systemName: "arrowtriangle.up.fill")
                             .resizable()
-                            .foregroundColor(Color(viewModel.fanLamps.useAlarmColor || applicationLamps.useAlarmColor ? .main : .alarm))
+                            .foregroundColor(Color(viewModel.fanLamps.contains(.useAlarmColor) || appLamps.indicators.contains(.useAlarmColor) ? .main : .alarm))
                             .alignmentGuide(.top, computeValue: { dimension in
                                 -geo2.size.height + dimension.height/CGFloat(2)
                             })
@@ -237,14 +237,10 @@ struct PhysicalSpeedIndicator: ViewModifier {
 }
 
 struct FanView_Previews: PreviewProvider {
-    @State static var fans: Set<FanCharacteristics> = [FanCharacteristics()]
-    @State static var runningFans = Set<FanCharacteristics>()
     static var chars = FanCharacteristics()
-    static var house = House()
     static var previews: some View {
-        FanView(addr: "0.0.0.0:8181", chars: chars, house: house, weather: Weather(house: house))
-            .preferredColorScheme(.dark)
-            .environmentObject(ApplicationLamps.shared)
+        FanView(addr: "0.0.0.0:8181", chars: chars)
+            .preferredColorScheme(.light)
     }
 }
 

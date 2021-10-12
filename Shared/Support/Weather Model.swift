@@ -11,7 +11,7 @@ import Combine
 import SwiftUI
 
 class Weather: ObservableObject {
-    @ObservedObject var house: House
+    @ObservedObject var house = House.shared
     @AppStorage(StorageKey.lowTempLimit.key) var lowTempLimit: Double = 55
     @AppStorage(StorageKey.highTempLimit.key) var highTempLimit: Double = 75
 //    @AppStorage var houseConfiguredAlarms: Alarm.House
@@ -53,8 +53,7 @@ class Weather: ObservableObject {
         }
     }
     
-    init (house: House) {
-        self.house = house
+    init () {
         let decoder = JSONDecoder()
         let forecastD = forecastData ?? Data()
         let forecastObj = (try? decoder.decode(WeatherObject.self, from: forecastD)).map { $0.hourly } ?? nil
@@ -65,6 +64,7 @@ class Weather: ObservableObject {
             .sink(receiveValue: { [weak self] _ in
                 guard let self = self else { return }
                 let lastUpdate = self.lastUpdate.map { Date(timeIntervalSince1970: $0) } ?? .distantPast
+                let fansAreRunning = self.house.fans.map { $0.speed }.filter({ $0 > 0 }).count > 0
                 self.updateCurrentTemp()
                 let nextUpdate = WeatherCheckInterval.nextRecommendedDate(
                     forTemp: self.currentTemp,
@@ -72,7 +72,7 @@ class Weather: ObservableObject {
                     highTempLimitSet: self.highTempLimit,
                     lowTempLimitSet: self.lowTempLimit,
                     tempAlarmSet: self.tempAlarmSet,
-                    fansRunning: self.house.runningFans)
+                    fansRunning: fansAreRunning)
                 if Date() > nextUpdate {
                     self.load()
                 }
