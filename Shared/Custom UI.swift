@@ -458,7 +458,43 @@ extension RangeSlider {
 
 struct TargetSegmentedPicker: View {
     @Binding var segments: Int
-    @Binding var colorIndicatorOffset: Int
+    @Binding var highlightedSegment: Int
+    @Binding var targetedSegment: Int
+    
+    struct PickerLabel: View, Identifiable {
+        
+        var id: Int
+        var labelText: String
+        var highlighted: Bool
+        var targeted: Bool
+        var visibleSeparator: Bool
+        var segments: Int
+        var separatorPaddingFactor: CGFloat
+        var body: some View {
+            GeometryReader { geo in
+                RoundedRectangle(cornerRadius: 5.0)
+                    .inset(by: 3.0)
+                    .foregroundColor( highlighted ? Color(UIColor.controlsTint) : Color.clear)
+                    .shadow(color: highlighted ? .black : .clear, radius: 0.75, x: 0.5, y: 0.5)
+                    .overlay(
+                        VerticalLine()
+                            .stroke(visibleSeparator ? .red : .clear)
+                            .padding([.bottom, .top], geo.size.height * separatorPaddingFactor)
+                    )
+                    .overlay(Text(labelText).font(.system(size: geo.size.height * 0.5)))
+                    .overlay(Image(systemName: "triangle.fill").resizable().scaleEffect(x: 0.5, y: 0.5, anchor: UnitPoint.bottom).offset(x: 0, y: geo.size.height / 4).foregroundColor(targeted ? .controlsTint : .clear))
+                    .frame(width: geo.size.width/CGFloat(segments), height: geo.size.height)
+            }
+        }
+    }
+    
+    private var labels: Array<PickerLabel> {
+        var nums = (1...(segments - 2)).map{ String($0) }
+        nums.append("Max")
+        nums.insert("Off", at: 0)
+        return nums.enumerated().map { (index, value) in PickerLabel (id: index, labelText: value, highlighted: index == highlightedSegment, targeted: index == targetedSegment, visibleSeparator: ![0, highlightedSegment, highlightedSegment + 1].contains(index), segments: segments, separatorPaddingFactor: 0.1) }
+    }
+
     var body: some View {
         GeometryReader { geo in
             let width = geo.size.width
@@ -466,28 +502,29 @@ struct TargetSegmentedPicker: View {
             let cornerRadius = height * 0.3
             let cellWidth = width / CGFloat(segments)
             RoundedRectangle(cornerRadius: cornerRadius)
-                .size(CGSize(width: width, height: height))
                 .foregroundColor(Color(UIColor.controlsBackground))
-                .overlay(
-                    RoundedRectangle(cornerRadius: cornerRadius)
-                        .inset(by: 2.0)
-                        .size(CGSize(width: cellWidth, height: height))
-                        .foregroundColor(Color(UIColor.controlsTint))
-//                        .stroke()
-                        .shadow(color: .gray, radius: 0.75, x: 0.5, y: 0.5)
-                        .offset(CGSize(width: cellWidth * CGFloat(colorIndicatorOffset), height: 0))
-                )
                 .overlay (
-                    Line ()
-                        .stroke()
-                        .foregroundColor(.red)
-                        .offset(CGSize(width: cellWidth, height: 0))
+                    ForEach ( labels ) { label in
+                        label
+                            .onTapGesture(perform: {
+                                targetedSegment = label.id
+                            })
+                            .offset(x: cellWidth * CGFloat(label.id), y: 0)
+                    }
+                )
+                .overlay(
+                    Text(String("Targeted segment: \(targetedSegment)"))
+                        .contentShape(Rectangle())
+                        .onTapGesture(perform: {
+                            targetedSegment += 1
+                        })
+                        .offset(x: 0, y: 40)
                 )
         }
     }
 }
 
-struct Line: Shape {
+struct VerticalLine: Shape {
     func path(in rect: CGRect) -> Path {
         Path { path in
             path.move(to: CGPoint(x: 0, y: 0))
@@ -499,10 +536,12 @@ struct Line: Shape {
 }
 
 struct Utilities_Previews: PreviewProvider {
-    
+    @State static var selected: Int = 1
     static var previews: some View {
-        TargetSegmentedPicker(segments: Binding<Int>.constant(3), colorIndicatorOffset: Binding<Int>.constant(0))
+//        TargetSegmentedPicker.PickerLabel(id: 0, labelText: "Off", visibleSeparator: true, segments: 5).label
+//            .frame(width: nil, height: 30)
+        TargetSegmentedPicker(segments: Binding<Int>.constant(8), highlightedSegment: Binding<Int>.constant(2), targetedSegment: Utilities_Previews.$selected)
+            .preferredColorScheme(.dark)
             .frame(width: 350, height: 30, alignment: .bottom)
-        //        .fixedSize(horizontal: false, vertical: true)
     }
 }
