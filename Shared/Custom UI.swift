@@ -463,7 +463,7 @@ struct TargetSegmentedPicker: View {
     @Binding var indicatorPulse: TargetAlarmIndicator?
     @State private var targetedSegmentIndicatorOn: Bool = false
     @State private var targetSegmentOffset: CGFloat = 0
-    @State private var indicatorCase: String = "init"
+//    @State private var indicatorCase: String = "init"
     
     enum TargetAlarmIndicator {
         case fastBlink, slowBlink
@@ -479,13 +479,11 @@ struct TargetSegmentedPicker: View {
     
     struct IndicatorOn: View {
         @State private var opacity: CGFloat = 0.0
-        @Binding var diagnostic: String
         var body: some View {
             Image(systemName: "triangle.fill")
                 .resizable()
                 .opacity(opacity)
                 .onAppear(perform: {
-                    diagnostic = "On"
                     withAnimation(.easeInOut(duration: 0.5)) {
                         opacity = 1.0
                     }
@@ -495,7 +493,6 @@ struct TargetSegmentedPicker: View {
     
     struct IndicatorOff: View {
         @State private var opacity: CGFloat = 1.0
-        @Binding var diagnostic: String
         var body: some View {
             Image(systemName: "triangle.fill")
                 .resizable()
@@ -504,20 +501,17 @@ struct TargetSegmentedPicker: View {
                     withAnimation(.easeInOut(duration: 0.5)) {
                         opacity = 0.0
                     }
-                    diagnostic = "Off"
                 })
         }
     }
     
     struct IndicatorFastBlink: View {
         @State private var opacity: CGFloat = 0.0
-        @Binding var diagnostic: String
         var body: some View {
             Image(systemName: "triangle.fill")
                 .resizable()
                 .opacity(opacity)
                 .onAppear(perform: {
-                    diagnostic = "fast"
                     withAnimation(.easeInOut(duration: 0.35).repeatForever(autoreverses: true)) {
                         opacity = 1.0
                     }
@@ -527,13 +521,11 @@ struct TargetSegmentedPicker: View {
 
     struct IndicatorSlowBlink: View {
         @State private var opacity: CGFloat = 0.0
-        @Binding var diagnostic: String
         var body: some View {
             Image(systemName: "triangle.fill")
                 .resizable()
                 .opacity(opacity)
                 .onAppear(perform: {
-                    diagnostic = "slow"
                     withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
                         opacity = 1.0
                     }
@@ -600,16 +592,15 @@ struct TargetSegmentedPicker: View {
                 .overlay (
                     VStack {
                         if (targetedSegmentIndicatorOn && indicatorPulse == nil) {
-                            IndicatorOn(diagnostic: $indicatorCase)
+                            IndicatorOn()
                         } else if (targetedSegmentIndicatorOn && indicatorPulse == .fastBlink) {
-                            IndicatorFastBlink(diagnostic: $indicatorCase)
+                            IndicatorFastBlink()
                         } else if (targetedSegmentIndicatorOn && indicatorPulse == .slowBlink) {
-                            IndicatorSlowBlink(diagnostic: $indicatorCase)
+                            IndicatorSlowBlink()
                         } else if (!targetedSegmentIndicatorOn) {
-                            IndicatorOff(diagnostic: $indicatorCase)
+                            IndicatorOff()
                         } else {
                             EmptyView()
-                                .onAppear { indicatorCase = "Blank" }
                         }
                     }
                         .aspectRatio(contentMode: .fit)
@@ -621,33 +612,33 @@ struct TargetSegmentedPicker: View {
                         }
                        , alignment: .leading)
             
-                .overlay(
-                    Text(String("Highlighted segment: \(highlightedSegment)"))
-                        .contentShape(Rectangle())
-                        .onTapGesture(perform: {
-                            highlightedSegment = (highlightedSegment + 1)%segments
-                        })
-                        .offset(x: 0, y: 40)
-                )
-                .overlay(
-                    Text(String("Speed: \(indicatorPulse == nil ? "nil" : indicatorPulse!.description)"))
-                        .contentShape(Rectangle())
-                        .onTapGesture(perform: {
-                            let pulses: [TargetAlarmIndicator?] = [nil, .fastBlink, .slowBlink]
-                            let index: Int = ((pulses.firstIndex(where: { $0 == indicatorPulse }) ?? 0) + 1)%3
-                            indicatorPulse = pulses[index] == nil ? nil : pulses[index]!
-                        })
-                        .offset(x: 0, y: 80)
-                )
-                .overlay(
-                    Text(String("State: \(indicatorCase)"))
-                        .contentShape(Rectangle())
-                        .offset(x: 0, y: 120)
-                )
+//                .overlay(
+//                    Text(String("Highlighted segment: \(highlightedSegment)"))
+//                        .contentShape(Rectangle())
+//                        .onTapGesture(perform: {
+//                            highlightedSegment = (highlightedSegment + 1)%segments
+//                        })
+//                        .offset(x: 0, y: 40)
+//                )
+//                .overlay(
+//                    Text(String("Speed: \(indicatorPulse == nil ? "nil" : indicatorPulse!.description)"))
+//                        .contentShape(Rectangle())
+//                        .onTapGesture(perform: {
+//                            let pulses: [TargetAlarmIndicator?] = [nil, .fastBlink, .slowBlink]
+//                            let index: Int = ((pulses.firstIndex(where: { $0 == indicatorPulse }) ?? 0) + 1)%3
+//                            indicatorPulse = pulses[index] == nil ? nil : pulses[index]!
+//                        })
+//                        .offset(x: 0, y: 80)
+//                )
+//                .overlay(
+//                    Text(String("State: \(indicatorCase)"))
+//                        .contentShape(Rectangle())
+//                        .offset(x: 0, y: 120)
+//                )
                 .frame(height: min(geo.size.height, 40))
                 .onChange(of: targetedSegment) { newTarget in
                     targetedSegmentIndicatorOn = targetedSegment != highlightedSegment
-                    withAnimation(.default) {
+                    withAnimation(.easeInOut(duration: 0.5)) {
                         targetSegmentOffset = cellWidth * CGFloat (newTarget)
                     }
                 }
@@ -678,15 +669,20 @@ struct Utilities_Previews: PreviewProvider {
         @State var segments: Int = 8
         @State var highlighted: Int = 2
         @State var targeted: Int = 0
-        @State var pulse: TargetSegmentedPicker.TargetAlarmIndicator? = .fastBlink
+        @State var pulse: TargetSegmentedPicker.TargetAlarmIndicator? = nil
         var body: some View {
             TargetSegmentedPicker(segments: $segments, highlightedSegment: $highlighted, targetedSegment: $targeted, indicatorPulse: $pulse)
         }
     }
 
     static var previews: some View {
-        BindingTestHolder()
-            .preferredColorScheme(.dark)
+        if #available(iOS 15.0, *) {
+            BindingTestHolder()
+                .preferredColorScheme(.dark)
+                .previewInterfaceOrientation(.landscapeLeft)
+        } else {
+            // Fallback on earlier versions
+        }
     }
 }
 
