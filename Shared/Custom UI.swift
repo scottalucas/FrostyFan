@@ -460,39 +460,124 @@ struct TargetSegmentedPicker: View {
     @Binding var segments: Int
     @Binding var highlightedSegment: Int
     @Binding var targetedSegment: Int
+    @Binding var indicatorPulse: TargetAlarmIndicator?
+    @State private var targetedSegmentIndicatorOn: Bool = false
+    @State private var targetSegmentOffset: CGFloat = 0
+    @State private var indicatorCase: String = "init"
+    
+    enum TargetAlarmIndicator {
+        case fastBlink, slowBlink
+        var description: String {
+            switch self {
+                case .fastBlink:
+                    return "fast"
+                case .slowBlink:
+                    return "slow"
+            }
+        }
+    }
+    
+    struct IndicatorOn: View {
+        @State private var opacity: CGFloat = 0.0
+        @Binding var diagnostic: String
+        var body: some View {
+            Image(systemName: "triangle.fill")
+                .resizable()
+                .opacity(opacity)
+                .onAppear(perform: {
+                    diagnostic = "On"
+                    withAnimation(.easeInOut(duration: 0.5)) {
+                        opacity = 1.0
+                    }
+                })
+        }
+    }
+    
+    struct IndicatorOff: View {
+        @State private var opacity: CGFloat = 1.0
+        @Binding var diagnostic: String
+        var body: some View {
+            Image(systemName: "triangle.fill")
+                .resizable()
+                .opacity(opacity)
+                .onAppear(perform: {
+                    withAnimation(.easeInOut(duration: 0.5)) {
+                        opacity = 0.0
+                    }
+                    diagnostic = "Off"
+                })
+        }
+    }
+    
+    struct IndicatorFastBlink: View {
+        @State private var opacity: CGFloat = 0.0
+        @Binding var diagnostic: String
+        var body: some View {
+            Image(systemName: "triangle.fill")
+                .resizable()
+                .opacity(opacity)
+                .onAppear(perform: {
+                    diagnostic = "fast"
+                    withAnimation(.easeInOut(duration: 0.35).repeatForever(autoreverses: true)) {
+                        opacity = 1.0
+                    }
+                })
+        }
+    }
+
+    struct IndicatorSlowBlink: View {
+        @State private var opacity: CGFloat = 0.0
+        @Binding var diagnostic: String
+        var body: some View {
+            Image(systemName: "triangle.fill")
+                .resizable()
+                .opacity(opacity)
+                .onAppear(perform: {
+                    diagnostic = "slow"
+                    withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
+                        opacity = 1.0
+                    }
+                })
+        }
+    }
     
     struct PickerLabel: View, Identifiable {
         
         var id: Int
         var labelText: String
         var highlighted: Bool
-        var targeted: Bool
         var visibleSeparator: Bool
         var segments: Int
         var separatorPaddingFactor: CGFloat
         var body: some View {
             GeometryReader { geo in
-                RoundedRectangle(cornerRadius: 5.0)
+                let h = min(geo.size.height, 40)
+                RoundedRectangle(cornerRadius: h * 0.3)
                     .inset(by: 3.0)
-                    .foregroundColor( highlighted ? Color(UIColor.controlsTint) : Color.clear)
+                    .foregroundColor( highlighted ? Color(UIColor.systemBackground) : Color.clear)
                     .shadow(color: highlighted ? .black : .clear, radius: 0.75, x: 0.5, y: 0.5)
                     .overlay(
                         VerticalLine()
-                            .stroke(visibleSeparator ? .red : .clear)
-                            .padding([.bottom, .top], geo.size.height * separatorPaddingFactor)
+                            .stroke(visibleSeparator ? .gray.opacity(0.5) : .clear)
+                            .padding([.bottom, .top], h * separatorPaddingFactor)
                     )
-                    .overlay(Text(labelText).font(.system(size: geo.size.height * 0.5)))
-                    .overlay(Image(systemName: "triangle.fill").resizable().scaleEffect(x: 0.5, y: 0.5, anchor: UnitPoint.bottom).offset(x: 0, y: geo.size.height / 4).foregroundColor(targeted ? .controlsTint : .clear))
-                    .frame(width: geo.size.width/CGFloat(segments), height: geo.size.height)
+                    .overlay(
+                        Text(labelText)
+                            .font(.system(size: h * 0.5))
+                    )
+                    .frame(width: geo.size.width/CGFloat(segments), height: h)
             }
         }
     }
     
-    private var labels: Array<PickerLabel> {
-        var nums = (1...(segments - 2)).map{ String($0) }
+    private var labelArray: Array<PickerLabel> {
+        guard segments >= 2 else { return [] }
+        highlightedSegment = min(highlightedSegment, segments - 1)
+        targetedSegment = min(targetedSegment, segments - 1)
+        var nums = segments <= 2 ? [] : (1...(segments - 2)).map{ String($0) }
         nums.append("Max")
         nums.insert("Off", at: 0)
-        return nums.enumerated().map { (index, value) in PickerLabel (id: index, labelText: value, highlighted: index == highlightedSegment, targeted: index == targetedSegment, visibleSeparator: ![0, highlightedSegment, highlightedSegment + 1].contains(index), segments: segments, separatorPaddingFactor: 0.1) }
+        return nums.enumerated().map { (index, value) in PickerLabel (id: index, labelText: value, highlighted: index == highlightedSegment, visibleSeparator: ![0, highlightedSegment, highlightedSegment + 1].contains(index), segments: segments, separatorPaddingFactor: 0.1) }
     }
 
     var body: some View {
@@ -504,7 +589,7 @@ struct TargetSegmentedPicker: View {
             RoundedRectangle(cornerRadius: cornerRadius)
                 .foregroundColor(Color(UIColor.controlsBackground))
                 .overlay (
-                    ForEach ( labels ) { label in
+                    ForEach ( labelArray ) { label in
                         label
                             .onTapGesture(perform: {
                                 targetedSegment = label.id
@@ -512,14 +597,68 @@ struct TargetSegmentedPicker: View {
                             .offset(x: cellWidth * CGFloat(label.id), y: 0)
                     }
                 )
+                .overlay (
+                    VStack {
+                        if (targetedSegmentIndicatorOn && indicatorPulse == nil) {
+                            IndicatorOn(diagnostic: $indicatorCase)
+                        } else if (targetedSegmentIndicatorOn && indicatorPulse == .fastBlink) {
+                            IndicatorFastBlink(diagnostic: $indicatorCase)
+                        } else if (targetedSegmentIndicatorOn && indicatorPulse == .slowBlink) {
+                            IndicatorSlowBlink(diagnostic: $indicatorCase)
+                        } else if (!targetedSegmentIndicatorOn) {
+                            IndicatorOff(diagnostic: $indicatorCase)
+                        } else {
+                            EmptyView()
+                                .onAppear { indicatorCase = "Blank" }
+                        }
+                    }
+                        .aspectRatio(contentMode: .fit)
+                        .scaleEffect(x: 0.5, y: 0.5, anchor: .bottom)
+                        .offset(x: targetSegmentOffset, y: height/3)
+                        .foregroundColor(.controlsTint)
+                        .alignmentGuide(HorizontalAlignment.leading) { boxDim in
+                            (boxDim.width - cellWidth)/2
+                        }
+                       , alignment: .leading)
+            
                 .overlay(
-                    Text(String("Targeted segment: \(targetedSegment)"))
+                    Text(String("Highlighted segment: \(highlightedSegment)"))
                         .contentShape(Rectangle())
                         .onTapGesture(perform: {
-                            targetedSegment += 1
+                            highlightedSegment = (highlightedSegment + 1)%segments
                         })
                         .offset(x: 0, y: 40)
                 )
+                .overlay(
+                    Text(String("Speed: \(indicatorPulse == nil ? "nil" : indicatorPulse!.description)"))
+                        .contentShape(Rectangle())
+                        .onTapGesture(perform: {
+                            let pulses: [TargetAlarmIndicator?] = [nil, .fastBlink, .slowBlink]
+                            let index: Int = ((pulses.firstIndex(where: { $0 == indicatorPulse }) ?? 0) + 1)%3
+                            indicatorPulse = pulses[index] == nil ? nil : pulses[index]!
+                        })
+                        .offset(x: 0, y: 80)
+                )
+                .overlay(
+                    Text(String("State: \(indicatorCase)"))
+                        .contentShape(Rectangle())
+                        .offset(x: 0, y: 120)
+                )
+                .frame(height: min(geo.size.height, 40))
+                .onChange(of: targetedSegment) { newTarget in
+                    targetedSegmentIndicatorOn = targetedSegment != highlightedSegment
+                    withAnimation(.default) {
+                        targetSegmentOffset = cellWidth * CGFloat (newTarget)
+                    }
+                }
+                .onChange(of: highlightedSegment) { _ in
+                    targetedSegmentIndicatorOn = targetedSegment != highlightedSegment
+                }
+                .onAppear() {
+                    targetedSegmentIndicatorOn.toggle()
+                    targetedSegmentIndicatorOn = targetedSegment != highlightedSegment
+                    targetSegmentOffset = cellWidth * CGFloat (targetedSegment)
+                }
         }
     }
 }
@@ -531,17 +670,29 @@ struct VerticalLine: Shape {
             path.addLine(to: CGPoint(x: 0, y: rect.height))
         }
     }
-    
-    
 }
 
 struct Utilities_Previews: PreviewProvider {
-    @State static var selected: Int = 1
+    
+    struct BindingTestHolder: View {
+        @State var segments: Int = 8
+        @State var highlighted: Int = 2
+        @State var targeted: Int = 0
+        @State var pulse: TargetSegmentedPicker.TargetAlarmIndicator? = .fastBlink
+        var body: some View {
+            TargetSegmentedPicker(segments: $segments, highlightedSegment: $highlighted, targetedSegment: $targeted, indicatorPulse: $pulse)
+        }
+    }
+
     static var previews: some View {
-//        TargetSegmentedPicker.PickerLabel(id: 0, labelText: "Off", visibleSeparator: true, segments: 5).label
-//            .frame(width: nil, height: 30)
-        TargetSegmentedPicker(segments: Binding<Int>.constant(8), highlightedSegment: Binding<Int>.constant(2), targetedSegment: Utilities_Previews.$selected)
+        BindingTestHolder()
             .preferredColorScheme(.dark)
-            .frame(width: 350, height: 30, alignment: .bottom)
+    }
+}
+
+extension Binding {
+    static func mock(_ value: Value) -> Self {
+        var value = value
+        return Binding(get: { value }, set: { value = $0 })
     }
 }
