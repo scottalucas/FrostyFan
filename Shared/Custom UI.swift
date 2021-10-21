@@ -545,16 +545,6 @@ struct TargetSegmentedPicker: View {
                             -(boxDim.height/2)
                         }
                     , alignment: .topLeading)
-                .overlay(
-                    Text(String("Speed: \(indicatorPulse == nil ? "nil" : indicatorPulse!.description)"))
-                        .contentShape(Rectangle())
-                        .onTapGesture(perform: {
-                            let pulses: [IndicatorOpacity.TargetAlarmIndicator?] = [nil, .fastBlink, .slowBlink]
-                            let index: Int = ((pulses.firstIndex(where: { $0 == indicatorPulse }) ?? 0) + 1)%3
-                            indicatorPulse = pulses[index] == nil ? nil : pulses[index]!
-                        })
-                        .offset(x: 0, y: 80)
-                )
                 .onChange(of: targetedSegment) { newTarget in
                     targetedSegmentIndicatorOn = targetedSegment != highlightedSegment
                     withAnimation(.easeInOut(duration: 0.5)) {
@@ -661,14 +651,26 @@ struct Utilities_Previews: PreviewProvider {
         var body: some View {
             TargetSegmentedPicker(segments: $segments, highlightedSegment: $highlighted, targetedSegment: $targeted, indicatorPulse: $pulse)
                 .frame(width: 325, height: 100)
+                .overlay(
+                    Text("test")
+                        .offset(y: 50)
+                        .onTapGesture {
+                            highlighted = (highlighted + 1)%segments
+                        }
+                )
+            
         }
     }
 
     static var previews: some View {
         if #available(iOS 15.0, *) {
-            BindingTestHolder()
+            let holder = BindingTestHolder()
+            return holder
                 .preferredColorScheme(.light)
+
+                .eraseToAnyView()
         } else {
+            return BindingTestHolder().eraseToAnyView()
             // Fallback on earlier versions
         }
     }
