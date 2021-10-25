@@ -85,6 +85,8 @@ final class FanStatus: OptionSet, RawRepresentable {
     static var fanNotResponsive = FanStatus(rawValue: 1 << 8)
     
     static var noFanCharacteristics = FanStatus(rawValue: 1 << 9)
+    
+    static var updatedByFan: FanStatus = [.fanOff, .interlockActive, .damperOperating, .fanNotResponsive, .noFanCharacteristics]
 
     var description: [String] {
         var retVal = Array<String>()
@@ -115,8 +117,9 @@ final class FanLamps: OptionSet, RawRepresentable {
     static var showPhysicalSpeedIndicator = FanLamps(rawValue: 1 << 3)
     static var showDamperIndicator = FanLamps(rawValue: 1 << 4)
     static var showInterlockIndicator = FanLamps(rawValue: 1 << 5)
-    static var showFaultIndicator = FanLamps(rawValue: 1 << 6)
-    static var showNoCharsIndicator = FanLamps(rawValue: 1 << 7)
+    static var showMinorFaultIndicator = FanLamps(rawValue: 1 << 6)
+    static var showMajorFaultIndicator = FanLamps(rawValue: 1 << 7)
+    static var showNoCharsIndicator = FanLamps(rawValue: 1 << 8)
 
     var description: [String] {
         var retVal = Array<String>()
@@ -126,7 +129,8 @@ final class FanLamps: OptionSet, RawRepresentable {
         if self.contains(.showPhysicalSpeedIndicator) { retVal.append("Show physical speed indicator") }
         if self.contains(.showDamperIndicator) { retVal.append("Show damper indicator") }
         if self.contains(.showInterlockIndicator) { retVal.append("Show interlock indicator") }
-        if self.contains(.showFaultIndicator) { retVal.append("Show fault indicator") }
+        if self.contains(.showMinorFaultIndicator) { retVal.append("Show minor fault indicator") }
+        if self.contains(.showMajorFaultIndicator) { retVal.append("Show major fault indicator") }
         if self.contains(.showNoCharsIndicator) { retVal.append("Show no chars indicator") }
         return retVal
     }
@@ -136,7 +140,8 @@ final class FanLamps: OptionSet, RawRepresentable {
         if self.contains(.showDamperIndicator) { labelArr.append("Damper operating") }
         if self.contains(.showInterlockIndicator) { labelArr.append("Interlock active") }
         if self.contains(.showNoCharsIndicator) { labelArr.append("Features not found") }
-        if self.contains(.showFaultIndicator) { labelArr.append("Fan fault") }
+        if self.contains(.showMajorFaultIndicator) { labelArr.append("Major fan fault") }
+        if self.contains(.showMinorFaultIndicator) { labelArr.append("Minor fan fault") }
         return labelArr
     }
     

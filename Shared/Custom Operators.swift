@@ -54,7 +54,13 @@ extension Array where Element == (String, String?) {
         return data
     }
 }
-
+//
+//extension Task {
+//    static func sleep(seconds: Double) async throws {
+//        let duration = UInt64(seconds * 1_000_000_000)
+//        try await Task.sleep(nanoseconds: duration)
+//    }
+//}
 
 //
 //extension Lamps: RawRepresentable {

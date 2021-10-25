@@ -52,14 +52,7 @@ struct SpeedController: View {
     @ObservedObject var viewModel: FanViewModel
     
     var body: some View {
-        Picker (selection: $viewModel.displayedSegment, label: Text("Picker")) {
-            ForEach (0..<viewModel.controllerSegments.count, id: \.self) { segmentIndex in
-                Text(viewModel.controllerSegments[segmentIndex])
-                    .tag(segmentIndex)
-            }
-        }
-        .pickerStyle(SegmentedPickerStyle())
-        .modifier(TargetSpeedIndicator(viewModel: viewModel))
+        SegmentedSpeedPicker(segments: $viewModel.selectorSegments, highlightedSegment: $viewModel.currentMotorSpeed, targetedSegment: $viewModel.targetedSpeed, indicatorPulse: $viewModel.indicatedAlarm)
     }
 }
 
@@ -223,7 +216,7 @@ struct TargetSpeedIndicator: ViewModifier {
                                 -geo2.size.height + dimension.height/CGFloat(2)
                             })
                             .alignmentGuide(HorizontalAlignment.center, computeValue: { dimension in
-                                let oneSegW = geo2.size.width/CGFloat(viewModel.controllerSegments.count)
+                                let oneSegW = geo2.size.width/CGFloat(viewModel.selectorSegments + 1)
                                 let offs = oneSegW/2.0 + (oneSegW * CGFloat(viewModel.currentMotorSpeed ?? 0)) - dimension.width
                                 return -offs
                             })

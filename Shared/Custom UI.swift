@@ -456,30 +456,29 @@ extension RangeSlider {
     }
 }
 
-struct TargetSegmentedPicker: View {
+struct SegmentedSpeedPicker: View {
     @Binding var segments: Int
-    @Binding var highlightedSegment: Int
-    @Binding var targetedSegment: Int
+    @Binding var highlightedSegment: Int?
+    @Binding var targetedSegment: Int?
     @Binding var indicatorPulse: IndicatorOpacity.TargetAlarmIndicator?
     @State private var targetedSegmentIndicatorOn: Bool = false
     @State private var targetSegmentOffset: CGFloat = 0
     @State private var highlightSegmentOffset: CGFloat = 0
+    var minLabel: PickerLabel.SpecialLabel = .useString("Off")
+    var maxLabel: PickerLabel.SpecialLabel = .useString("Max")
 
     struct PickerLabel: View, Identifiable {
-        
         var id: Int
         var labelText: String
         var highlighted: Bool
         var visibleSeparator: Bool
-        var segments: Int
+        var cells: Int
         var separatorPaddingFactor: CGFloat
         var body: some View {
             GeometryReader { geo in
-//                let h = min(geo.size.height, 40)
                 RoundedRectangle(cornerRadius: geo.size.height * 0.3)
                     .inset(by: 3.0)
                     .foregroundColor( Color(UIColor.clear) )
-//                    .shadow(color: highlighted ? .black : .clear, radius: 0.75, x: 0.5, y: 0.5)
                     .overlay(
                         VerticalLine()
                             .stroke(visibleSeparator ? Color.gray.opacity(0.5) : Color.clear)
@@ -488,37 +487,79 @@ struct TargetSegmentedPicker: View {
                     .overlay(
                         Text(labelText)
                             .font(.system(size: geo.size.height * 0.4))
+                            .foregroundColor(.segmentControllerText)
                     )
-                    .frame(width: geo.size.width/CGFloat(segments))
+                    .frame(width: geo.size.width/CGFloat(cells))
             }
+        }
+        enum SpecialLabel {
+            case useString(String), useNumber
         }
     }
     
     private var labelArray: Array<PickerLabel> {
-        guard segments >= 2 else { return [] }
-        highlightedSegment = min(highlightedSegment, segments - 1)
-        var nums = segments <= 2 ? [] : (1...(segments - 2)).map{ String($0) }
-        nums.append("Max")
-        nums.insert("Off", at: 0)
-        return nums.enumerated().map { (index, value) in PickerLabel (id: index, labelText: value, highlighted: index == highlightedSegment, visibleSeparator: ![0, highlightedSegment, highlightedSegment + 1].contains(index), segments: segments, separatorPaddingFactor: 0.1) }
+        guard segments > 1 else { return [] }
+        var labelStrings = Array<String>()
+        if case let .useString(s) = minLabel {
+            labelStrings = [s]
+        } else {
+            labelStrings = ["0"]
+        }
+        labelStrings.append(contentsOf: (1..<segments - 1).map { String($0) })
+        if case let .useString(s) = maxLabel {
+            labelStrings.append(s)
+        } else {
+            labelStrings.append(String(segments - 1))
+        }
+        var retVal = Array<PickerLabel>()
+        labelStrings.enumerated().forEach { (i, val) in
+            let highlighted: Bool
+            let separator: Bool
+            switch (i, highlightedSegment) {
+                case (0, nil):
+                    highlighted = false
+                    separator = false
+                case (0,0):
+                    highlighted = true
+                    separator = false
+                case (let i, .some(let h)) where i == h:
+                    highlighted = true //t
+                    separator = false
+                case (let i, .some(let h)) where i == h + 1:
+                    highlighted = false
+                    separator = false
+                case (let i, _) where i == 0:
+                    highlighted = false
+                    separator = false
+                default:
+                    highlighted = false
+                    separator = true
+            }
+            retVal.append(PickerLabel(id: i, labelText: labelStrings[i], highlighted: highlighted, visibleSeparator: separator, cells: segments, separatorPaddingFactor: 0.1))
+        }
+        return retVal
     }
-
     var body: some View {
         GeometryReader { geo in
             let width = geo.size.width
-//            let height = (20...40) ~= geo.size.height ? geo.size.height : 30
             let cornerRadius = geo.size.height * 0.3
             let cellWidth = width / CGFloat(segments)
             RoundedRectangle(cornerRadius: cornerRadius)
-                .foregroundColor(Color(UIColor.controlsBackground))
+                .foregroundColor(.segmentControllerBackground)
                 .overlay (
-                    RoundedRectangle(cornerRadius: cornerRadius)
-                        .inset(by: 3.0)
-                        .frame(width: geo.size.width/CGFloat(segments))
-                        .foregroundColor( Color(UIColor.systemBackground) )
-                        .shadow(color: .black, radius: 0.75, x: 0.5, y: 0.5)
-                        .offset(x: highlightSegmentOffset, y: 0)
-                    
+                    VStack {
+                        if highlightedSegment == nil {
+                            RoundedRectangle(cornerRadius: cornerRadius)
+                                .foregroundColor(Color.clear)
+                        } else {
+                            RoundedRectangle(cornerRadius: cornerRadius)
+                                .inset(by: 3.0)
+                                .frame(width: cellWidth)
+                                .foregroundColor( Color(UIColor.systemBackground) )
+                                .shadow(color: .black, radius: 0.75, x: 0.5, y: 0.5)
+                                .offset(x: highlightSegmentOffset, y: 0)
+                        }
+                    }
                     , alignment: .leading
                 )
                 .overlay (
@@ -546,22 +587,32 @@ struct TargetSegmentedPicker: View {
                         }
                     , alignment: .topLeading)
                 .onChange(of: targetedSegment) { newTarget in
+                    guard let newTarget = newTarget else {
+                        targetedSegmentIndicatorOn = false
+                        return
+                    }
                     targetedSegmentIndicatorOn = targetedSegment != highlightedSegment
                     withAnimation(.easeInOut(duration: 0.5)) {
                         targetSegmentOffset = cellWidth * CGFloat (newTarget)
                     }
                 }
                 .onChange(of: highlightedSegment) { newHighlight in
+                    guard let newHighlight = newHighlight else {
+                        targetedSegmentIndicatorOn = false
+                        return
+                    }
                     targetedSegmentIndicatorOn = targetedSegment != highlightedSegment
                     withAnimation(.easeInOut(duration: 0.5)) {
                         highlightSegmentOffset = cellWidth * CGFloat (newHighlight)
                     }
                 }
                 .onAppear() {
-                    targetedSegmentIndicatorOn.toggle()
-                    targetedSegmentIndicatorOn = targetedSegment != highlightedSegment
-                    targetSegmentOffset = cellWidth * CGFloat (targetedSegment)
-                    highlightSegmentOffset = cellWidth * CGFloat (highlightedSegment)
+                    highlightSegmentOffset = cellWidth * CGFloat (highlightedSegment ?? 0)
+                    targetSegmentOffset = cellWidth * CGFloat (targetedSegment ?? 0)
+                    if let h = highlightedSegment, let t = targetedSegment {
+                        targetedSegmentIndicatorOn.toggle()
+                        targetedSegmentIndicatorOn = t == h ? false : true
+                    }
                 }
         }
         .frame(minWidth: 125, idealWidth: 300, maxWidth: 325, minHeight: 20, idealHeight: 30, maxHeight: 40)
@@ -609,10 +660,10 @@ struct IndicatorOpacity: ViewModifier {
         return content
             .opacity(opacity)
             .onChange(of: blink) { newBlink in
-                let (finalOpacity, animation) = recalc(on: on, blink: newBlink)
                 guard on else { return }
+                let (finalOpacity, animation) = recalc(on: on, blink: newBlink)
                 withAnimation(.linear(duration: 0)) {
-                    opacity = on ? 0.0 : 1.0
+                    opacity = 1 - finalOpacity
                 }
 
                 withAnimation(animation) {
@@ -624,7 +675,6 @@ struct IndicatorOpacity: ViewModifier {
                 withAnimation(.linear(duration: 0)) {
                     opacity = 1 - finalOpacity
                 }
-                
                 withAnimation(animation) {
                     opacity = finalOpacity
                 }
@@ -645,17 +695,20 @@ struct Utilities_Previews: PreviewProvider {
     
     struct BindingTestHolder: View {
         @State var segments: Int = 8
-        @State var highlighted: Int = 7
-        @State var targeted: Int = 2
+        @State var highlighted: Int? = 7
+        @State var targeted: Int? = 2
         @State var pulse: IndicatorOpacity.TargetAlarmIndicator? = .fastBlink
         var body: some View {
-            TargetSegmentedPicker(segments: $segments, highlightedSegment: $highlighted, targetedSegment: $targeted, indicatorPulse: $pulse)
+            SegmentedSpeedPicker(segments: $segments, highlightedSegment: $highlighted, targetedSegment: $targeted, indicatorPulse: $pulse)
                 .frame(width: 325, height: 100)
                 .overlay(
                     Text("test")
                         .offset(y: 50)
                         .onTapGesture {
-                            highlighted = (highlighted + 1)%segments
+                            var sArr: [Int?] = Array((0..<segments))
+                            sArr.append(nil)
+                            highlighted = (highlighted.map{ ($0 + 1)%(segments + 1) == segments ? nil : ($0 + 1)%(segments + 1) } ?? 0)
+//                            (highlighted + 1)%(segments + 1)
                         }
                 )
             
@@ -666,7 +719,7 @@ struct Utilities_Previews: PreviewProvider {
         if #available(iOS 15.0, *) {
             let holder = BindingTestHolder()
             return holder
-                .preferredColorScheme(.light)
+                .preferredColorScheme(.dark)
 
                 .eraseToAnyView()
         } else {

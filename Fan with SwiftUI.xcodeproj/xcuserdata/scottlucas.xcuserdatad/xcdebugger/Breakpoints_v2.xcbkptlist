@@ -272,10 +272,10 @@
             filePath = "Shared/Fan/Fan View Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "233"
-            endingLineNumber = "233"
-            landmarkName = "setDisplayMotor(toSpeed:)"
-            landmarkType = "7">
+            startingLineNumber = "209"
+            endingLineNumber = "209"
+            landmarkName = "FanViewModel"
+            landmarkType = "21">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -304,10 +304,10 @@
             filePath = "Shared/Fan/Fan View Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "229"
-            endingLineNumber = "229"
-            landmarkName = "setDisplayMotor(toSpeed:)"
-            landmarkType = "7">
+            startingLineNumber = "205"
+            endingLineNumber = "205"
+            landmarkName = "FanViewModel"
+            landmarkType = "21">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -320,8 +320,8 @@
             filePath = "Shared/Fan/Fan View.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "185"
-            endingLineNumber = "185"
+            startingLineNumber = "178"
+            endingLineNumber = "178"
             landmarkName = "body(content:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -336,10 +336,10 @@
             filePath = "Shared/Fan/Fan View Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "225"
-            endingLineNumber = "225"
-            landmarkName = "setDisplayMotor(toSpeed:)"
-            landmarkType = "7">
+            startingLineNumber = "201"
+            endingLineNumber = "201"
+            landmarkName = "FanViewModel"
+            landmarkType = "21">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -352,26 +352,51 @@
             filePath = "Shared/Fan/Fan Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "426"
-            endingLineNumber = "426"
-            landmarkName = "loadResults(action:)"
+            startingLineNumber = "412"
+            endingLineNumber = "412"
+            landmarkName = "init(from:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "FBC1829F-A4BB-4794-975E-FCA0E93F9A76"
+            uuid = "DEB92334-CABF-43BA-95A5-D947668570C7"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "Shared/Fan/Fan View Model.swift"
+            filePath = "Shared/Fan/Fan Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "156"
-            endingLineNumber = "156"
-            landmarkName = "startSubscribers()"
+            startingLineNumber = "503"
+            endingLineNumber = "503"
+            landmarkName = "context"
+            landmarkType = "24">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "B20BEA03-3B79-4CAE-8531-8E889B1A7F8F"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "Yes"
+            filePath = "Shared/Custom UI.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "664"
+            endingLineNumber = "664"
+            landmarkName = "body(content:)"
             landmarkType = "7">
+            <Actions>
+               <BreakpointActionProxy
+                  ActionExtensionID = "Xcode.BreakpointAction.Log">
+                  <ActionContent
+                     message = "on: @blink@, new on: @newBlink@"
+                     conveyanceType = "0">
+                  </ActionContent>
+               </BreakpointActionProxy>
+            </Actions>
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>
