@@ -53,19 +53,36 @@ class House: ObservableObject {
     }
 }
 
+//extension House {
+//    var scanner: AnyPublisher<(String, FanCharacteristics), ConnectionError> {
+//        return
+//        NetworkAddress.hosts.publisher
+//            .prepend("192.168.1.67:8080") //testing
+//            .setFailureType(to: ConnectionError.self)
+//            .flatMap ({ addr -> AnyPublisher<(IPAddr, FanCharacteristics), ConnectionError> in
+//                return FanStatusLoader(addr: addr).loadResults(action: .refresh)
+//                    .catch({ _ in
+//                        Empty.init(completeImmediately: false)
+//                    })
+//                            .map { [addr] chars in (addr, chars) }
+//                    .eraseToAnyPublisher()
+//            })
+//            .eraseToAnyPublisher()
+//    }
+//}
+
 extension House {
     var scanner: AnyPublisher<(String, FanCharacteristics), ConnectionError> {
         return
-            NetworkAddress.hosts.publisher
-            .prepend("192.168.1.67:8080") //testing
-            .setFailureType(to: ConnectionError.self)
-            .flatMap ({ addr -> AnyPublisher<(IPAddr, FanCharacteristics), ConnectionError> in
-                return FanStatusLoader(addr: addr).loadResults(action: .refresh)
-                    .catch({ _ in
-                        Empty.init(completeImmediately: false)
-                    })
-                    .map { [addr] chars in (addr, chars) }
-                    .eraseToAnyPublisher()
-            })
+        Just ("192.168.1.67:8080") //testing
+//        NetworkAddress.hosts.publisher
+//            .prepend("192.168.1.67:8080") //testing
+            .asyncMap { addr in
+                let chars = try await FanStatusLoader(addr: addr).loadResultsAsync(action: .refresh)
+                return (addr, chars)
+            }
+            .mapError { $0 as? ConnectionError ?? ConnectionError.cast($0) }
             .eraseToAnyPublisher()
-    }}
+    }
+}
+

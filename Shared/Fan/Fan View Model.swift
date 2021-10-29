@@ -11,16 +11,12 @@ import Combine
 
 class FanViewModel: ObservableObject {
     @ObservedObject var model: FanModel
-
+    @Published var chars: FanCharacteristics
     @Published var selectorSegments: Int = 2
     @Published var targetedSpeed: Int?
     @Published var indicatedAlarm: IndicatorOpacity.TargetAlarmIndicator?
-    
     @Published var offDateTxt = ""
-//    @Published var displayedSegment: Int = 0
-
     @Published var fanLamps = FanLamps()
-
     @Published var fanRotationDuration: Double = 0.0
     @Published var currentMotorSpeed: Int?
     private var displayedMotorSpeed: Int?
@@ -32,6 +28,7 @@ class FanViewModel: ObservableObject {
     init (atAddr addr: String, usingChars chars: FanCharacteristics) {
         print("view model init for \(addr)")
         self.model = FanModel(forAddress: addr, usingChars: chars)
+        self.chars = chars
         startSubscribers()
         let m: String = String(model.fanCharacteristics?.airspaceFanModel.prefix(4) ?? "")
         selectorSegments = FanViewModel.speedTable[m] ?? 2
@@ -46,11 +43,15 @@ class FanViewModel: ObservableObject {
     }
     
     func setTimer (addHours hours: Int) {
-        model.setFan(addHours: hours)
+        Task {
+            await model.setFan(addHours: hours)
+        }
     }
     
     func refreshFan () {
-        model.refreshFan()
+        Task {
+//        await model.refreshFan() # FIX
+        }
     }
     
     private func updateOffDate(minutesLeft: Int) -> String {
@@ -73,7 +74,7 @@ class FanViewModel: ObservableObject {
             .compactMap { $0 }
             .sink(receiveValue: { [weak self] segmentSelected in
                 guard let self = self else { return }
-                self.model.setFan(toSpeed: segmentSelected)
+                Task { await self.model.setFan(toSpeed: segmentSelected) }
             })
             .store(in: &longTermBag)
         
@@ -116,6 +117,10 @@ class FanViewModel: ObservableObject {
             .store(in: &longTermBag)
         
         model.$fanCharacteristics
+            .compactMap { $0 }
+            .assign(to: &$chars)
+        
+        model.$fanCharacteristics
             .map { $0?.speed }
             .receive(on: DispatchQueue.main)
             .assign(to: &$currentMotorSpeed)
@@ -141,7 +146,6 @@ class FanViewModel: ObservableObject {
             .compactMap { $0 }
             .sink(receiveValue: { [weak self] spd in
                 guard let self = self else { return }
-//                self.setDisplayMotor(toSpeed: spd)
                 guard spd != 0 else {
                     self.displayMotor.send(Just(0.0).eraseToAnyPublisher())
                     return
@@ -160,26 +164,6 @@ class FanViewModel: ObservableObject {
             .switchToLatest()
             .receive(on: DispatchQueue.main)
             .assign(to: &$fanRotationDuration)
-        
-//        model.$commError
-//            .compactMap { $0 }
-//            .receive(on: DispatchQueue.main)
-//            .sink(receiveValue: { [weak self] err in
-//                print("Comm error: \(err.localizedDescription)")
-//                if let house = self?.houseViewModel, let chars = self?.model.fanCharacteristics {
-//                    house.fans.remove(chars)
-//                }
-//            })
-//            .store(in: &longTermBag)
-        
-//        weather.$currentTempStr
-//            .receive(on: DispatchQueue.main)
-//            .sink(receiveValue: { [weak self] _ in
-//                guard let self = self else { return }
-//                if self.weather.tooCold { self.displayedAppLamps.insert(.tooCold) } else { self.displayedAppLamps.remove(.tooCold) }
-//                if self.weather.tooHot { self.displayedAppLamps.insert(.tooHot) } else { self.displayedAppLamps.remove(.tooHot) }
-//            })
-//            .store(in: &longTermBag)
         }
     }
 
@@ -194,22 +178,4 @@ extension FanViewModel {
         "4300" : 10,
         "5300" : 10
     ]
-}
-
-extension FanViewModel {
-//    private func setDisplayMotor(toSpeed: Int) {
-//        guard currentMotorSpeed != toSpeed else { return }
-////        defer { displayedMotorSpeed = toSpeed }
-//        let scaleFactor = 3.5
-//        guard toSpeed != 0 else {
-//            displayMotor.send(Just(0.0).eraseToAnyPublisher())
-//            return
-//        }
-//        let s = Double (toSpeed)
-//        displayMotor.send (
-//            Timer.publish(every: scaleFactor * 1/s, on: .main, in: .common)
-//                .autoconnect()
-//            .map { _ in scaleFactor * 1/s }
-//            .eraseToAnyPublisher())
-//    }
 }

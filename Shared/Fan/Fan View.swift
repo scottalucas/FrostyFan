@@ -52,7 +52,11 @@ struct SpeedController: View {
     @ObservedObject var viewModel: FanViewModel
     
     var body: some View {
-        SegmentedSpeedPicker(segments: $viewModel.selectorSegments, highlightedSegment: $viewModel.currentMotorSpeed, targetedSegment: $viewModel.targetedSpeed, indicatorPulse: $viewModel.indicatedAlarm)
+        SegmentedSpeedPicker(
+            segments: $viewModel.selectorSegments,
+            highlightedSegment: $viewModel.currentMotorSpeed,
+            targetedSegment: $viewModel.targetedSpeed,
+            indicatorPulse: $viewModel.indicatedAlarm)
     }
 }
 
