@@ -74,9 +74,9 @@ class House: ObservableObject {
 extension House {
     var scanner: AnyPublisher<(String, FanCharacteristics), ConnectionError> {
         return
-        Just ("192.168.1.67:8080") //testing
-//        NetworkAddress.hosts.publisher
-//            .prepend("192.168.1.67:8080") //testing
+            Just ("192.168.1.67:8080") //testing
+                                       //        NetworkAddress.hosts.publisher
+                                       //            .prepend("192.168.1.67:8080") //testing
             .asyncMap { addr in
                 let chars = try await FanStatusLoader(addr: addr).loadResultsAsync(action: .refresh)
                 return (addr, chars)

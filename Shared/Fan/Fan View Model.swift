@@ -14,7 +14,7 @@ class FanViewModel: ObservableObject {
     @Published var chars: FanCharacteristics
     @Published var selectorSegments: Int = 2
     @Published var targetedSpeed: Int?
-    @Published var indicatedAlarm: IndicatorOpacity.TargetAlarmIndicator?
+    @Published var indicatedAlarm: IndicatorOpacity.IndicatorBlink?
     @Published var offDateTxt = ""
     @Published var fanLamps = FanLamps()
     @Published var fanRotationDuration: Double = 0.0

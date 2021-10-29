@@ -55,8 +55,8 @@ struct SpeedController: View {
         SegmentedSpeedPicker(
             segments: $viewModel.selectorSegments,
             highlightedSegment: $viewModel.currentMotorSpeed,
-            targetedSegment: $viewModel.targetedSpeed,
-            indicatorPulse: $viewModel.indicatedAlarm)
+            indicatedSegment: $viewModel.targetedSpeed,
+            indicatorBlink: $viewModel.indicatedAlarm)
     }
 }
 
