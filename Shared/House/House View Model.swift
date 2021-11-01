@@ -52,8 +52,12 @@ class HouseViewModel: ObservableObject {
             .assign(to: &$fans)
         
     }
-    func scan () {
-        house.scanForFans()
+//    func scan () {
+//        house.scanForFans()
+//    }
+    
+     func asyncScan () async {
+         await house.scannerAsync()
     }
 }
 //    typealias IPAddr = String

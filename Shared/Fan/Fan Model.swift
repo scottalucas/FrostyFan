@@ -362,7 +362,7 @@ struct FanStatusLoader {
         }
         let decoder = JSONDecoder()
         let config = URLSession.shared.configuration
-        config.timeoutIntervalForRequest = 5
+        config.timeoutIntervalForRequest = 10
         let session = URLSession.init(configuration: config)
         let (data, response) = try await session.data(from: url)
         guard let r = (response as? HTTPURLResponse) else {

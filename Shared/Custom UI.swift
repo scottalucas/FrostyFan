@@ -464,8 +464,8 @@ struct SegmentedSpeedPicker: View {
     @State private var indicatorOn: Bool = false
     @State private var indicatorOffset: CGFloat = 0
     @State private var highlightOffset: CGFloat = 0
-    var minMaxLabels: PickerLabel.SpecialLabel
-    var middleLabels: PickerLabel.SpecialLabel
+    var minMaxLabels: PickerLabel.Appearance
+    var middleLabels: PickerLabel.Appearance
 
     struct PickerLabel: View, Identifiable {
         var id: Int
@@ -492,7 +492,7 @@ struct SegmentedSpeedPicker: View {
                     .frame(width: geo.size.width/CGFloat(cells))
             }
         }
-        enum SpecialLabel {
+        enum Appearance {
             case useStrings(Array<String>), useImages(Array<Image>), fillIntegerSequence
         }
     }
@@ -657,8 +657,8 @@ struct SegmentedSpeedPicker: View {
         highlightedSegment: Binding<Int?>,
         indicatedSegment: Binding<Int?>,
         indicatorBlink: Binding<IndicatorOpacity.IndicatorBlink?>,
-        minMaxLabels: PickerLabel.SpecialLabel = .useStrings(["Min", "Max"]),
-        middleLabels: PickerLabel.SpecialLabel = .fillIntegerSequence) {
+        minMaxLabels: PickerLabel.Appearance = .useStrings(["Min", "Max"]),
+        middleLabels: PickerLabel.Appearance = .fillIntegerSequence) {
             self._segments = segments
             self._highlightedSegment = highlightedSegment
             self._indicatedSegment = indicatedSegment
@@ -737,6 +737,17 @@ struct VerticalLine: Shape {
             path.move(to: CGPoint(x: 0, y: 0))
             path.addLine(to: CGPoint(x: 0, y: rect.height))
         }
+    }
+}
+
+class RefreshActionPerformer: ObservableObject {
+    @Published private(set) var isPerforming = false
+    
+    func perform(_ action: RefreshAction) async {
+        guard !isPerforming else { return }
+        isPerforming = true
+        await action()
+        isPerforming = false
     }
 }
 
