@@ -13,6 +13,8 @@ struct FanView: View {
 //    private var applicationLamps: HouseLamps
     @StateObject var viewModel: FanViewModel
     @AppStorage var name: String
+    @Binding var refreshing: Bool
+    private var pullDownSize: CGSize
     @State private var angle: Angle = .zero
     @State private var timerWheelPosition: Int = .zero
     @State private var activeSheet: Sheet?
@@ -28,6 +30,8 @@ struct FanView: View {
             ControllerRender(viewModel: viewModel, activeSheet: $activeSheet)
             FanImageRender(angle: $angle, activeSheet: $activeSheet, viewModel: viewModel)
             FanNameRender(activeSheet: $activeSheet, name: $name, fanViewModel: viewModel)
+                .offset(y: refreshing ? 30 : pullDownSize.height)
+                .scaleEffect(x: 1.0 + pullDownSize.height / 400, y: 1.0 + pullDownSize.height / 400, anchor: .topLeading)
         }
         .foregroundColor(viewModel.fanLamps.contains(.useAlarmColor) || HouseViewModel.shared.indicators.contains(.useAlarmColor) ? .alarm : .main)
         .modifier(OverlaySheetRender(viewModel: viewModel, activeSheet: $activeSheet))
@@ -42,9 +46,11 @@ struct FanView: View {
         }
     }
     
-    init (addr: IPAddr, chars: FanCharacteristics) {
+    init (addr: IPAddr, chars: FanCharacteristics, refreshing: Binding<Bool>, pullDownOffset: CGSize) {
         _name = AppStorage(wrappedValue: "\(chars.airspaceFanModel)", StorageKey.fanName(chars.macAddr).key)
         _viewModel = StateObject(wrappedValue: FanViewModel(atAddr: addr, usingChars: chars))
+        _refreshing = refreshing
+        pullDownSize = pullDownOffset
     }
 }
 
@@ -236,7 +242,7 @@ struct TargetSpeedIndicator: ViewModifier {
 struct FanView_Previews: PreviewProvider {
     static var chars = FanCharacteristics()
     static var previews: some View {
-        FanView(addr: "0.0.0.0:8181", chars: chars)
+        FanView(addr: "0.0.0.0:8181", chars: chars, refreshing: .constant(false), pullDownOffset: .zero)
             .preferredColorScheme(.light)
     }
 }
