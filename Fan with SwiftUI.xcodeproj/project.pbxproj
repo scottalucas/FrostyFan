@@ -48,6 +48,9 @@
 		937F7C632595239B009E4754 /* Custom UI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937F7C612595239B009E4754 /* Custom UI.swift */; };
 		937F7C7125952556009E4754 /* Test Objects.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937F7C7025952556009E4754 /* Test Objects.swift */; };
 		937F7C7225952556009E4754 /* Test Objects.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937F7C7025952556009E4754 /* Test Objects.swift */; };
+		9380A2B227359DBA0000F465 /* No Fan View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9380A2B127359DBA0000F465 /* No Fan View.swift */; };
+		9380A2B327359DBA0000F465 /* No Fan View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9380A2B127359DBA0000F465 /* No Fan View.swift */; };
+		93CF0A092731E44100307298 /* Fatal Fault Sheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93CF0A082731E43E00307298 /* Fatal Fault Sheet.swift */; };
 		93CF9548258984A1004BBD49 /* Fan View Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93CF9547258984A1004BBD49 /* Fan View Model.swift */; };
 		93CF9549258984A1004BBD49 /* Fan View Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93CF9547258984A1004BBD49 /* Fan View Model.swift */; };
 		93F31BD4267002370056DCA1 /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 93F31BD3267002370056DCA1 /* Launch Screen.storyboard */; };
@@ -108,6 +111,8 @@
 		937F7C5625952358009E4754 /* Custom Errors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Custom Errors.swift"; sourceTree = "<group>"; };
 		937F7C612595239B009E4754 /* Custom UI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Custom UI.swift"; sourceTree = "<group>"; };
 		937F7C7025952556009E4754 /* Test Objects.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Test Objects.swift"; sourceTree = "<group>"; };
+		9380A2B127359DBA0000F465 /* No Fan View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "No Fan View.swift"; sourceTree = "<group>"; };
+		93CF0A082731E43E00307298 /* Fatal Fault Sheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Fatal Fault Sheet.swift"; sourceTree = "<group>"; };
 		93CF9547258984A1004BBD49 /* Fan View Model.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Fan View Model.swift"; sourceTree = "<group>"; };
 		93F31BD3267002370056DCA1 /* Launch Screen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = "Launch Screen.storyboard"; sourceTree = "<group>"; };
 		93F31BEE2670130C0056DCA1 /* Fan.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Fan.png; path = Assets.xcassets/Fan.png; sourceTree = "<group>"; };
@@ -232,6 +237,7 @@
 				930CFF722581881000E8E979 /* Fan Model.swift */,
 				93CF9547258984A1004BBD49 /* Fan View Model.swift */,
 				930CFFC4258188F400E8E979 /* Fan View.swift */,
+				9380A2B127359DBA0000F465 /* No Fan View.swift */,
 			);
 			path = Fan;
 			sourceTree = "<group>";
@@ -271,6 +277,7 @@
 				936F79D7259FADD500AACA53 /* Timer Sheet.swift */,
 				936F79E1259FADFC00AACA53 /* Detail Sheet.swift */,
 				936F79E7259FAE0F00AACA53 /* Name Sheet.swift */,
+				93CF0A082731E43E00307298 /* Fatal Fault Sheet.swift */,
 				936F79ED259FB59900AACA53 /* Sheet Protocol.swift */,
 			);
 			path = Sheets;
@@ -443,6 +450,7 @@
 				936F79EE259FB59900AACA53 /* Sheet Protocol.swift in Sources */,
 				930CFF942581884B00E8E979 /* House View Model.swift in Sources */,
 				936F79E2259FADFC00AACA53 /* Detail Sheet.swift in Sources */,
+				93CF0A092731E44100307298 /* Fatal Fault Sheet.swift in Sources */,
 				937F7C622595239B009E4754 /* Custom UI.swift in Sources */,
 				937F7C7125952556009E4754 /* Test Objects.swift in Sources */,
 				930CFF8D2581884000E8E979 /* House Model.swift in Sources */,
@@ -454,6 +462,7 @@
 				937F7C5025952138009E4754 /* Custom Operators.swift in Sources */,
 				930CFF4E2581878D00E8E979 /* Airspace Fan.swift in Sources */,
 				936F79D8259FADD500AACA53 /* Timer Sheet.swift in Sources */,
+				9380A2B227359DBA0000F465 /* No Fan View.swift in Sources */,
 				933A987E25AAA9240084C535 /* Weather Model.swift in Sources */,
 				934C8ABA25AB92380037906C /* Location Model.swift in Sources */,
 				93CF9548258984A1004BBD49 /* Fan View Model.swift in Sources */,
@@ -470,6 +479,7 @@
 				930CFFC6258188F400E8E979 /* Fan View.swift in Sources */,
 				930CFF952581884B00E8E979 /* House View Model.swift in Sources */,
 				934C8ACA25AB926F0037906C /* Alarm Model.swift in Sources */,
+				9380A2B327359DBA0000F465 /* No Fan View.swift in Sources */,
 				937F7C632595239B009E4754 /* Custom UI.swift in Sources */,
 				937F7C7225952556009E4754 /* Test Objects.swift in Sources */,
 				930CFF8E2581884000E8E979 /* House Model.swift in Sources */,

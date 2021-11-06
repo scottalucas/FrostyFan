@@ -9,48 +9,73 @@ import SwiftUI
 
 struct FanView: View {
     typealias IPAddr = String
+    var id: IPAddr
     @Environment(\.scenePhase) var scenePhase
-//    private var applicationLamps: HouseLamps
+
     @StateObject var viewModel: FanViewModel
+//    @ObservedObject var houseViewModel: HouseViewModel
     @AppStorage var name: String
-    @Binding var refreshing: Bool
-    private var pullDownSize: CGSize
-    @State private var angle: Angle = .zero
-    @State private var timerWheelPosition: Int = .zero
+//    @Binding var refreshing: Bool
+//    @Binding var applicationLamps: HouseLamps
+    @GestureState var viewOffset = CGSize.zero
+
+    @State var pullDownOffset = CGFloat.zero
+    @State private var angle = Angle.zero
     @State private var activeSheet: Sheet?
     enum Sheet: Identifiable {
         var id: Int { hashValue }
         case fanName
         case timer
         case detail
+        case fatalFault
     }
     
     var body: some View {
         ZStack {
             ControllerRender(viewModel: viewModel, activeSheet: $activeSheet)
             FanImageRender(angle: $angle, activeSheet: $activeSheet, viewModel: viewModel)
-            FanNameRender(activeSheet: $activeSheet, name: $name, fanViewModel: viewModel)
-                .offset(y: refreshing ? 30 : pullDownSize.height)
-                .scaleEffect(x: 1.0 + pullDownSize.height / 400, y: 1.0 + pullDownSize.height / 400, anchor: .topLeading)
+            FanNameRender(activeSheet: $activeSheet, name: $name, pullDownOffset: $pullDownOffset)
+            VStack {
+                Text("\(pullDownOffset)")
+            }
         }
-        .foregroundColor(viewModel.fanLamps.contains(.useAlarmColor) || HouseViewModel.shared.indicators.contains(.useAlarmColor) ? .alarm : .main)
-        .modifier(OverlaySheetRender(viewModel: viewModel, activeSheet: $activeSheet))
+//        .gesture(DragGesture().updating($viewOffset) { value, state, _ in
+//            guard refreshing.status == .readyForRequest else {
+//                let thump = UIImpactFeedbackGenerator(style: .rigid)
+//                thump.impactOccurred()
+//                pullDownOffset = .zero
+//                state = .zero
+//                return
+//            }
+//            state = CGSize(width: .zero, height: max(0, min(75, value.translation.height)))
+//            pullDownOffset = state.height
+//            if pullDownOffset >= 75 { refreshing.status = .requestPending }
+//        })
+        .foregroundColor(viewModel.useAlarmColor ? .alarm : .main)
+        .overlaySheet(dataSource: viewModel, activeSheet: $activeSheet)
+//        .modifier(OverlaySheetRender(dataSource: viewModel, activeSheet: $activeSheet))
         .onReceive(viewModel.$fanRotationDuration) { val in
             self.angle = .zero
             withAnimation(Animation.linear(duration: val)) {
                 self.angle = .degrees(179.99)
             }
         }
+        .onChange(of: viewModel.fatalFault) { fault in
+            guard fault else { return }
+            activeSheet = .fatalFault
+        }
         .onAppear {
             viewModel.refreshFan()
         }
     }
     
-    init (addr: IPAddr, chars: FanCharacteristics, refreshing: Binding<Bool>, pullDownOffset: CGSize) {
+    init (initialCharacteristics chars: FanCharacteristics) {
+        id = chars.ipAddr
+//        self.houseViewModel = houseViewModel
         _name = AppStorage(wrappedValue: "\(chars.airspaceFanModel)", StorageKey.fanName(chars.macAddr).key)
-        _viewModel = StateObject(wrappedValue: FanViewModel(atAddr: addr, usingChars: chars))
-        _refreshing = refreshing
-        pullDownSize = pullDownOffset
+        _viewModel = StateObject(wrappedValue: FanViewModel(chars: chars))
+//        _refreshing = refreshing
+//        self._pullDownOffset = pullDownOffset
     }
 }
 
@@ -69,11 +94,12 @@ struct SpeedController: View {
 struct ControllerRender: View {
     var viewModel: FanViewModel
     @Binding var activeSheet: FanView.Sheet?
+//    @Binding var applicationLamps: HouseLamps
     
     var body: some View {
         VStack {
             Spacer()
-            if viewModel.fanLamps.contains(.showTimerIcon) {
+            if viewModel.showTimerIcon {
                 VStack {
                     Button(
                         action: {
@@ -85,28 +111,28 @@ struct ControllerRender: View {
                                     .foregroundColor(.main)
                                     .scaledToFit()
                                     .frame(width: nil, height: 40)
-                                if viewModel.fanLamps.contains(.showTimeLeft) {
-                                    Text(viewModel.offDateTxt)
+                                if viewModel.offDateText != nil {
+                                    Text(viewModel.offDateText ?? "")
                                         .font(.subheadline)
                                 }
                             }
                             .padding(.bottom, 15)
                         })
-                    ForEach (viewModel.fanLamps.diplayedLabels, id: \.self) { element in
-                     Text(element)
+                    if viewModel.fanStatusText != nil {
+                        Text(viewModel.fanStatusText ?? "")
                     }
                 }
-            } else {
-                ForEach (HouseViewModel.shared.indicators.diplayedLabels, id: \.self) { element in
-                 Text(element)
-                }
             }
+//            else {
+//                ForEach (applicationLamps.diplayedLabels, id: \.self) { element in
+//                 Text(element)
+//                }
+//            }
             SpeedController(viewModel: viewModel)
                 .padding([.leading, .trailing], 20)
         }
     }
 }
-
 
 struct FanImageRender: View {
     @Binding var angle: Angle
@@ -125,20 +151,19 @@ struct FanImageRender: View {
                 .allowsHitTesting(false)
                 .overlay(
                     Button(action: {
-                        if !viewModel.fanLamps.contains(.showNoCharsIndicator) {
-                            activeSheet = .detail
-                        }
+                        activeSheet = .detail
                     }, label: {
-                        let labels = HouseViewModel.shared.indicators.diplayedLabels
-                        if labels.isEmpty {
-                            AnyView(Color.clear)
-                        }
-                        else {
-                            ForEach (labels, id: \.self) { item in
-                                AnyView(Text(item)
-                                )}
-                                .frame(width: nil, height: nil, alignment: .center)
-                        }
+                        Text("Stats")
+//                        let labels = HouseViewModel.shared.indicators.diplayedLabels
+//                        if labels.isEmpty {
+//                            AnyView(Color.clear)
+//                        }
+//                        else {
+//                            ForEach (labels, id: \.self) { item in
+//                                AnyView(Text(item)
+//                                )}
+//                                .frame(width: nil, height: nil, alignment: .center)
+//                        }
                     })
                     .buttonStyle(BorderlessButtonStyle())
                     .frame(width: nil, height: 75, alignment: .center)
@@ -152,9 +177,13 @@ struct FanImageRender: View {
 }
 
 struct FanNameRender: View {
+    @EnvironmentObject private var house: House
     @Binding var activeSheet: FanView.Sheet?
     @Binding var name: String
-    var fanViewModel: FanViewModel
+    @Binding var pullDownOffset: CGFloat
+    @State private var scaleFactor = 1.0
+    @State private var yOffset: CGFloat = .zero
+//    var fanViewModel: FanViewModel
     
     var body: some View {
         VStack (alignment: /*@START_MENU_TOKEN@*/.center/*@END_MENU_TOKEN@*/, spacing: 0) {
@@ -168,82 +197,66 @@ struct FanNameRender: View {
             Divider().frame(width: nil, height: 1, alignment: .center).background(Color.main)
             Spacer()
         }
+        .scaleEffect(scaleFactor, anchor: .topLeading)
         .padding([.leading, .trailing], 20.0)
         .padding(.top, 40.0)
-    }
-}
+        .onChange(of: house.pulldownDistance) { pullOffset in
+            yOffset = pullOffset
+            scaleFactor = 1 + pow(Double(pullOffset/70), 3)
 
-struct OverlaySheetRender: ViewModifier {
-    @Binding var activeSheet: FanView.Sheet?
-    @State var wheelPosition: Int = 0
-    private var viewModel: FanViewModel
-    private var chars: FanCharacteristics?
-    private var timeOnTimer: Int = 0
-    private var macAddr: String = ""
-
-    func body (content: Content) -> some View {
-        content
-            .sheet(item: $activeSheet, onDismiss: {
-                defer { wheelPosition = 0 }
-                if wheelPosition > 0 {
-                    viewModel.setTimer(addHours: wheelPosition)
-                }
-            }) {
-                switch $0 {
-                case .detail:
-                    DetailSheet(chars: chars ?? FanCharacteristics())
-                case .fanName:
-                    NameSheet(storageKey: StorageKey.fanName(macAddr))
-                case .timer:
-                    TimerSheet(wheelPosition: $wheelPosition, timeOnTimer: timeOnTimer).eraseToAnyView()
-                }
-            }
-    }
-    init (viewModel: FanViewModel, activeSheet: Binding<FanView.Sheet?>) {
-        self.viewModel = viewModel
-        self._activeSheet = activeSheet
-        chars = viewModel.model.fanCharacteristics
-        viewModel.model.fanCharacteristics.map { c in
-            self.macAddr = c.macAddr
-            self.timeOnTimer = c.timer
+//            1/(pow(Double(pullOffset), 2) == 0 ? .infinity : pow(Double(pullOffset), 2))
         }
     }
 }
 
-struct TargetSpeedIndicator: ViewModifier {
-    @ObservedObject var viewModel: FanViewModel
-    @ObservedObject var appLamps = HouseViewModel.shared
-    
-    func body(content: Content) -> some View {
-        content
-            .overlay (
-                viewModel.fanLamps.contains(.showPhysicalSpeedIndicator) ?
-                    GeometryReader { geo2 in
-                        Image(systemName: "arrowtriangle.up.fill")
-                            .resizable()
-                            .foregroundColor(Color(viewModel.fanLamps.contains(.useAlarmColor) || appLamps.indicators.contains(.useAlarmColor) ? .main : .alarm))
-                            .alignmentGuide(.top, computeValue: { dimension in
-                                -geo2.size.height + dimension.height/CGFloat(2)
-                            })
-                            .alignmentGuide(HorizontalAlignment.center, computeValue: { dimension in
-                                let oneSegW = geo2.size.width/CGFloat(viewModel.selectorSegments + 1)
-                                let offs = oneSegW/2.0 + (oneSegW * CGFloat(viewModel.currentMotorSpeed ?? 0)) - dimension.width
-                                return -offs
-                            })
-                            .animation(.easeInOut)
-                            .frame(width: 20, height: 10, alignment: .top)
-                    }
-                    .eraseToAnyView() :
-                    Color.clear.eraseToAnyView()
-            )
+
+//struct TargetSpeedIndicator: ViewModifier {
+//    @ObservedObject var viewModel: FanViewModel
+////    @ObservedObject var appLamps = HouseViewModel.shared
+//
+//    func body(content: Content) -> some View {
+//        content
+//            .overlay (
+//                viewModel.fanLamps.contains(.showPhysicalSpeedIndicator) ?
+//                    GeometryReader { geo2 in
+//                        Image(systemName: "arrowtriangle.up.fill")
+//                            .resizable()
+//                            .foregroundColor(Color(viewModel.fanLamps.contains(.useAlarmColor) || appLamps.indicators.contains(.useAlarmColor) ? .main : .alarm))
+//                            .alignmentGuide(.top, computeValue: { dimension in
+//                                -geo2.size.height + dimension.height/CGFloat(2)
+//                            })
+//                            .alignmentGuide(HorizontalAlignment.center, computeValue: { dimension in
+//                                let oneSegW = geo2.size.width/CGFloat(viewModel.selectorSegments + 1)
+//                                let offs = oneSegW/2.0 + (oneSegW * CGFloat(viewModel.currentMotorSpeed ?? 0)) - dimension.width
+//                                return -offs
+//                            })
+//                            .animation(.easeInOut)
+//                            .frame(width: 20, height: 10, alignment: .top)
+//                    }
+//                    .eraseToAnyView() :
+//                    Color.clear.eraseToAnyView()
+//            )
+//    }
+//}
+
+extension FanView: Hashable {
+    static func == (lhs: FanView, rhs: FanView) -> Bool {
+        rhs.id == lhs.id
+    }
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
     }
 }
+
+extension FanView: Identifiable {}
+
 
 struct FanView_Previews: PreviewProvider {
     static var chars = FanCharacteristics()
     static var previews: some View {
-        FanView(addr: "0.0.0.0:8181", chars: chars, refreshing: .constant(false), pullDownOffset: .zero)
+        FanView(initialCharacteristics: chars)
             .preferredColorScheme(.light)
+            .environmentObject(House())
     }
 }
 

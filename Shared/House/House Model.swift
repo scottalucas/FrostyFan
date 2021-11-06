@@ -11,21 +11,67 @@ import Combine
 
 class House: ObservableObject {
     typealias IPAddr = String
-    static let shared = House()
+    //    static let shared = House()
     @Published var fans = Set<FanCharacteristics>() //IP addresses
-    @Published var status = HouseStatus()
+    @Published var progress: Double?
+    @Published var isRefreshing = false
+    @Published var pulldownDistance = Double.zero
     
-//    @Published var scanning = false
-//    var runningFans: Bool {
-//        fans.filter { chars in chars.speed > 0}.count > 0 ? true : false
-//    }
-    private var bag = Set<AnyCancellable>()
-    
-    private init () {
-//        scanForFans()
+    private var addressCount: Int = 0 {
+        didSet {
+            progress = updateProgress()
+        }
+    }
+    private var addressesChecked: Int = 0 {
+        didSet {
+            progress = updateProgress()
+            print ( progress.map { String( format: "%.2f", $0 ) } ?? "fault" )
+        }
     }
     
-    func asyncScanForFans () {
+    func scan () {
+        guard !isRefreshing else { return }
+        isRefreshing = true
+        Task {
+//            await scannerAsync()
+            await Task.sleep(2_000_000_000)
+            isRefreshing = false
+        }
+    }
+    
+    init (testFan fan: FanCharacteristics = FanCharacteristics()) {
+        fans.update(with: fan)
+    }
+    
+   func scannerAsync () async {
+        defer {print("finished")}
+        return await withTaskGroup(of: (String, FanCharacteristics?).self ) { group in
+            var seq = NetworkAddress.hosts
+            seq.append("192.168.1.67:8080")
+            addressCount = seq.count
+            for addr in seq {
+                group.addTask {
+                    let chars = try? await FanStatusLoader(addr: addr).loadResultsAsync(action: .refresh)
+                    return (addr, chars)
+                }
+            }
+            for await (addr, optChars) in group {
+                guard let chars = optChars else { return }
+                print("Addr: \(addr), chars: \(chars)")
+                var newFan = chars
+                newFan.ipAddr = addr
+                fans.update(with: newFan)
+            }
+//        return group
+        }
+    }
+    
+    private func updateProgress () -> Double? {
+        guard addressCount > 0 else { return nil }
+        guard addressesChecked/addressCount < 1 else { return 1.0 }
+        return Double(addressesChecked) / Double(addressCount)
+    }
+//    func asyncScanForFans () {
 //        Task {
 //            for try await (addr, fan) in scannerAsync {
 //                fan.ipAddr = addr
@@ -61,7 +107,7 @@ class House: ObservableObject {
 //            })
 //            .store(in: &bag)
 //    }
-}
+//}
 
 //extension House {
 //    var scanner: AnyPublisher<(String, FanCharacteristics), ConnectionError> {
@@ -81,7 +127,7 @@ class House: ObservableObject {
 //    }
 //}
 
-extension House {
+//extension House {
 //    var scanner: AnyPublisher<(String, FanCharacteristics), ConnectionError> {
 //        return
 //            Just ("192.168.1.67:8080") //testing
@@ -94,27 +140,5 @@ extension House {
 //            .mapError { $0 as? ConnectionError ?? ConnectionError.cast($0) }
 //            .eraseToAnyPublisher()
 //    }
-    func scannerAsync () async {
-        fans.removeAll()
-        defer {print("finished")}
-        await withTaskGroup(of: (String, FanCharacteristics?).self ) { group in
-            var seq = NetworkAddress.hosts
-            seq.append("192.168.1.67:8080")
-            for addr in seq {
-                    group.addTask {
-                        let chars = try? await FanStatusLoader(addr: addr).loadResultsAsync(action: .refresh)
-                        return (addr, chars)
-                    }
-            }
-            for await (addr, optChars) in group {
-                if let chars = optChars {
-                    print("Addr: \(addr), chars: \(chars)")
-                    var newFan = chars
-                    newFan.ipAddr = addr
-                    fans.update(with: newFan)
-                }
-            }
-        }
-    }
-}
+//}
 

@@ -8,8 +8,8 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @EnvironmentObject var weather: Weather
-    @EnvironmentObject var location: Location
+//    @EnvironmentObject var weather: Weather
+//    @EnvironmentObject var location: Location
     @Environment(\.scenePhase) var scenePhase
     @AppStorage(StorageKey.temperatureAlarmEnabled.key) var temperatureAlertsEnabled: Bool = false
     @AppStorage(StorageKey.interlockAlarmEnabled.key) var interlockAlertsEnabled: Bool = false
@@ -69,7 +69,7 @@ struct SettingsView: View {
                                     .foregroundColor(.main)
                                 Spacer()
                                 Button(action: {
-                                    location.updateLocation()
+//                                    location.updateLocation() //FIX
                                 }, label: {
                                     Text("Set Location")
                                         .padding(5)
@@ -86,7 +86,7 @@ struct SettingsView: View {
                                     .foregroundColor(.main)
                                 Spacer()
                                 Button(action: {
-                                    location.clearLocation()
+//                                    location.clearLocation() //FIX
                                 }, label: {
                                     Text("Erase Location")
                                         .padding(5)
@@ -103,7 +103,7 @@ struct SettingsView: View {
                                     .foregroundColor(.main)
                                 Spacer()
                                 Button(action: {
-                                    location.updateLocation()
+//                                    location.updateLocation() //FIX
                                 }, label: {
                                     Text("Set Location")
                                         .padding(5)
@@ -146,11 +146,11 @@ struct SettingsView: View {
                 Spacer()
                 HStack {
                     VStack (alignment: .leading) {
-                        if let tempStr = weather.currentTempStr {
-                            Text("Outside temperature: \(tempStr)")
-                                .foregroundColor(.white)
-                                .italic()
-                        }
+//                        if let tempStr = weather.currentTempStr {
+//                            Text("Outside temperature: \(tempStr)")
+//                                .foregroundColor(.white)
+//                                .italic()
+//                        } //FIX
                         if (locationPermission == .appAllowed || locationPermission == .unknown), coordinatesAvailable
                         {
                             Text("Location: \(latStr!), \(lonStr!)")
@@ -240,10 +240,10 @@ struct SettingsBackgound: View {
 }
 
 struct Settings_View_Previews: PreviewProvider {
-    static var house = House.shared
+//    static var house = House.shared
     static var previews: some View {
         SettingsView()
-            .environmentObject(Weather())
-            .environmentObject(Location())
+//            .environmentObject(Weather())
+//            .environmentObject(Location())
     }
 }

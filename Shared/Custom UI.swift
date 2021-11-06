@@ -46,6 +46,46 @@ extension Color {
     static var controlsBackground = Color(.controlsBackground)
 }
 
+extension View {
+    func overlaySheet(dataSource source: FanViewModel, activeSheet: Binding<FanView.Sheet?>) -> some View {
+        modifier(OverlaySheetRender(dataSource: source, activeSheet: activeSheet))
+    }
+}
+
+struct OverlaySheetRender: ViewModifier {
+    @Binding var activeSheet: FanView.Sheet?
+    @ObservedObject var data: FanViewModel
+//    private var view: FanView
+    //    private var chars: FanCharacteristics?
+    //    private var timeOnTimer: Int = 0
+    //    private var macAddr: String = ""
+    
+    func body (content: Content) -> some View {
+        content
+            .sheet(item: $activeSheet, onDismiss: {
+                defer { data.timerWheelPosition = 0 }
+                if data.timerWheelPosition > 0 {
+                    data.setTimer(addHours: data.timerWheelPosition)
+                }
+            }) {
+                switch $0 {
+                    case .detail:
+                        DetailSheet(chars: data.chars)
+                    case .fanName:
+                        NameSheet(storageKey: StorageKey.fanName(data.chars.macAddr))
+                    case .timer:
+                        TimerSheet(wheelPosition: $data.timerWheelPosition, timeOnTimer: data.chars.timer)
+                    case .fatalFault:
+                        FatalFaultSheet()
+                }
+            }
+    }
+    init (dataSource: FanViewModel, activeSheet: Binding<FanView.Sheet?>) {
+        self._activeSheet = activeSheet
+        self.data = dataSource
+    }
+}
+
 struct RefreshableScrollView<Content: View>: View {
     @State private var previousScrollOffset: CGFloat = 0
     @State private var scrollOffset: CGFloat = 0
@@ -668,6 +708,49 @@ struct SegmentedSpeedPicker: View {
         }
 }
 
+struct PulldownRefresh: ViewModifier {
+    @EnvironmentObject private var house: House
+    @GestureState private var dragSize = CGSize.zero
+    @State private var verticalOffset: Double = .zero
+    @State private var refreshing = false
+    private var spinnerAlignment: Alignment
+    
+    func body(content: Content) -> some View {
+        return
+        content
+            .offset(x: 0, y: verticalOffset)
+            .overlay(alignment: spinnerAlignment) {
+                if house.isRefreshing {
+                    ProgressView()
+                }
+            }
+            .gesture(DragGesture().onChanged { value in
+                guard !house.isRefreshing else { return }
+                let verticalTranslation = max(0, value.location.y - value.startLocation.y)
+                verticalOffset = 75 * (verticalTranslation)/(verticalTranslation + 75)
+                if verticalTranslation >= 75 {
+                    refreshing = true
+                    let thump = UIImpactFeedbackGenerator(style: .rigid)
+                    thump.impactOccurred()
+                    house.scan()
+                    withAnimation {
+                        verticalOffset = .zero
+                    }
+                }
+                house.pulldownDistance = verticalOffset
+            })
+    }
+    init(spinnerAlignment align: Alignment = .top) {
+        spinnerAlignment = align
+    }
+}
+
+extension View {
+    func pulldownRefresh (spinnerAlignment: Alignment = .top) -> some View {
+        modifier(PulldownRefresh(spinnerAlignment: spinnerAlignment))
+    }
+}
+
 struct IndicatorOpacity: ViewModifier {
     
     enum IndicatorBlink: Double {
@@ -740,17 +823,6 @@ struct VerticalLine: Shape {
     }
 }
 
-class RefreshActionPerformer: ObservableObject {
-    @Published private(set) var isPerforming = false
-    
-    func perform(_ action: RefreshAction) async {
-        guard !isPerforming else { return }
-        isPerforming = true
-        await action()
-        isPerforming = false
-    }
-}
-
 struct Utilities_Previews: PreviewProvider {
     
     struct BindingTestHolder: View {
@@ -775,16 +847,18 @@ struct Utilities_Previews: PreviewProvider {
     }
 
     static var previews: some View {
-        if #available(iOS 15.0, *) {
-            let holder = BindingTestHolder()
-            return holder
-                .preferredColorScheme(.dark)
-
-                .eraseToAnyView()
-        } else {
-            return BindingTestHolder().eraseToAnyView()
-            // Fallback on earlier versions
-        }
+//            let holder = BindingTestHolder()
+//            return holder
+//                .preferredColorScheme(.dark)
+//
+//                .eraseToAnyView()
+        Rectangle ()
+            .foregroundColor(Color(uiColor: .systemBackground))
+            .overlay {
+                Text("test")
+            }
+            .pulldownRefresh()
+            .environmentObject(House())
     }
 }
 

@@ -10,54 +10,119 @@ import SwiftUI
 import Combine
 
 class HouseViewModel: ObservableObject {
-    static let shared = HouseViewModel()
-    @ObservedObject var house = House.shared
-    @Published var fans = Set<FanCharacteristics>()
+    deinit { NotificationCenter.default.removeObserver(self, name: .removeFan, object: nil) }
+//    static let shared = HouseViewModel()
+    private var house: House
+    private var status = HouseStatus() {
+        willSet {
+            indicators = setHouseLamps(status: newValue)
+        }
+    }
+    
+    @Published var fanViews = Set<FanView>()
+    @Published var progress: Double?
     @Published var indicators = HouseLamps()
-    @Published private var status = House.shared.status
+    @Published var scanning = false
+    @Published var pullDownOffset: CGFloat = .zero
+//    @Published var refreshing = false
+    
     private var bag = Set<AnyCancellable>()
     
-    private init () {
-        $status
-            .sink(receiveValue: { status in
-                if status.contains(.scanning) {
-                    self.indicators.insert(.showScanningSpinner)
-                } else {
-                    self.indicators.remove(.showScanningSpinner)
-                }
-                
-                if status.contains(.temperatureAlarmsEnabled) && !status.isDisjoint(with: [.tooHot, .tooCold]) {
-                    self.indicators.insert(.showTemperatureWarning)
-                    self.indicators.insert(.useAlarmColor)
-                } else {
-                    self.indicators.remove(.showTemperatureWarning)
-                    self.indicators.remove(.useAlarmColor)
-                }
-                
-                if status.contains(.noFansAvailable) {
-                    self.indicators.insert(.showNoFanWarning)
-                } else {
-                    self.indicators.remove(.showNoFanWarning)
-                }
-                
-                if status.contains(.temperatureAvailable) {
-                    self.indicators.insert(.showTemperatureText)
-                } else {
-                    self.indicators.remove(.showTemperatureText)
-                }
-            })
-            .store(in: &bag)
-        
+    init () {
+        house = House()
+        NotificationCenter.default.addObserver(forName: .removeFan, object: nil, queue: nil) { [weak self] noti in
+            guard let fan = noti.userInfo?.keys.first as? FanView else { return }
+            self?.fanViews.remove(fan)
+        }
         house.$fans
-            .assign(to: &$fans)
+            .map { charSet in
+                Set (
+                    charSet
+                        .map { FanView(initialCharacteristics: $0) }
+                )
+            }
+            .assign(to: &$fanViews)
+        
+        house.$progress
+            .assign(to: &$progress)
+        //        $status
+//            .sink(receiveValue: { status in
+//                if status.contains(.scanning) {
+//                    self.indicators.insert(.showScanningSpinner)
+//                } else {
+//                    self.indicators.remove(.showScanningSpinner)
+//                }
+//
+//                if status.contains(.temperatureAlarmsEnabled) && !status.isDisjoint(with: [.tooHot, .tooCold]) {
+//                    self.indicators.insert(.showTemperatureWarning)
+//                    self.indicators.insert(.useAlarmColor)
+//                } else {
+//                    self.indicators.remove(.showTemperatureWarning)
+//                    self.indicators.remove(.useAlarmColor)
+//                }
+//
+//                if status.contains(.noFansAvailable) {
+//                    self.indicators.insert(.showNoFanWarning)
+//                } else {
+//                    self.indicators.remove(.showNoFanWarning)
+//                }
+//
+//                if status.contains(.temperatureAvailable) {
+//                    self.indicators.insert(.showTemperatureText)
+//                } else {
+//                    self.indicators.remove(.showTemperatureText)
+//                }
+//            })
+//            .store(in: &bag)
+//
+//        house.$fans
+//            .assign(to: &$fans)
         
     }
 //    func scan () {
 //        house.scanForFans()
 //    }
     
-     func asyncScan () async {
-         await house.scannerAsync()
+    private func setHouseLamps(status: HouseStatus) -> HouseLamps {
+        var retVal = HouseLamps()
+//        if status.contains(.scanning) {
+//            retVal.insert(.showScanningSpinner)
+//        }
+        
+        if status.contains(.temperatureAlarmsEnabled) && !status.isDisjoint(with: [.tooHot, .tooCold]) {
+            retVal.insert(.showTemperatureWarning)
+            retVal.insert(.useAlarmColor)
+        }
+        
+        if status.contains(.noFansAvailable) {
+            retVal.insert(.showNoFanWarning)
+        }
+        
+        if status.contains(.temperatureAvailable) {
+            retVal.insert(.showTemperatureText)
+        }
+        return retVal
+    }
+    
+    func asyncScan () async {
+        fanViews.removeAll()
+        Task {
+//            await house.scannerAsync()
+            if fanViews.count == 0 {
+                status.update(with: .noFansAvailable)
+            } else {
+                status.remove(.noFansAvailable)
+            }
+        }
+//        let taskGroup = await house.scannerAsync()
+//        for await (addr, optChars) in taskGroup {
+//            if var chars = optChars {
+//                print("Addr: \(addr), chars: \(chars)")
+//                chars.ipAddr = addr
+//                let newFanView = await FanView(addr: addr, chars: chars, houseViewModel: self)
+//                fanViews.update(with: newFanView)
+//            }
+//        }
     }
 }
 //    typealias IPAddr = String

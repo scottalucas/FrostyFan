@@ -10,8 +10,8 @@ import Combine
 import SwiftUI
 
 class FanModel: ObservableObject {
-    var ipAddr: String
-    @EnvironmentObject var house: House
+//    var ipAddr: String
+//    @EnvironmentObject var house: House
     @Published var fanCharacteristics: FanCharacteristics?
     @Published var fanStatus = FanStatus()
     private var motor: MotorDelegate!
@@ -49,27 +49,27 @@ class FanModel: ObservableObject {
     private var updateTimer: Timer?
     private var bag = Set<AnyCancellable>()
     
-    init(forAddress address: String, usingChars chars: FanCharacteristics? = nil) {
-        ipAddr = address
-        motor = Motor(atAddr: address)
-        timer = FanTimer(atAddr: address)
+    init(usingChars chars: FanCharacteristics) {
+//        ipAddr = chars?.ipAddr
+        motor = Motor(atAddr: chars.ipAddr)
+        timer = FanTimer(atAddr: chars.ipAddr)
         startSubscribers()
-        if let c = chars {
-            fanCharacteristics = c
-            startKeepalive()
-        } else {
-            Task {
-                do {
-                    fanCharacteristics = try await FanStatusLoader(addr: self.ipAddr).loadResultsAsync(action: .refresh)
-                    startKeepalive()
-                } catch {
-                    print ("Error while refreshing fan at \(ipAddr), error: \(error.localizedDescription)")
-                    fanStatus = []
-                    fanStatus.insert(.fanNotResponsive)
-                }
-            }
-        }
-        print("init fan model \(ipAddr) chars \(chars == nil ? "not " : "")available")
+        startKeepalive()
+//        if let c = chars {
+//            fanCharacteristics = c
+//        } else {
+//            Task {
+//                do {
+//                    fanCharacteristics = try await FanStatusLoader(addr: self.ipAddr).loadResultsAsync(action: .refresh)
+//                    startKeepalive()
+//                } catch {
+//                    print ("Error while refreshing fan at \(ipAddr), error: \(error.localizedDescription)")
+//                    fanStatus = []
+//                    fanStatus.insert(.fanNotResponsive)
+//                }
+//            }
+//        }
+        print("init fan model \(chars.ipAddr)")
     }
     
     func setFan(toSpeed finalTarget: Int) async {
@@ -117,7 +117,8 @@ class FanModel: ObservableObject {
             print("Keepalive")
             Task {
                 do {
-                    self.fanCharacteristics = try await FanStatusLoader(addr: self.ipAddr).loadResultsAsync(action: .refresh)
+                    guard let addr = self.fanCharacteristics?.ipAddr else { throw AdjustmentError.missingKeys }
+                    self.fanCharacteristics = try await FanStatusLoader(addr: addr).loadResultsAsync(action: .refresh)
                 } catch {
                     self.motorContext = .fault
                 }
@@ -135,15 +136,15 @@ class FanModel: ObservableObject {
 
 extension FanModel {
     private func startSubscribers () {
-        $fanStatus
-            .filter { $0.contains(.fanNotResponsive) }
-            .sink(receiveValue: { _ in
-                print("Fan not responsive, removing from house.")
-                if let myFanFromHouse = self.house.fans.first(where: { chars in chars.ipAddr == self.ipAddr }) {
-                    self.house.fans.remove(myFanFromHouse)
-                }
-            })
-            .store(in: &bag)
+//        $fanStatus
+//            .filter { $0.contains(.fanNotResponsive) }
+//            .sink(receiveValue: { _ in
+//                print("Fan not responsive, removing from house.")
+//                if let myFanFromHouse = self.house.fans.first(where: { chars in chars.ipAddr == self.ipAddr }) {
+//                    self.house.fans.remove(myFanFromHouse)
+//                }
+//            })
+//            .store(in: &bag)
         
         $fanCharacteristics
             .sink(receiveValue: { [weak self] optChars in
@@ -178,7 +179,7 @@ extension FanModel {
 extension FanModel {
     convenience init () {
         print("Test fan model init")
-        self.init(forAddress: "0.0.0.0:8181")
+        self.init(usingChars: FanCharacteristics())
     }
 }
 
@@ -226,7 +227,7 @@ extension FanModel {
 }
 
 struct FanCharacteristics: Decodable, Hashable {
-    var ipAddr: String?
+    var ipAddr: String
     var speed: Int
     var damper: DamperStatus = .unknown
     var timer = 0
@@ -296,7 +297,11 @@ struct FanCharacteristics: Decodable, Hashable {
         let i2Str = try container.decode(String.self, forKey: .interlock2)
         macAddr = try container.decode(String.self, forKey: .macaddr)
         airspaceFanModel = try container.decode(String.self, forKey: .model)
-        ipAddr = try? container.decode(String.self, forKey: .ipaddr)
+        do {
+            ipAddr = try container.decode(String.self, forKey: .ipaddr)
+        } catch {
+            ipAddr = UUID.init().uuidString
+        }
         let cfmStr = try? container.decode(String.self, forKey: .cfm)
         cubicFeetPerMinute = cfmStr.map({ Int($0) }) ?? nil
         softwareVersion = try? container.decode(String.self, forKey: .softver)
@@ -326,7 +331,7 @@ struct FanCharacteristics: Decodable, Hashable {
         labelValueDictionary["Interlock 2"] = i2Str == "1" ? "Active" : "Not active"
         labelValueDictionary["MAC Address"] = macAddr
         labelValueDictionary["Model"] = airspaceFanModel
-        labelValueDictionary["IP Address"] = ipAddr ?? "Not reported"
+        labelValueDictionary["IP Address"] = ipAddr
         labelValueDictionary["Airflow"] = cfmStr.map { "\($0) cfm" } ?? "Not reported"
         labelValueDictionary["Software version"] = softwareVersion ?? "Not reported"
         labelValueDictionary["DNS"] = dns ?? "Not reported"
@@ -345,6 +350,7 @@ struct FanCharacteristics: Decodable, Hashable {
         speed = 0
         macAddr = "BEEF"
         airspaceFanModel = "Whole House Fan"
+        ipAddr = UUID.init().uuidString
     }
 }
 

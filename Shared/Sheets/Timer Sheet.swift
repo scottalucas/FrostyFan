@@ -46,6 +46,9 @@ struct TimerSheet: View {
             .padding()
             .shadow(radius: /*@START_MENU_TOKEN@*/10/*@END_MENU_TOKEN@*/)
         }
+        .onAppear(perform: {
+            wheelPosition = .zero
+        })
     }
 }
 

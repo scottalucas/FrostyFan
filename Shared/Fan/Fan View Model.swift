@@ -15,31 +15,47 @@ class FanViewModel: ObservableObject {
     @Published var selectorSegments: Int = 2
     @Published var targetedSpeed: Int?
     @Published var indicatedAlarm: IndicatorOpacity.IndicatorBlink?
-    @Published var offDateTxt = ""
-    @Published var fanLamps = FanLamps()
+    @Published var offDateText: String?
+    @Published var fanStatusText: String?
+    @Published var fanStatusIcons = Array<Image>()
     @Published var fanRotationDuration: Double = 0.0
     @Published var currentMotorSpeed: Int?
+    @Published var useAlarmColor = false
+    @Published var showTimerIcon = true
+    @Published var fatalFault = false
+    @Published var timerWheelPosition: Int = .zero
+
+    private var fanStatus: FanStatus = FanStatus() {
+        willSet {
+        let (newLamps, newBlink) = setFanLamps(from: newValue)
+            fanStatusText = newLamps.diplayedLabels.reduce("", { (old, new) in
+                return old + new + "\r"
+            })
+            fanStatusIcons = newLamps.displayedIcons
+            indicatedAlarm = newBlink
+        }
+    }
+    private var fanLamps = FanLamps()
     private var displayedMotorSpeed: Int?
     private var displayMotor = PassthroughSubject<AnyPublisher<Double, Never>, Never>()
     
     private var longTermBag = Set<AnyCancellable>()
     private var monitorBag = Set<AnyCancellable>()
     
-    init (atAddr addr: String, usingChars chars: FanCharacteristics) {
-        print("view model init for \(addr)")
-        self.model = FanModel(forAddress: addr, usingChars: chars)
+    init (chars: FanCharacteristics) {
+        print("view model init for \(chars.ipAddr)")
+        self.model = FanModel(usingChars: chars)
         self.chars = chars
         startSubscribers()
         let m: String = String(model.fanCharacteristics?.airspaceFanModel.prefix(4) ?? "")
         selectorSegments = FanViewModel.speedTable[m].map { $0 + 1 } ?? 2
-        offDateTxt = updateOffDate(minutesLeft: chars.timer)
+        offDateText = updateOffDate(minutesLeft: chars.timer)
         currentMotorSpeed = chars.speed
     }
     
     convenience init () {
         let chars = FanCharacteristics()
-        let addr = "Test"
-        self.init(atAddr: addr, usingChars: chars)
+        self.init(chars: chars)
     }
     
     func setTimer (addHours hours: Int) {
@@ -68,6 +84,33 @@ class FanViewModel: ObservableObject {
         monitorBag.removeAll()
     }
     
+    private func setFanLamps(from status: FanStatus) -> (FanLamps, IndicatorOpacity.IndicatorBlink?) {
+        var retLamps = FanLamps()
+        var retBlink = Optional<IndicatorOpacity.IndicatorBlink>.none
+        if !status.isDisjoint(with: [.damperOperating, .interlockActive]) {
+            retLamps.insert(.showMinorFaultIndicator)
+            retBlink = .slowBlink
+        }
+        if status.contains(.damperOperating) {
+            retLamps.insert(.showDamperIndicator)
+        }
+        if status.contains(.interlockActive) {
+            retLamps.insert(.showInterlockIndicator)
+        }
+        if status.contains(.speedAdjusting) {
+            retLamps.insert(.showPhysicalSpeedIndicator)
+        }
+        
+        if !status.contains(.timerAdjusting) {
+            self.fanLamps.insert([.showTimeLeft, .showTimerIcon])
+        }
+        
+        if status.contains(.noFanCharacteristics) {
+            self.fanLamps.insert(.showNoCharsIndicator)
+        }
+        return (retLamps, retBlink)
+    }
+    
     private func startSubscribers() {
         
         $targetedSpeed
@@ -80,40 +123,13 @@ class FanViewModel: ObservableObject {
         
         model.$fanStatus
             .sink(receiveValue: { status in
-                print(status.description)
-                if !status.isDisjoint(with: [.damperOperating, .interlockActive]) {
-                    self.fanLamps.insert(.showMinorFaultIndicator)
-                    self.indicatedAlarm = .slowBlink
-                } else {
-                    self.fanLamps.remove(.showMinorFaultIndicator)
-                    self.indicatedAlarm = nil
-                }
-                if status.contains(.damperOperating) {
-                    self.fanLamps.insert(.showDamperIndicator)
-                } else {
-                    self.fanLamps.remove(.showDamperIndicator)
-                }
-                if status.contains(.interlockActive) {
-                    self.fanLamps.insert(.showInterlockIndicator)
-                } else {
-                    self.fanLamps.remove(.showInterlockIndicator)
-                }
-                if status.contains(.speedAdjusting) {
-                    self.fanLamps.insert(.showPhysicalSpeedIndicator)
-                } else {
-                    self.fanLamps.remove(.showPhysicalSpeedIndicator)
-                }
-                if status.contains(.timerAdjusting) {
-                    self.fanLamps.remove([.showTimeLeft, .showTimerIcon])
-                } else {
-                    self.fanLamps.insert([.showTimeLeft, .showTimerIcon])
-                }
-                if status.contains(.noFanCharacteristics) {
-                    self.fanLamps.insert(.showNoCharsIndicator)
-                } else {
-                    self.fanLamps.remove(.showNoCharsIndicator)
-                }
+//                print(status.description)
+//                guard !status.contains(.fanNotResponsive) else {
+//                    NotificationCenter.default.post(name: .removeFan, object: nil, userInfo: [self.model.ipAddr : ""])
+//                    return
+//                }
             })
+            
             .store(in: &longTermBag)
         
         model.$fanCharacteristics
@@ -132,7 +148,7 @@ class FanViewModel: ObservableObject {
                 guard let self = self else { return "" }
                 return self.updateOffDate(minutesLeft: timeTillOff)
             }
-            .assign(to: &$offDateTxt)
+            .assign(to: &$offDateText)
 
         model.$fanCharacteristics
             .compactMap { $0?.airspaceFanModel }

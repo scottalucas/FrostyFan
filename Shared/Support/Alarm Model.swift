@@ -6,11 +6,12 @@
 //
 
 import Foundation
+import SwiftUI
 
 final class HouseStatus: OptionSet, RawRepresentable {
     var rawValue: Int
     
-    static var scanning = HouseStatus(rawValue: 1)
+//    static var scanning = HouseStatus(rawValue: 1)
     static var tooHot = HouseStatus(rawValue: 1 << 1)
     static var tooCold = HouseStatus(rawValue: 1 << 2)
     static var noFansAvailable = HouseStatus(rawValue: 1 << 3)
@@ -21,7 +22,7 @@ final class HouseStatus: OptionSet, RawRepresentable {
         var retVal = Array<String>()
         if self.contains(.tooHot) { retVal.append("Too hot") }
         if self.contains(.tooCold) { retVal.append("Too cold") }
-        if self.contains(.scanning) { retVal.append("Scanning") }
+//        if self.contains(.scanning) { retVal.append("Scanning") }
         if self.contains(.noFansAvailable) { retVal.append("No fans") }
         if self.contains(.temperatureAvailable) { retVal.append("Temp reading available") }
         if self.contains(.temperatureAlarmsEnabled) { retVal.append("Temp alarms configured") }
@@ -58,6 +59,12 @@ final class HouseLamps: OptionSet, RawRepresentable, Equatable {
         if self.contains(.showTemperatureWarning) { labelArr.append("Outside temperature warning") }
         if self.contains(.showScanningSpinner) { labelArr.append("Looking for fans") }
         if self.contains(.showNoFanWarning) { labelArr.append("No fans found") }
+        return labelArr
+    }
+    
+    var displayedIcons: [Image] {
+        var labelArr = Array<Image>()
+        if self.contains(.showTemperatureWarning) { labelArr.append(.thermometer) }
         return labelArr
     }
     
@@ -145,9 +152,20 @@ final class FanLamps: OptionSet, RawRepresentable {
         return labelArr
     }
     
+    var displayedIcons: [Image] {
+        var labelArr = Array<Image>()
+        if self.contains(.showDamperIndicator) { labelArr.append(.speed) }
+        if self.contains(.showInterlockIndicator) { labelArr.append(.interlock) }
+        return labelArr
+    }
+    
     internal init (rawValue: Int) {
         self.rawValue = rawValue
     }
+}
+
+extension Notification.Name {
+    static let removeFan = Notification.Name("removeFan")
 }
 
 //extension FanLamps: ObservableObject {}
