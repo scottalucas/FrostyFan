@@ -47,18 +47,14 @@ extension Color {
 }
 
 extension View {
-    func overlaySheet(dataSource source: FanViewModel, activeSheet: Binding<FanView.Sheet?>) -> some View {
+    func overlaySheet(dataSource source: FanViewModel, activeSheet: Binding<OverlaySheet?>) -> some View {
         modifier(OverlaySheetRender(dataSource: source, activeSheet: activeSheet))
     }
 }
 
 struct OverlaySheetRender: ViewModifier {
-    @Binding var activeSheet: FanView.Sheet?
+    @Binding var activeSheet: OverlaySheet?
     @ObservedObject var data: FanViewModel
-//    private var view: FanView
-    //    private var chars: FanCharacteristics?
-    //    private var timeOnTimer: Int = 0
-    //    private var macAddr: String = ""
     
     func body (content: Content) -> some View {
         content
@@ -80,7 +76,7 @@ struct OverlaySheetRender: ViewModifier {
                 }
             }
     }
-    init (dataSource: FanViewModel, activeSheet: Binding<FanView.Sheet?>) {
+    init (dataSource: FanViewModel, activeSheet: Binding<OverlaySheet?>) {
         self._activeSheet = activeSheet
         self.data = dataSource
     }
@@ -709,45 +705,50 @@ struct SegmentedSpeedPicker: View {
 }
 
 struct PulldownRefresh: ViewModifier {
-    @EnvironmentObject private var house: House
+//    @EnvironmentObject private var houseViewModel: HouseViewModel
+    @Environment (\.updateProgress) var updateProgress
     @GestureState private var dragSize = CGSize.zero
     @State private var verticalOffset: Double = .zero
-    @State private var refreshing = false
+//    @State private var refreshing = false
     private var spinnerAlignment: Alignment
+    private var complete: () -> Void
     
     func body(content: Content) -> some View {
-        return
-        content
-            .offset(x: 0, y: verticalOffset)
-            .overlay(alignment: spinnerAlignment) {
-                if house.isRefreshing {
-                    ProgressView()
-                }
+        return VStack (alignment: .center, spacing: 0)
+        {
+            if let update = updateProgress {
+                ProgressView(value: update)
+//                    .padding()
             }
+            content
+            .offset(x: 0, y: verticalOffset)
             .gesture(DragGesture().onChanged { value in
-                guard !house.isRefreshing else { return }
+                guard updateProgress == nil else { return }
                 let verticalTranslation = max(0, value.location.y - value.startLocation.y)
-                verticalOffset = 75 * (verticalTranslation)/(verticalTranslation + 75)
+//                verticalOffset = 75 * (verticalTranslation)/(verticalTranslation + 75)
+                verticalOffset = verticalTranslation
                 if verticalTranslation >= 75 {
-                    refreshing = true
+                    complete()
                     let thump = UIImpactFeedbackGenerator(style: .rigid)
                     thump.impactOccurred()
-                    house.scan()
                     withAnimation {
                         verticalOffset = .zero
                     }
                 }
-                house.pulldownDistance = verticalOffset
             })
+        }
+//            .overlay(alignment: spinnerAlignment) {
+//            }
     }
-    init(spinnerAlignment align: Alignment = .top) {
+    init(spinnerAlignment align: Alignment = .top, _ complete: @escaping () -> Void) {
         spinnerAlignment = align
+        self.complete = complete
     }
 }
 
 extension View {
-    func pulldownRefresh (spinnerAlignment: Alignment = .top) -> some View {
-        modifier(PulldownRefresh(spinnerAlignment: spinnerAlignment))
+    func pulldownRefresh (spinnerAlignment: Alignment = .top, complete: @escaping () -> Void) -> some View {
+        modifier(PulldownRefresh(spinnerAlignment: spinnerAlignment, complete))
     }
 }
 
@@ -857,8 +858,8 @@ struct Utilities_Previews: PreviewProvider {
             .overlay {
                 Text("test")
             }
-            .pulldownRefresh()
-            .environmentObject(House())
+            .pulldownRefresh() { }
+            .environmentObject(HouseViewModel())
     }
 }
 

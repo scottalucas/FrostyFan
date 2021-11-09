@@ -10,8 +10,6 @@ import Combine
 import SwiftUI
 
 class FanModel: ObservableObject {
-//    var ipAddr: String
-//    @EnvironmentObject var house: House
     @Published var fanCharacteristics: FanCharacteristics?
     @Published var fanStatus = FanStatus()
     private var motor: MotorDelegate!
@@ -50,25 +48,10 @@ class FanModel: ObservableObject {
     private var bag = Set<AnyCancellable>()
     
     init(usingChars chars: FanCharacteristics) {
-//        ipAddr = chars?.ipAddr
         motor = Motor(atAddr: chars.ipAddr)
         timer = FanTimer(atAddr: chars.ipAddr)
         startSubscribers()
         startKeepalive()
-//        if let c = chars {
-//            fanCharacteristics = c
-//        } else {
-//            Task {
-//                do {
-//                    fanCharacteristics = try await FanStatusLoader(addr: self.ipAddr).loadResultsAsync(action: .refresh)
-//                    startKeepalive()
-//                } catch {
-//                    print ("Error while refreshing fan at \(ipAddr), error: \(error.localizedDescription)")
-//                    fanStatus = []
-//                    fanStatus.insert(.fanNotResponsive)
-//                }
-//            }
-//        }
         print("init fan model \(chars.ipAddr)")
     }
     
@@ -104,6 +87,16 @@ class FanModel: ObservableObject {
         } catch {
             timerContext = .fault
             print("Error setting timer \(error)")
+        }
+    }
+    
+    func refresh() {
+        guard let ipAddr = fanCharacteristics?.ipAddr else { return }
+        do {
+            Task {
+                let newChars = try await FanStatusLoader(addr: ipAddr).loadResultsAsync(action: .refresh)
+                fanCharacteristics = newChars
+            }
         }
     }
     
@@ -246,7 +239,28 @@ struct FanCharacteristics: Decodable, Hashable {
     var dipSwitch: String?
     var remoteSwitch: String?
     var setpoint: Int?
-    var labelValueDictionary: [String: String] = [:]
+    var labelValueDictionary: [String: String] {
+        return [
+            "Speed" : String(speed),
+            "Timer" : String(timer),
+            "Damper" : damper == .operating ? "Opening" : "Not operating",
+            "Interlock 1" : interlock1 ? "Active" : "Not active",
+            "Interlock 2" : interlock2 ? "Active" : "Not active",
+            "MAC Address" : macAddr,
+            "Model" : airspaceFanModel,
+            "IP Address" : ipAddr,
+            "Airflow": cubicFeetPerMinute.map { "\($0) cfm" } ?? "Not reported",
+            "Software version" : softwareVersion ?? "Not reported",
+            "DNS" : dns ?? "Not reported",
+            "DIP Switch" : dipSwitch ?? "Not reported",
+            "Remote Switch" : remoteSwitch ?? "Not reported",
+            "Power" : power.map { String($0) } ?? "Not reported",
+            "Inside Temp" : insideTemp.map { "\($0)˚" } ?? "Not reported",
+            "Attic Temp" : atticTemp.map { "\($0)˚" } ?? "Not reported",
+            "Outside Temp" : outsideTemp.map { "\($0)˚" } ?? "Not reported",
+            "Setpoint" : setpoint.map { String($0) } ?? "Not reported"
+        ]
+    }
     
     func hash(into hasher: inout Hasher) {
         hasher.combine(macAddr)
@@ -288,7 +302,6 @@ struct FanCharacteristics: Decodable, Hashable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let speedStr = try container.decode(String.self, forKey: .fanspd)
-        labelValueDictionary["Speed"] = speedStr
         let timerStr = try container.decode(String.self, forKey: .timeremaining)
         guard let intSpeed = Int(speedStr) else {throw DecodeError.noValue(.fanspd)}
         guard let intTimer = Int(timerStr) else {throw DecodeError.noValue(.timeremaining)}
@@ -324,31 +337,11 @@ struct FanCharacteristics: Decodable, Hashable {
         atticTemp = atticTempStr.map { Int($0) } ?? nil
         outsideTemp = outsideTempStr.map { Int($0) } ?? nil
         setpoint = setpointStr.map { Int($0) } ?? nil
-        labelValueDictionary["Speed"] = speedStr
-        labelValueDictionary["Timer"] = timerStr
-        labelValueDictionary["Damper"] = damperStr == "1" ? "Opening" : "Not operating"
-        labelValueDictionary["Interlock 1"] = i1Str == "1" ? "Active" : "Not active"
-        labelValueDictionary["Interlock 2"] = i2Str == "1" ? "Active" : "Not active"
-        labelValueDictionary["MAC Address"] = macAddr
-        labelValueDictionary["Model"] = airspaceFanModel
-        labelValueDictionary["IP Address"] = ipAddr
-        labelValueDictionary["Airflow"] = cfmStr.map { "\($0) cfm" } ?? "Not reported"
-        labelValueDictionary["Software version"] = softwareVersion ?? "Not reported"
-        labelValueDictionary["DNS"] = dns ?? "Not reported"
-        labelValueDictionary["DIP Switch"] = dipSwitch ?? "Not reported"
-        labelValueDictionary["Remote Switch"] = remoteSwitch ?? "Not reported"
-        labelValueDictionary["Power"] = powerStr ?? "Not reported"
-        labelValueDictionary["Inside Temp"] = insideTempStr.map { "\($0)˚" } ?? "Not reported"
-        labelValueDictionary["Attic Temp"] = atticTempStr.map { "\($0)˚" } ?? "Not reported"
-        labelValueDictionary["Outside Temp"] = outsideTempStr.map { "\($0)˚" } ?? "Not reported"
-        labelValueDictionary["Setpoint"] = setpointStr ?? "Not reported"
-        labelValueDictionary["Speed"] = speedStr
-        //        print(serverResponse)
     }
     
     init () {
         speed = 0
-        macAddr = "BEEF"
+        macAddr = UUID.init().uuidString.appending("BEEF")
         airspaceFanModel = "Whole House Fan"
         ipAddr = UUID.init().uuidString
     }
@@ -391,11 +384,45 @@ struct FanStatusLoader {
             .jsonData
         )
     }
+    
+    func loadResultsPublished (action: FanModel.Action) throws -> AnyPublisher<FanCharacteristics, ConnectionError> {
+        guard let url = URL(string: "http://\(ip)/fanspd.cgi?dir=\(action.rawValue)") else {
+            throw ConnectionError.badUrl
+        }
+        let decoder = JSONDecoder()
+        let config = URLSession.shared.configuration
+        config.timeoutIntervalForRequest = 10
+        let session = URLSession.init(configuration: config)
+        return session
+            .dataTaskPublisher(for: url)
+            .tryMap { (data, response) -> FanCharacteristics in
+                guard let r = (response as? HTTPURLResponse) else {
+                    throw ConnectionError.serverError("Server error: could not interpret server response.")
+                }
+                guard (200..<300).contains(r.statusCode) else {
+                    throw ConnectionError.serverError("Server error, code \(r.statusCode)")
+                }
+                return try decoder.decode(FanCharacteristics.self, from:
+                                            (String(data: data, encoding: .ascii) ?? "")
+                                            .trimmingCharacters(in: .whitespaces)
+                                            .split(separator: "<")
+                                            .filter({ !$0.contains("/") && $0.contains(">") })
+                                            .map ({ $0.split(separator: ">", maxSplits: 1) })
+                                            .map ({ arr -> (String, String?) in
+                    let newTuple = (String(arr[0]), arr.count == 2 ? String(arr[1]) : nil)
+                    return newTuple
+                }).jsonData )
+            }
+            .mapError {
+                ($0 as? ConnectionError) ?? ConnectionError.cast($0)
+            }
+            .eraseToAnyPublisher()
+    }
 }
 
 final class Motor: MotorDelegate {
-    
-    enum Context { case adjusting, standby, fault }
+                        
+                        enum Context { case adjusting, standby, fault }
     private var ipAddr: String
     private var context: Context = .standby
     
@@ -403,18 +430,6 @@ final class Motor: MotorDelegate {
         ipAddr = addr
     }
 
-//    var refresh: AsyncThrowingStream<FanCharacteristics, Error> {
-//        return AsyncThrowingStream<FanCharacteristics, Error> { [self] in
-//            try await Task.sleep(nanoseconds: 5 * 1_000_000_000)
-//            switch context {
-//                case .adjusting:
-//                    return try await FanStatusLoader(addr: ipAddr).loadResultsAsync(action: .refresh)
-//                case .standby:
-//                    return try await FanStatusLoader(addr: ipAddr).loadResultsAsync(action: .refresh)
-//            }
-//        }
-//    }
-    
     func setSpeedAsync(to target: Int) -> AsyncThrowingStream<FanCharacteristics, Error> {
         context = .adjusting
         let getter = FanStatusLoader(addr: ipAddr)

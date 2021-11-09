@@ -23,6 +23,8 @@ struct DetailSheet: View {
                 LazyVGrid(columns: columns, alignment: .leading, spacing: 20, pinnedViews: []) {
                     ForEach(data, id: \.self) { item in
                             item
+                            .lineLimit(1)
+                            .truncationMode(.head)
                                 .foregroundColor(.background)
                         }
                     }
@@ -83,15 +85,9 @@ struct DetailSheetEntry: View, Hashable, Identifiable {
 struct DetailSheet_Previews: PreviewProvider {
     static var chars: FanCharacteristics {
     var c = FanCharacteristics()
-        c.labelValueDictionary = ["DIP Switch": "11110", "Model": "3.5e", "DNS": "192.168.1.254", "Damper": "Not operating", "Remote Switch": "1111", "Interlock 1": "Not active", "IP Address": "not found", "Setpoint": "0", "Attic Temp": "85˚", "Airflow": "0 cfm", "Power": "0", "MAC Address": "BE:EF:BE:EF:BE:EF", "Inside Temp": "72˚", "Software version": "2.15.1", "Interlock 2": "Not active", "Timer": "0", "Speed": "0", "Outside Temp": "-99"]
+        c.speed = 4
     return c
     }
-    static var myModel: FanViewModel {
-        let testModel = FanModel()
-        testModel.fanCharacteristics!.labelValueDictionary = ["DIP Switch": "11110", "Model": "3.5e", "DNS": "192.168.1.254", "Damper": "Not operating", "Remote Switch": "1111", "Interlock 1": "Not active", "IP Address": "not found", "Setpoint": "0", "Attic Temp": "85˚", "Airflow": "0 cfm", "Power": "0", "MAC Address": "BE:EF:BE:EF:BE:EF", "Inside Temp": "72˚", "Software version": "2.15.1", "Interlock 2": "Not active", "Timer": "0", "Speed": "0", "Outside Temp": "-99"]
-        return FanViewModel(chars: FanCharacteristics())
-    }
-    
     static var previews: some View {
         
         DetailSheet(chars: chars)

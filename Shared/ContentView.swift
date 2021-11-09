@@ -11,7 +11,7 @@ struct ContentView: View {
     @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
-        HouseView()
+        HouseView(viewModel: HouseViewModel())
             .background(Color.background)
     }
     

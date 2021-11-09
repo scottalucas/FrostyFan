@@ -9,42 +9,50 @@ import Foundation
 import SwiftUI
 import Combine
 
+//@MainActor
 class HouseViewModel: ObservableObject {
     deinit { NotificationCenter.default.removeObserver(self, name: .removeFan, object: nil) }
-//    static let shared = HouseViewModel()
-    private var house: House
+    private var house: HouseDataSource
     private var status = HouseStatus() {
         willSet {
             indicators = setHouseLamps(status: newValue)
         }
     }
-    
     @Published var fanViews = Set<FanView>()
-    @Published var progress: Double?
     @Published var indicators = HouseLamps()
-    @Published var scanning = false
     @Published var pullDownOffset: CGFloat = .zero
-//    @Published var refreshing = false
+    @Published var isRefreshing = false
     
     private var bag = Set<AnyCancellable>()
     
-    init () {
-        house = House()
-        NotificationCenter.default.addObserver(forName: .removeFan, object: nil, queue: nil) { [weak self] noti in
-            guard let fan = noti.userInfo?.keys.first as? FanView else { return }
-            self?.fanViews.remove(fan)
-        }
-        house.$fans
-            .map { charSet in
-                Set (
-                    charSet
-                        .map { FanView(initialCharacteristics: $0) }
-                )
+    init (dataSource: HouseDataSource = House()) {
+        house = dataSource
+        house
+            .fanSetPub
+            .map {
+                $0
+                    .map { chars in
+                        FanView(initialCharacteristics: chars)
+                    }
             }
+            .map { Set($0) }
             .assign(to: &$fanViews)
+        }
         
-        house.$progress
-            .assign(to: &$progress)
+//        house.$isRefreshing
+//            .assign(to: &$isRefreshing)
+//
+//        house.$fans
+//            .map { charSet in
+//                Set (
+//                    charSet
+//                        .map { FanView(initialCharacteristics: $0) }
+//                )
+//            }
+//            .assign(to: &$fanViews)
+//
+//        house.$progress
+//            .assign(to: &$progress)
         //        $status
 //            .sink(receiveValue: { status in
 //                if status.contains(.scanning) {
@@ -78,7 +86,7 @@ class HouseViewModel: ObservableObject {
 //        house.$fans
 //            .assign(to: &$fans)
         
-    }
+//    }
 //    func scan () {
 //        house.scanForFans()
 //    }
@@ -104,72 +112,15 @@ class HouseViewModel: ObservableObject {
         return retVal
     }
     
-    func asyncScan () async {
-        fanViews.removeAll()
-        Task {
-//            await house.scannerAsync()
-            if fanViews.count == 0 {
-                status.update(with: .noFansAvailable)
-            } else {
-                status.remove(.noFansAvailable)
-            }
-        }
-//        let taskGroup = await house.scannerAsync()
-//        for await (addr, optChars) in taskGroup {
-//            if var chars = optChars {
-//                print("Addr: \(addr), chars: \(chars)")
-//                chars.ipAddr = addr
-//                let newFanView = await FanView(addr: addr, chars: chars, houseViewModel: self)
-//                fanViews.update(with: newFanView)
-//            }
-//        }
+    func scan () async {
+        await house.scan()
     }
 }
-//    typealias IPAddr = String
-//    
-////    @State var currentPageTag: Int = 0
-////    @Published var fanModels = Array<IPAddr>()
-////    @Published var scanning = false
-//    @Binding var fans: Array<String>
-//    @Binding var runningFans: Array<String>
-//    @Binding var scanning: Bool
-////    @Published var weatherString: String?
-//    private var house: House
-////    private var userScan = false
-////    private var bag = Set<AnyCancellable>()
-//    
-////    init () {
-////        self.house = house
-////        $scanning
-////            .filter { $0 }
-////            .sink(receiveValue: { [weak self] _ in
-////                self?.house.scanForFans()
-////            })
-////            .store(in: &bag)
-////
-////        house.$fans
-////            .map { Array.init($0) }
-////            .assign(to: &$fanModels)
-////
-////        house.$scanning
-////            .filter { !$0 }
-////            .assign(to: &$scanning)
-//        
-//
-//        
-////        print("init house view model with fans \(fanModels.map({ $0 }))")
-////    }
-//    
-////    func getView (viewModel: HouseViewModel? = nil) -> some View {
-////        HouseView(viewModel: self)
-////    }
-//}
-//
-//class TestHouseViewModel: HouseViewModel {
-//    var testFans: [FanModel]
-//    init (testFans: [FanModel]) {
-//        self.testFans = testFans
-//        super.init()
-//        testFans.forEach({ House.shared.fansAt.update(with: $0) })
-//    }
-//}
+
+extension HouseViewModel: HouseViewDataSource { }
+
+protocol HouseViewDataSource: ObservableObject {
+    var indicators: HouseLamps { get }
+    var pullDownOffset: CGFloat { get }
+    var isRefreshing: Bool { get }
+}

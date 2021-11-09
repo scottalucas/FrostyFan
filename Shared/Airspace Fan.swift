@@ -19,8 +19,8 @@ struct AirspaceFanApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environmentObject(House())
-//                .environment(\.boolRefreshing, false)
+                .environmentObject(HouseViewModel())
+                .environment(\.updateProgress, nil)
 //                .environmentObject(appStatus)
 //                .environmentObject(weather)
 //                .environmentObject(location)
@@ -34,3 +34,24 @@ struct AirspaceFanApp: App {
         UITableView.appearance().separatorColor = .main
     }
 }
+
+private struct ProgressKey: EnvironmentKey {
+    static let defaultValue: Double? = nil
+}
+
+extension EnvironmentValues {
+    var updateProgress: Double? {
+        get { self[ProgressKey.self] }
+        set { self[ProgressKey.self] = newValue }
+    }
+}
+
+extension View {
+    func scanProgress(_ progress: Double?) -> some View {
+        environment(\.updateProgress, progress)
+    }
+}
+
+
+
+
