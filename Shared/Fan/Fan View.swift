@@ -20,7 +20,7 @@ struct FanView: View {
     var id: MACAddr
     @Environment(\.scenePhase) var scenePhase
     @Environment(\.updateProgress) var updateProgress
-    @StateObject var viewModel = FanViewModel()
+    @StateObject var viewModel: FanViewModel
     @AppStorage var name: String
     @GestureState var viewOffset = CGSize.zero
 
@@ -54,7 +54,8 @@ struct FanView: View {
     init (initialCharacteristics chars: FanCharacteristics) {
         id = chars.macAddr
         _name = AppStorage(wrappedValue: "\(chars.airspaceFanModel)", StorageKey.fanName(chars.macAddr).key)
-        viewModel.chars = chars
+        _viewModel = StateObject.init(wrappedValue: FanViewModel(chars: chars))
+        print("init fan view model \(viewModel.chars.airspaceFanModel) selector segments \(viewModel.selectorSegments)")
     }
 }
 
@@ -179,9 +180,17 @@ extension FanView: Hashable {
 
 extension FanView: Identifiable {}
 
+struct FanMock {
+    var chars: FanCharacteristics
+    init () {
+        var a = FanCharacteristics()
+        a.airspaceFanModel = "4300"
+        chars = a
+    }
+}
 
 struct FanView_Previews: PreviewProvider {
-    static var chars = FanCharacteristics()
+    static var chars = FanMock().chars
     static var previews: some View {
         FanView(initialCharacteristics: chars)
             .environment(\.updateProgress, nil)

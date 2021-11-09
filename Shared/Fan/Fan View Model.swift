@@ -47,7 +47,7 @@ class FanViewModel: ObservableObject {
         self.model = FanModel(usingChars: chars)
         self.chars = chars
         startSubscribers()
-        let m: String = String(model.fanCharacteristics?.airspaceFanModel.prefix(4) ?? "")
+        let m: String = String(chars.airspaceFanModel.prefix(4))
         selectorSegments = FanViewModel.speedTable[m].map { $0 + 1 } ?? 2
         offDateText = updateOffDate(minutesLeft: chars.timer)
         currentMotorSpeed = chars.speed

@@ -10,7 +10,6 @@ import Combine
 
 struct HouseView: View {
     typealias IPAddr = String
-    @Environment(\.updateProgress) var updateProgress
     @StateObject var viewModel: HouseViewModel
     @State private var currentTab: Int = 0
     @State private var info: String = ""
@@ -20,14 +19,9 @@ struct HouseView: View {
         TabView (selection: $currentTab) {
             FanViewPageContainer (viewModel: viewModel)
                 .ignoresSafeArea(.container, edges: [.top])
-                .pulldownRefresh {
-                    Task {
-                        await viewModel.scan()
-                    }
-                }
                 .tabItem {
                     Image.fanIcon
-                    Text(updateProgress == nil ? "Fan" : "Scanning")
+                    Text("Fan")
                 }
                 .tag(1)
             SettingsView()
@@ -38,34 +32,52 @@ struct HouseView: View {
                 .tag(2)
         }
         .accentColor(.main)
-        .task {
-            await viewModel.scan()
+    }
+    
+    init(viewModel: HouseViewModel? = nil) {
+        if let vm = viewModel {
+            _viewModel = StateObject.init(wrappedValue: vm)
+        } else {
+            _viewModel = StateObject.init(wrappedValue: HouseViewModel())
         }
     }
 }
 
 struct FanViewPageContainer: View {
     typealias IPAddr = String
-    var viewModel: HouseViewModel
+    @StateObject var viewModel: HouseViewModel
     @State private var selectedFan: String = ""
+    @State private var viewCount = Int.zero
     
     var body: some View {
-        switch viewModel.fanViews.count {
-            case 0:
-                NoFanView()
-            case 1:
-                viewModel.fanViews.first!
-                    .padding(.bottom, 35)
-            default:
-                TabView (selection: $selectedFan) {
-                    ForEach (Array(viewModel.fanViews)) { view in
+        Group {
+            switch viewCount {
+                case 0:
+                    NoFanView()
+                case 1:
+                    viewModel.fanViews.first!
+                        .padding(.bottom, 75)
+                default:
+                    TabView (selection: $selectedFan) {
+                        ForEach (Array(viewModel.fanViews)) { view in
                             view
                                 .padding(.bottom, 75)
                                 .tag(view.id)
+                        }
                     }
-                }
-                .tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))
-                .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .always))
+                    .tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))
+                    .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .always))
+            }
+        }
+        .pulldownRefresh(progress: $viewModel.progress) {
+            await viewModel.scan()
+        }
+        .offset(x: 0, y: 50.0)
+        .task {
+            await viewModel.scan()
+        }
+        .onReceive(viewModel.$fanViews) { view in
+            viewCount = view.count
         }
     }
 }
@@ -79,24 +91,29 @@ struct HouseViewPreviews: PreviewProvider {
 }
 
 class HouseViewDataMock: HouseDataSource {
-    var fanSetPub : CurrentValueSubject<Set<FanCharacteristics>, Never>
+    var progress = PassthroughSubject<Double?, Never>()
     
-    var updateProgress: Double?
+    var scan: () async -> Void
     
-    func scan() async {
-        print("scan request")
-    }
+    var fanSetPub = CurrentValueSubject<Set<FanCharacteristics>, Never>([])
     
     func remove(_: FanCharacteristics) {
         print("remove request")
     }
     
     init () {
-        let fanA = FanCharacteristics()
-        let fanB = FanCharacteristics()
+        scan = { print("scan requested") }
         let fanc = FanCharacteristics()
         let fand = FanCharacteristics()
         let fane = FanCharacteristics()
-        fanSetPub = CurrentValueSubject<Set<FanCharacteristics>, Never>([fanA,fanB, fanc, fand, fane])
+        Task {
+            var fanA = FanCharacteristics()
+            fanA.airspaceFanModel = "3.5e"
+            var fanB = FanCharacteristics()
+            fanB.airspaceFanModel = "2.5e"
+            await Task.sleep(500_000_000)
+            fanSetPub.send([fanA])
+            progress.send(0.1)
+        }
     }
 }

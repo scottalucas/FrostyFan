@@ -11,20 +11,12 @@ struct ContentView: View {
     @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
-        HouseView(viewModel: HouseViewModel())
+        HouseView()
             .background(Color.background)
     }
     
     init () {
         UISegmentedControl.appearance().selectedSegmentTintColor = .main
-        
-        //        House.shared.fansAt.insert(FanModel())
-//        Timer.scheduledTimer(withTimeInterval: 5, repeats: false) { _ in
-//            House.shared.lostFan(atIp: "0.0.0.0:8181")
-//        }
-//        Timer.scheduledTimer(withTimeInterval: 10, repeats: false) { _ in
-//            House.shared.fansAt.update (with: "0.0.0.0:8181")
-//        }
     }
 }
 

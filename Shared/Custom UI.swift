@@ -705,50 +705,60 @@ struct SegmentedSpeedPicker: View {
 }
 
 struct PulldownRefresh: ViewModifier {
-//    @EnvironmentObject private var houseViewModel: HouseViewModel
     @Environment (\.updateProgress) var updateProgress
     @GestureState private var dragSize = CGSize.zero
     @State private var verticalOffset: Double = .zero
-//    @State private var refreshing = false
-    private var spinnerAlignment: Alignment
-    private var complete: () -> Void
+    @State private var isEnabled = true
+    @Binding var progress: Double?
+    private var complete: () async -> Void
     
     func body(content: Content) -> some View {
         return VStack (alignment: .center, spacing: 0)
         {
-            if let update = updateProgress {
-                ProgressView(value: update)
-//                    .padding()
-            }
             content
+            .overlay (alignment: .top)
+            {
+                if let update = progress {
+                    GeometryReader { geo in
+                        VStack {
+                            ProgressView(value: update)
+                                .padding([.leading, .trailing], 0.3 * geo.size.width)
+                                .padding([.top], 20)
+                            Text("Scanning...")
+                                .foregroundColor(.controlsBackground)
+                        }
+                    }
+                }
+            }
             .offset(x: 0, y: verticalOffset)
             .gesture(DragGesture().onChanged { value in
-                guard updateProgress == nil else { return }
+                guard isEnabled else { return }
                 let verticalTranslation = max(0, value.location.y - value.startLocation.y)
-//                verticalOffset = 75 * (verticalTranslation)/(verticalTranslation + 75)
                 verticalOffset = verticalTranslation
                 if verticalTranslation >= 75 {
-                    complete()
+                    isEnabled = false
                     let thump = UIImpactFeedbackGenerator(style: .rigid)
                     thump.impactOccurred()
                     withAnimation {
                         verticalOffset = .zero
                     }
+                    Task {
+                        await complete()
+                        isEnabled = true
+                    }
                 }
             })
         }
-//            .overlay(alignment: spinnerAlignment) {
-//            }
     }
-    init(spinnerAlignment align: Alignment = .top, _ complete: @escaping () -> Void) {
-        spinnerAlignment = align
+    init(progress: Binding<Double?>, complete: @escaping () async -> Void) {
         self.complete = complete
+        self._progress = progress
     }
 }
 
 extension View {
-    func pulldownRefresh (spinnerAlignment: Alignment = .top, complete: @escaping () -> Void) -> some View {
-        modifier(PulldownRefresh(spinnerAlignment: spinnerAlignment, complete))
+    func pulldownRefresh (progress: Binding<Double?>, _ complete: @escaping () async -> Void) -> some View {
+        modifier(PulldownRefresh(progress: progress, complete: complete))
     }
 }
 
@@ -858,7 +868,7 @@ struct Utilities_Previews: PreviewProvider {
             .overlay {
                 Text("test")
             }
-            .pulldownRefresh() { }
+            .pulldownRefresh(progress: .mock(nil)) { }
             .environmentObject(HouseViewModel())
     }
 }

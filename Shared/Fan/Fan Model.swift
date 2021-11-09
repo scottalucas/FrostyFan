@@ -339,6 +339,22 @@ struct FanCharacteristics: Decodable, Hashable {
         setpoint = setpointStr.map { Int($0) } ?? nil
     }
     
+    init? (data: Data) {
+        guard let tupleSource = String(data: data, encoding: .ascii) else { return nil }
+        let s = tupleSource
+            .trimmingCharacters(in: .whitespaces)
+            .split(separator: "<")
+            .filter({ !$0.contains("/") && $0.contains(">") })
+            .map ({ $0.split(separator: ">", maxSplits: 1) })
+            .map ({ arr -> (String, String?) in
+                let newTuple = (String(arr[0]), arr.count == 2 ? String(arr[1]) : nil)
+                return newTuple
+            })
+        let decoder = JSONDecoder()
+        guard let chars = try? decoder.decode(FanCharacteristics.self, from: s.jsonData) else { return nil }
+        self = chars
+    }
+    
     init () {
         speed = 0
         macAddr = UUID.init().uuidString.appending("BEEF")
