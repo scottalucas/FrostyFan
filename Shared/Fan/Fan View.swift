@@ -19,7 +19,6 @@ struct FanView: View {
     typealias MACAddr = String
     var id: MACAddr
     @Environment(\.scenePhase) var scenePhase
-    @Environment(\.updateProgress) var updateProgress
     @StateObject var viewModel: FanViewModel
     @AppStorage var name: String
     @GestureState var viewOffset = CGSize.zero
@@ -34,7 +33,6 @@ struct FanView: View {
             FanImageRender(angle: $angle, activeSheet: $activeSheet, viewModel: viewModel)
             FanNameRender(activeSheet: $activeSheet, name: $name)
         }
-        .foregroundColor(viewModel.useAlarmColor ? .alarm : .main)
         .overlaySheet(dataSource: viewModel, activeSheet: $activeSheet)
         .onReceive(viewModel.$fanRotationDuration) { val in
             self.angle = .zero
@@ -121,23 +119,19 @@ struct FanImageRender: View {
                 .opacity(/*@START_MENU_TOKEN@*/0.8/*@END_MENU_TOKEN@*/)
                 .blur(radius: 10.0)
                 .scaleEffect(1.5)
-                .allowsHitTesting(false)
                 .overlay(
-                    Button(action: {
-                        activeSheet = .detail
-                    }, label: {
-                        Text("Stats")
-//                        let labels = HouseViewModel.shared.indicators.diplayedLabels
-//                        if labels.isEmpty {
-//                            AnyView(Color.clear)
-//                        }
-//                        else {
-//                            ForEach (labels, id: \.self) { item in
-//                                AnyView(Text(item)
-//                                )}
-//                                .frame(width: nil, height: nil, alignment: .center)
-//                        }
-                    })
+                    VStack {
+                        Button(action: {
+                            activeSheet = .detail
+                        }, label: {
+                            Image(systemName: "info.circle.fill")
+                                .resizable()
+                                .frame(width: 35, height: 35)
+                                .aspectRatio(1.0, contentMode: .fill)
+                        })
+                        RefreshIndicator()
+                            .padding(.top, 40)
+                    }
                     .buttonStyle(BorderlessButtonStyle())
                     .frame(width: nil, height: 75, alignment: .center)
                     .padding(.horizontal)
@@ -170,7 +164,7 @@ struct FanNameRender: View {
 }
 
 extension FanView: Hashable {
-    static func == (lhs: FanView, rhs: FanView) -> Bool {
+    static func ==(lhs: FanView, rhs: FanView) -> Bool {
         rhs.id == lhs.id
     }
     func hash(into hasher: inout Hasher) {
@@ -180,21 +174,31 @@ extension FanView: Hashable {
 
 extension FanView: Identifiable {}
 
-struct FanMock {
-    var chars: FanCharacteristics
-    init () {
-        var a = FanCharacteristics()
-        a.airspaceFanModel = "4300"
-        chars = a
-    }
-}
 
 struct FanView_Previews: PreviewProvider {
+    struct FanMock {
+        var chars: FanCharacteristics
+        init () {
+            var a = FanCharacteristics()
+            a.airspaceFanModel = "4300"
+            chars = a
+        }
+    }
+    struct InjectedIndicators {
+        static var indicators: GlobalIndicators {
+            let retVal = GlobalIndicators.shared
+            retVal.updateProgress = 0.5
+            return retVal
+        }
+    }
     static var chars = FanMock().chars
     static var previews: some View {
         FanView(initialCharacteristics: chars)
             .environment(\.updateProgress, nil)
+            .environmentObject(InjectedIndicators.indicators)
             .preferredColorScheme(.light)
+            .foregroundColor(.main)
+            .tint(.main)
+            .accentColor(.main)
     }
 }
-

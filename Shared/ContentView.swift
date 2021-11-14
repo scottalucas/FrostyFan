@@ -8,11 +8,11 @@
 import SwiftUI
 
 struct ContentView: View {
-    @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         HouseView()
             .background(Color.background)
+            .foregroundColor(.main)
     }
     
     init () {

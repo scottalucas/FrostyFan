@@ -9,42 +9,28 @@ import Foundation
 import SwiftUI
 import Combine
 
-//@MainActor
+@MainActor
 class HouseViewModel: ObservableObject {
-    deinit { NotificationCenter.default.removeObserver(self, name: .removeFan, object: nil) }
     private var status = HouseStatus() {
         willSet {
             indicators = setHouseLamps(status: newValue)
         }
     }
-    private var scanModel: () async -> Void
+//    private var scanModel: () async -> Void
+    private var globalIndicators = GlobalIndicators.shared
+    private var dataSource: House
     @Published var fanViews = Set<FanView>()
     @Published var indicators = HouseLamps()
-    @Published var pullDownOffset: CGFloat = .zero
-    @Published var isRefreshing = false
-    @Published var progress: Double?
+    //    @Published var progress: Double?
     
-    private var bag = Set<AnyCancellable>()
+//    private var bag = Set<AnyCancellable>()
     
-    init (dataSource: HouseDataSource = House()) {
-        scanModel = dataSource.scan
-
-        dataSource
-            .fanSetPub
-            .map { $0.map
-                { chars in
-                    FanView(initialCharacteristics: chars)
-                }
-            }
-            .map { Set($0) }
-            .assign(to: &$fanViews)
-        
-        dataSource
-            .progress
-            .assign(to: &$progress)
+    init (dataSource: House = House(), initialFans: Set<FanCharacteristics> = []) {
+        fanViews = Set(initialFans.map { FanView(initialCharacteristics: $0) })
+        self.dataSource = dataSource
     }
-        
-   
+    
+    
     private func setHouseLamps(status: HouseStatus) -> HouseLamps {
         var retVal = HouseLamps()
         
@@ -63,8 +49,11 @@ class HouseViewModel: ObservableObject {
         return retVal
     }
     
-    func scan () async {
-        fanViews.removeAll()
-        await scanModel()
+    func scan () async throws {
+//        fanViews.removeAll()
+//        let data = dataSource.scan()
+        for try await item in dataSource.scan() {
+            fanViews.update(with: FanView(initialCharacteristics: item))
+        }
     }
 }

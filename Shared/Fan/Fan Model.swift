@@ -101,13 +101,13 @@ class FanModel: ObservableObject {
     }
     
     private func startKeepalive () {
-        print ("Start keepalive, nil: \(updateTimer == nil), valid: \(updateTimer.map { $0.isValid } ?? false)")
+//        print ("Start keepalive, nil: \(updateTimer == nil), valid: \(updateTimer.map { $0.isValid } ?? false)")
         if case let .some (t) = updateTimer, t.isValid { return }
         updateTimer?.invalidate()
         updateTimer = nil
         updateTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
             guard let self = self else { return }
-            print("Keepalive")
+//            print("Keepalive")
             Task {
                 do {
                     guard let addr = self.fanCharacteristics?.ipAddr else { throw AdjustmentError.missingKeys }
@@ -264,6 +264,10 @@ struct FanCharacteristics: Decodable, Hashable {
     
     func hash(into hasher: inout Hasher) {
         hasher.combine(macAddr)
+    }
+    
+    static func ==(lhs: FanCharacteristics, rhs: FanCharacteristics) -> Bool {
+        return lhs.macAddr == rhs.macAddr
     }
     
     enum DamperStatus {

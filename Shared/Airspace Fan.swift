@@ -15,11 +15,12 @@ struct AirspaceFanApp: App {
 //    let location = Location()
 //    let appStatus = ApplicationStatus.shared
 //    let weather: Weather
+    let globalIndicators = GlobalIndicators.shared
     
     var body: some Scene {
         WindowGroup {
             ContentView()
-//                .environmentObject(appStatus)
+                .environmentObject(globalIndicators)
 //                .environmentObject(weather)
 //                .environmentObject(location)
 //                .environmentObject(house)
@@ -31,6 +32,15 @@ struct AirspaceFanApp: App {
         UITableView.appearance().backgroundColor = .main
         UITableView.appearance().separatorColor = .main
     }
+}
+
+class GlobalIndicators: ObservableObject {
+    static var shared: GlobalIndicators = GlobalIndicators()
+    @Published var updateProgress: Double?
+    @Published var houseAlarms = Array<HouseLamps>()
+    @Published var fanAlarmDict = Dictionary<FanView.ID, FanLamps>()
+
+    private init() {}
 }
 
 private struct ProgressKey: EnvironmentKey {
