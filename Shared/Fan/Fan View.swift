@@ -29,8 +29,9 @@ struct FanView: View {
     
     var body: some View {
         ZStack {
-            ControllerRender(viewModel: viewModel, activeSheet: $activeSheet)
             FanImageRender(angle: $angle, activeSheet: $activeSheet, viewModel: viewModel)
+            ControllerRender(viewModel: viewModel, activeSheet: $activeSheet)
+                .padding(.bottom, 45)
             FanNameRender(activeSheet: $activeSheet, name: $name)
         }
         .overlaySheet(dataSource: viewModel, activeSheet: $activeSheet)
@@ -108,38 +109,48 @@ struct ControllerRender: View {
 struct FanImageRender: View {
     @Binding var angle: Angle
     @Binding var activeSheet: OverlaySheet?
+    @State private var verticalOffset = CGFloat.zero
     var viewModel: FanViewModel
     
     var body: some View {
-        VStack() {
-            Image.fanLarge
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .rotationEffect(angle)
-                .opacity(/*@START_MENU_TOKEN@*/0.8/*@END_MENU_TOKEN@*/)
-                .blur(radius: 10.0)
-                .scaleEffect(1.5)
-                .overlay(
-                    VStack {
-                        Button(action: {
-                            activeSheet = .detail
-                        }, label: {
-                            Image(systemName: "info.circle.fill")
-                                .resizable()
-                                .frame(width: 35, height: 35)
-                                .aspectRatio(1.0, contentMode: .fill)
-                        })
-                        RefreshIndicator()
-                            .padding(.top, 40)
+//        VStack() {
+        ZStack(alignment: .top) {
+            VStack {
+                Image.fanIcon
+                    .resizable()
+                    .aspectRatio(1.0, contentMode: .fit)
+                    .rotationEffect(angle)
+                    .scaleEffect(1.5)
+                    .readFanOffset()
+                    .onPreferenceChange(FanImageOffsetKey.self) { midpoint in
+                        verticalOffset = midpoint
                     }
-                    .buttonStyle(BorderlessButtonStyle())
-                    .frame(width: nil, height: 75, alignment: .center)
-                    .padding(.horizontal)
-                )
-                .padding(.top, 100)
-                .ignoresSafeArea(.container, edges: .top)
-            Spacer()
+                Spacer()
+            }
+            .offset(y: 100)
+            Color.clear
+                .background(.thinMaterial)
+//                .ignoresSafeArea()
+            VStack {
+                Button(action: {
+                    activeSheet = .detail
+                }, label: {
+                    Image(systemName: "info.circle.fill")
+                        .resizable()
+                        .frame(width: 35, height: 35)
+                        .aspectRatio(1.0, contentMode: .fill)
+                })
+                RefreshIndicator()
+                    .padding(.top, 40)
+            }
+            .fixedSize(horizontal: false, vertical: true)
+            .buttonStyle(BorderlessButtonStyle())
+            .padding(.horizontal)
+            .alignmentGuide(VerticalAlignment.top, computeValue: { dim in
+                -verticalOffset + dim.height/2
+            })
         }
+        .ignoresSafeArea()
     }
 }
 
@@ -162,6 +173,34 @@ struct FanNameRender: View {
         .padding(.top, 40.0)
     }
 }
+
+struct FanImageOffsetKey: PreferenceKey {
+    static var defaultValue: CGFloat = .zero
+    
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
+}
+
+struct FanImageOffsetReader: ViewModifier {
+    private var offsetView: some View {
+        GeometryReader { geometry in
+//            Color.clear.preference(key: FanImageOffsetKey.self, value: 100)
+            Color.clear.preference(key: FanImageOffsetKey.self, value: geometry.frame(in: .global).midY)
+        }
+    }
+    
+    func body(content: Content) -> some View {
+        content.background(offsetView)
+    }
+}
+
+extension View {
+    func readFanOffset () -> some View {
+        modifier(FanImageOffsetReader())
+    }
+}
+
 
 extension FanView: Hashable {
     static func ==(lhs: FanView, rhs: FanView) -> Bool {

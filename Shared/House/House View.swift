@@ -19,7 +19,7 @@ struct HouseView: View {
     var body: some View {
         TabView (selection: $currentTab) {
             FanViewPageContainer (viewModel: viewModel)
-                .ignoresSafeArea(.all, edges: [.top])
+                .ignoresSafeArea(.all, edges: [.top, .bottom])
                 .tabItem {
                     Image.fanIcon
                     Text(globalIndicators.updateProgress == nil ? "Fan" : "Scanning")
@@ -48,7 +48,6 @@ struct HouseView: View {
     }
     
     init(viewModel: HouseViewModel? = nil) {
-//        _viewModel = StateObject.init(wrappedValue: HouseViewModel(dataSource: HouseViewDataMock()))
         if let vm = viewModel {
             _viewModel = StateObject.init(wrappedValue: vm)
         } else {
@@ -62,8 +61,7 @@ struct FanViewPageContainer: View {
     @StateObject var viewModel: HouseViewModel
     @State private var selectedFan: String = ""
     @State private var revealControlOffset = CGFloat.zero
-//    @State private var viewCount = Int.zero
-    
+
     var body: some View {
         Group {
             switch viewModel.fanViews.count {
@@ -71,40 +69,21 @@ struct FanViewPageContainer: View {
                     NoFanView()
                 case 1:
                     viewModel.fanViews.first!
-                        .padding(.bottom, 75)
                 default:
                     TabView (selection: $selectedFan) {
                         ForEach (Array(viewModel.fanViews)) { view in
                             view
-                                .padding(.bottom, 50)
                                 .tag(view.id)
                         }
                     }
-//                    .overlay {
-//                        ZStack {
-//                            GeometryReader {
-//                                geo in
-//                                Color.red
-////                                revealControlOffset = 25.0
-//                            }
-//
-//                        }
-//                    }
-//                    .frame(width: .infinity, height: 600)
-                    .offset(x: 0, y: revealControlOffset)
                     .tabViewStyle(PageTabViewStyle(indexDisplayMode: .always))
                     .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .always))
             }
         }
-        .safeAreaInset(edge: .bottom) { Color.clear.frame(height: 60) }
+        .safeAreaInset(edge: .bottom) { Color.clear.frame(height: 70) }
         .pulldownRefresh {
             try? await viewModel.scan()
         }
-        
-        .offset(x: 0, y: 50.0)
-//        .onReceive(viewModel.$fanViews) { view in
-//            viewCount = view.count
-//        }
     }
 }
 
@@ -160,7 +139,6 @@ class HouseViewDataMock: House {
                 continuation.yield(fanA)
                 checkedHosts += 1
                 percentHostsChecked = checkedHosts / totalHosts
-//                print("a \(fanSet.count)")
                 var fanB = FanCharacteristics()
                 fanB.airspaceFanModel = "2.5e"
                 fanB.macAddr = UUID.init().uuidString
@@ -168,7 +146,6 @@ class HouseViewDataMock: House {
                 continuation.yield(fanB)
                 checkedHosts += 1
                 percentHostsChecked = checkedHosts / totalHosts
-                //                print("b \(fanSet.count)")
                 await Task.sleep(500_000_000)
                 var fanC = FanCharacteristics()
                 fanC.airspaceFanModel = "4300"
@@ -176,7 +153,6 @@ class HouseViewDataMock: House {
                 continuation.yield(fanC)
                 checkedHosts += 1
                 percentHostsChecked = checkedHosts / totalHosts
-                //                print("c \(fanSet.count)")
                 await Task.sleep(1_000_000_000)
                 indicators.updateProgress = nil
                 continuation.finish(throwing: nil)
@@ -185,5 +161,8 @@ class HouseViewDataMock: House {
             }
             
         }
+    }
+    override init () {
+        GlobalIndicators.shared.updateProgress = nil
     }
 }

@@ -50,7 +50,7 @@ class HouseViewModel: ObservableObject {
     }
     
     func scan () async throws {
-//        fanViews.removeAll()
+        fanViews.removeAll()
 //        let data = dataSource.scan()
         for try await item in dataSource.scan() {
             fanViews.update(with: FanView(initialCharacteristics: item))

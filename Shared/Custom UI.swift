@@ -82,41 +82,9 @@ struct OverlaySheetRender: ViewModifier {
     }
 }
 
-struct RefreshableKeyTypes {
-    enum ViewType: Int {
-        case movingView
-        case fixedView
-    }
-
-    struct PrefData: Equatable {
-        let vType: ViewType
-        let bounds: CGRect
-    }
-
-    struct PrefKey: PreferenceKey {
-        static var defaultValue: [PrefData] = []
-
-        static func reduce(value: inout [PrefData], nextValue: () -> [PrefData]) {
-            value.append(contentsOf: nextValue())
-        }
-
-        typealias Value = [PrefData]
-    }
-}
-
-struct ActivityRep: UIViewRepresentable {
-    func makeUIView(context: UIViewRepresentableContext<ActivityRep>) -> UIActivityIndicatorView {
-        return UIActivityIndicatorView()
-    }
-    
-    func updateUIView(_ uiView: UIActivityIndicatorView, context: UIViewRepresentableContext<ActivityRep>) {
-        uiView.startAnimating()
-    }
-}
-
 struct WidthPreferenceKey: PreferenceKey {
     static var defaultValue: CGFloat = .zero
-    
+
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value = nextValue()
     }
@@ -128,7 +96,7 @@ struct WidthReader: ViewModifier {
             Color.clear.preference(key: WidthPreferenceKey.self, value: geometry.size.width)
         }
     }
-    
+
     func body(content: Content) -> some View {
         content.background(sizeView)
     }
