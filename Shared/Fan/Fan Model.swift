@@ -10,50 +10,75 @@ import Combine
 import SwiftUI
 
 class FanModel: ObservableObject {
+//    @EnvironmentObject var globalIndicators: GlobalIndicators
     @Published var fanCharacteristics: FanCharacteristics?
-    @Published var fanStatus = FanStatus()
+//    @Published var fanStatus = FanStatus()
+    @Published var motorContext: Motor.Context = .standby
+    @Published var timerContext: FanTimer.Context = .standby
     private var motor: MotorDelegate!
     private var timer: TimerDelegate!
-    private var motorContext: Motor.Context = .standby {
-        didSet {
-            switch motorContext {
-                case .standby:
-                    fanStatus.remove(.speedAdjusting)
-                    if timerContext == .standby { startKeepalive() }
-                case .adjusting:
-                    fanStatus.insert(.speedAdjusting)
-                    stopKeepalive()
-                case .fault:
-                    fanStatus.remove(.speedAdjusting)
-                    stopKeepalive()
-            }
-        }
-    }
-    private var timerContext: FanTimer.Context = .standby {
-        didSet {
-            switch timerContext {
-                case .standby:
-                    fanStatus.remove(.timerAdjusting)
-                    if motorContext == .standby { startKeepalive() }
-                case .adjusting:
-                    fanStatus.insert(.timerAdjusting)
-                    startKeepalive()
-                case .fault:
-                    fanStatus.remove(.timerAdjusting)
-                    stopKeepalive()
-            }
-        }
-    }
+//    {
+//        didSet {
+////            guard let chars = fanCharacteristics, let indicatorObj = globalIndicators.fanAlarmDict[chars.macAddr] else { return }
+//            switch motorContext {
+//                case .standby:
+////                    indicatorObj.remove(.)
+//                    fanStatus.remove(.speedAdjusting)
+//                    if timerContext == .standby { startKeepalive() }
+//                case .adjusting:
+//                    fanStatus.insert(.speedAdjusting)
+//                    stopKeepalive()
+//                case .fault:
+//                    fanStatus.remove(.speedAdjusting)
+//                    stopKeepalive()
+//            }
+//        }
+//    }
+//    {
+//        didSet {
+////            guard let chars = fanCharacteristics else { return }
+//            switch timerContext {
+//                case .standby:
+//                    if motorContext == .standby { startKeepalive() }
+//                case .adjusting:
+//                    fanStatus.insert(.timerAdjusting)
+//                    startKeepalive()
+//                case .fault:
+//                    fanStatus.remove(.timerAdjusting)
+//                    stopKeepalive()
+//            }
+//        }
+//    }
     private var updateTimer: Timer?
     private var bag = Set<AnyCancellable>()
     
     init(usingChars chars: FanCharacteristics) {
         motor = Motor(atAddr: chars.ipAddr)
         timer = FanTimer(atAddr: chars.ipAddr)
-        startSubscribers()
         startKeepalive()
         print("init fan model \(chars.ipAddr)")
     }
+    
+//    private func updateFanLamps () {
+//        guard let chars = fanCharacteristics else { return }
+//        if chars.timer > 0 {
+//            fanStatus.insert(.nonZeroTimeRemaining)
+//        } else {
+//            fanStatus.remove(.nonZeroTimeRemaining)
+//        }
+//
+//        if chars.interlock1 || chars.interlock2 {
+//            fanStatus.insert(.interlockActive)
+//        } else {
+//            fanStatus.remove(.interlockActive)
+//        }
+//
+//        if chars.damper == .operating {
+//            fanStatus.insert(.damperOperating)
+//        } else {
+//            fanStatus.remove(.damperOperating)
+//        }
+//    }
     
     func setFan(toSpeed finalTarget: Int) async {
         motorContext = .adjusting
@@ -71,7 +96,8 @@ class FanModel: ObservableObject {
     }
     
     func setFan(addHours hours: Int) async {
-        guard let chars = fanCharacteristics, hours > 0 else { fanStatus.insert(.timerAdjustmentFailed)
+        guard let chars = fanCharacteristics, hours > 0 else {
+//            fanStatus.insert(.timerAdjustmentFailed)
             timerContext = .fault
             return
         }
@@ -101,13 +127,11 @@ class FanModel: ObservableObject {
     }
     
     private func startKeepalive () {
-//        print ("Start keepalive, nil: \(updateTimer == nil), valid: \(updateTimer.map { $0.isValid } ?? false)")
         if case let .some (t) = updateTimer, t.isValid { return }
         updateTimer?.invalidate()
         updateTimer = nil
         updateTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
             guard let self = self else { return }
-//            print("Keepalive")
             Task {
                 do {
                     guard let addr = self.fanCharacteristics?.ipAddr else { throw AdjustmentError.missingKeys }
@@ -124,48 +148,6 @@ class FanModel: ObservableObject {
         guard let t = updateTimer else { return }
         if t.isValid { t.invalidate() }
         self.updateTimer = nil
-    }
-}
-
-extension FanModel {
-    private func startSubscribers () {
-//        $fanStatus
-//            .filter { $0.contains(.fanNotResponsive) }
-//            .sink(receiveValue: { _ in
-//                print("Fan not responsive, removing from house.")
-//                if let myFanFromHouse = self.house.fans.first(where: { chars in chars.ipAddr == self.ipAddr }) {
-//                    self.house.fans.remove(myFanFromHouse)
-//                }
-//            })
-//            .store(in: &bag)
-        
-        $fanCharacteristics
-            .sink(receiveValue: { [weak self] optChars in
-                guard let self = self else { return }
-                var currentStatus = self.fanStatus.subtracting(FanStatus.updatedByFan)
-                guard let chars = optChars else {
-                    currentStatus.insert(.noFanCharacteristics)
-                    self.fanStatus = currentStatus
-                    return
-                }
-                if chars.speed == 0 {
-                    currentStatus.insert(.fanOff)
-                }
-                
-                if chars.timer > 0 {
-                    currentStatus.insert(.nonZeroTimeRemaining)
-                }
-                
-                if chars.interlock1 || chars.interlock2 {
-                    currentStatus.insert(.interlockActive)
-                }
-                
-                if chars.damper == .operating {
-                    currentStatus.insert(.damperOperating)
-                }
-                self.fanStatus = currentStatus
-            })
-            .store(in: &bag)
     }
 }
 

@@ -9,15 +9,15 @@ import SwiftUI
 
 struct NoFanView: View {
     typealias IPAddr = String
+    @EnvironmentObject private var sharedHouseData: SharedHouseData
     @Environment(\.scenePhase) var scenePhase
     @Environment(\.colorScheme) var colorScheme
-    @EnvironmentObject private var globalIndicators: GlobalIndicators
     
     var body: some View {
         Rectangle ()
             .foregroundColor(Color(.clear))
             .overlay (alignment: .center) {
-                    if globalIndicators.updateProgress != nil {
+                    if sharedHouseData.updateProgress != nil {
                             RefreshIndicator()
                     } else {
                         Text("No fans found")
@@ -29,8 +29,8 @@ struct NoFanView: View {
 
 struct No_Fan_View_Previews: PreviewProvider {
     struct InjectedIndicators {
-        static var indicators: GlobalIndicators {
-            let retVal = GlobalIndicators.shared
+        static var indicators: SharedHouseData {
+            let retVal = SharedHouseData.shared
             retVal.updateProgress = 0.2
             return retVal
         }

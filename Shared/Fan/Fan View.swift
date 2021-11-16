@@ -7,8 +7,8 @@
 
 import SwiftUI
 
-enum OverlaySheet: Identifiable {
-    var id: Int { hashValue }
+enum OverlaySheet: String, Identifiable {
+    var id: String { self.rawValue }
     case fanName
     case timer
     case detail
@@ -17,12 +17,13 @@ enum OverlaySheet: Identifiable {
 
 struct FanView: View {
     typealias MACAddr = String
-    var id: MACAddr
+    let id: MACAddr
     @Environment(\.scenePhase) var scenePhase
+    @EnvironmentObject var sharedHouseData: SharedHouseData
     @StateObject var viewModel: FanViewModel
     @AppStorage var name: String
     @GestureState var viewOffset = CGSize.zero
-
+    
     @State var pullDownOffset = CGFloat.zero
     @State private var angle = Angle.zero
     @State private var activeSheet: OverlaySheet?
@@ -32,7 +33,7 @@ struct FanView: View {
             FanImageRender(angle: $angle, activeSheet: $activeSheet, viewModel: viewModel)
             ControllerRender(viewModel: viewModel, activeSheet: $activeSheet)
                 .padding(.bottom, 45)
-            FanNameRender(activeSheet: $activeSheet, name: $name)
+            FanNameRender(activeSheet: $activeSheet, name: $name, showDamperWarning: $viewModel.showDamperWarning, showInterlockWarning: $viewModel.showInterlockWarning)
         }
         .overlaySheet(dataSource: viewModel, activeSheet: $activeSheet)
         .onReceive(viewModel.$fanRotationDuration) { val in
@@ -54,19 +55,22 @@ struct FanView: View {
         id = chars.macAddr
         _name = AppStorage(wrappedValue: "\(chars.airspaceFanModel)", StorageKey.fanName(chars.macAddr).key)
         _viewModel = StateObject.init(wrappedValue: FanViewModel(chars: chars))
-        print("init fan view model \(viewModel.chars.airspaceFanModel) selector segments \(viewModel.selectorSegments)")
+        print("init fan view model \(chars.airspaceFanModel) selector segments \(viewModel.selectorSegments)")
     }
 }
 
 struct SpeedController: View {
     @ObservedObject var viewModel: FanViewModel
-    
+    @State var requestedSpeed: Int?
     var body: some View {
         SegmentedSpeedPicker(
             segments: $viewModel.selectorSegments,
             highlightedSegment: $viewModel.currentMotorSpeed,
-            indicatedSegment: $viewModel.targetedSpeed,
+            indicatedSegment: $requestedSpeed,
             indicatorBlink: $viewModel.indicatedAlarm)
+            .onChange(of: requestedSpeed) { speed in
+                viewModel.setSpeed(to: speed)
+            }
     }
 }
 
@@ -83,9 +87,9 @@ struct ControllerRender: View {
                             activeSheet = .timer
                         }, label: {
                             VStack {
-                                Image.timer
+                                IdentifiableImage.timer.image
                                     .resizable()
-                                    .foregroundColor(.main)
+//                                    .foregroundColor(.main)
                                     .scaledToFit()
                                     .frame(width: nil, height: 40)
                                 if viewModel.offDateText != nil {
@@ -95,9 +99,9 @@ struct ControllerRender: View {
                             }
                             .padding(.bottom, 15)
                         })
-                    if viewModel.fanStatusText != nil {
-                        Text(viewModel.fanStatusText ?? "")
-                    }
+                    //                    if viewModel.fanStatusText != nil {
+                    //                        Text(viewModel.fanStatusText ?? "")
+                    //                    }
                 }
             }
             SpeedController(viewModel: viewModel)
@@ -113,14 +117,15 @@ struct FanImageRender: View {
     var viewModel: FanViewModel
     
     var body: some View {
-//        VStack() {
+        //        VStack() {
         ZStack(alignment: .top) {
             VStack {
-                Image.fanIcon
+                IdentifiableImage.fanIcon.image
                     .resizable()
                     .aspectRatio(1.0, contentMode: .fit)
                     .rotationEffect(angle)
                     .scaleEffect(1.5)
+                    .clipped()
                     .readFanOffset()
                     .onPreferenceChange(FanImageOffsetKey.self) { midpoint in
                         verticalOffset = midpoint
@@ -130,12 +135,12 @@ struct FanImageRender: View {
             .offset(y: 100)
             Color.clear
                 .background(.thinMaterial)
-//                .ignoresSafeArea()
+            //                .ignoresSafeArea()
             VStack {
                 Button(action: {
                     activeSheet = .detail
                 }, label: {
-                    Image(systemName: "info.circle.fill")
+                    IdentifiableImage.info.image
                         .resizable()
                         .frame(width: 35, height: 35)
                         .aspectRatio(1.0, contentMode: .fill)
@@ -155,8 +160,12 @@ struct FanImageRender: View {
 }
 
 struct FanNameRender: View {
+    @EnvironmentObject var sharedHouseData: SharedHouseData
     @Binding var activeSheet: OverlaySheet?
     @Binding var name: String
+    @Binding var showDamperWarning: Bool
+    @Binding var showInterlockWarning: Bool
+    
     var body: some View {
         VStack (alignment: /*@START_MENU_TOKEN@*/.center/*@END_MENU_TOKEN@*/, spacing: 0) {
             HStack (alignment: .firstTextBaseline) {
@@ -165,6 +174,17 @@ struct FanNameRender: View {
                         activeSheet = .fanName
                     }
                 Spacer()
+                HStack {
+                    if sharedHouseData.showTempOutOfRangeWarning {
+                        IdentifiableImage.thermometer.image
+                    }
+                    if showDamperWarning {
+                        IdentifiableImage.damper.image
+                    }
+                    if showInterlockWarning {
+                        IdentifiableImage.interlock.image
+                    }
+                }
             }
             Divider().frame(width: nil, height: 1, alignment: .center).background(Color.main)
             Spacer()
@@ -185,7 +205,7 @@ struct FanImageOffsetKey: PreferenceKey {
 struct FanImageOffsetReader: ViewModifier {
     private var offsetView: some View {
         GeometryReader { geometry in
-//            Color.clear.preference(key: FanImageOffsetKey.self, value: 100)
+            //            Color.clear.preference(key: FanImageOffsetKey.self, value: 100)
             Color.clear.preference(key: FanImageOffsetKey.self, value: geometry.frame(in: .global).midY)
         }
     }
@@ -224,17 +244,23 @@ struct FanView_Previews: PreviewProvider {
         }
     }
     struct InjectedIndicators {
-        static var indicators: GlobalIndicators {
-            let retVal = GlobalIndicators.shared
+        static var indicators: SharedHouseData {
+            let retVal = SharedHouseData.shared
             retVal.updateProgress = 0.5
             return retVal
         }
     }
     static var chars = FanMock().chars
     static var previews: some View {
-        FanView(initialCharacteristics: chars)
-            .environment(\.updateProgress, nil)
-            .environmentObject(InjectedIndicators.indicators)
+        var fan = FanCharacteristics()
+        fan.timer = 0
+        let vm = FanViewModel(chars: fan)
+        //        vm.offDateText = "test"
+        return ControllerRender(viewModel: vm, activeSheet: .mock(nil))
+        //            .environmentObject(env)
+        //        FanView(initialCharacteristics: chars)
+        //            .environment(\.updateProgress, nil)
+        //            .environmentObject(InjectedIndicators.indicators)
             .preferredColorScheme(.light)
             .foregroundColor(.main)
             .tint(.main)

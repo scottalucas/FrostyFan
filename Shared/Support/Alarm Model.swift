@@ -62,11 +62,11 @@ final class HouseLamps: OptionSet, RawRepresentable, Equatable {
         return labelArr
     }
     
-    var displayedIcons: [Image] {
-        var labelArr = Array<Image>()
-        if self.contains(.showTemperatureWarning) { labelArr.append(.thermometer) }
-        return labelArr
-    }
+//    var displayedIcons: [Image] {
+//        var labelArr = Array<Image>()
+//        if self.contains(.showTemperatureWarning) { labelArr.append(.thermometer) }
+//        return labelArr
+//    }
     
     internal init (rawValue: Int) {
         self.rawValue = rawValue
@@ -151,14 +151,14 @@ final class FanLamps: OptionSet, RawRepresentable {
         if self.contains(.showMinorFaultIndicator) { labelArr.append("Minor fan fault") }
         return labelArr
     }
-    
-    var displayedIcons: [Image] {
-        var labelArr = Array<Image>()
-        if self.contains(.showDamperIndicator) { labelArr.append(.speed) }
-        if self.contains(.showInterlockIndicator) { labelArr.append(.interlock) }
-        return labelArr
-    }
-    
+//
+//    var displayedIcons: [Image] {
+//        var labelArr = Array<Image>()
+//        if self.contains(.showDamperIndicator) { labelArr.append(.damper) }
+//        if self.contains(.showInterlockIndicator) { labelArr.append(.interlock) }
+//        return labelArr
+//    }
+//
     internal init (rawValue: Int) {
         self.rawValue = rawValue
     }

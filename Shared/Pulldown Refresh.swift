@@ -9,9 +9,9 @@ import Foundation
 import SwiftUI
 
 struct RefreshIndicator: View {
-    @EnvironmentObject private var globalIndicators: GlobalIndicators
+    @EnvironmentObject private var sharedHouseData: SharedHouseData
     var body: some View {
-        if let update = globalIndicators.updateProgress {
+        if let update = sharedHouseData.updateProgress {
             GeometryReader { geo in
                 HStack {
                     Spacer()

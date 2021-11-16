@@ -10,8 +10,8 @@ import Combine
 
 struct HouseView: View {
     typealias IPAddr = String
+    @EnvironmentObject private var sharedHouseData: SharedHouseData
     @StateObject var viewModel: HouseViewModel
-    @EnvironmentObject private var globalIndicators: GlobalIndicators
     @State private var currentTab: Int = 0
     @State private var info: String = ""
     @State private var fanLabel: String = "Fan"
@@ -21,21 +21,16 @@ struct HouseView: View {
             FanViewPageContainer (viewModel: viewModel)
                 .ignoresSafeArea(.all, edges: [.top, .bottom])
                 .tabItem {
-                    Image.fanIcon
-                    Text(globalIndicators.updateProgress == nil ? "Fan" : "Scanning")
+                    IdentifiableImage.fanIcon.image
+                    Text(sharedHouseData.updateProgress == nil ? "Fan" : "Scanning")
                 }
                 .tag(1)
             SettingsView()
                 .tabItem {
-                    Image.bell
+                    IdentifiableImage.bell.image
                     Text("Alarms")
                 }
                 .tag(2)
-            Text("test")
-                .tabItem {
-                    Image.fanIcon
-                    Text("\(viewModel.fanViews.count)")
-                }
         }
         .foregroundColor(.main)
         .tint(.main)
@@ -68,7 +63,7 @@ struct FanViewPageContainer: View {
                 case 0:
                     NoFanView()
                 case 1:
-                    viewModel.fanViews.first!
+                    viewModel.fanViews.first?.eraseToAnyView() ?? NoFanView().eraseToAnyView()
                 default:
                     TabView (selection: $selectedFan) {
                         ForEach (Array(viewModel.fanViews)) { view in
@@ -90,9 +85,15 @@ struct FanViewPageContainer: View {
 struct HouseViewPreviews: PreviewProvider {
 
     static var previews: some View {
-        HouseView(viewModel: HouseViewModel(dataSource: HouseViewDataMock(), initialFans: Set([FanCharacteristics(), FanCharacteristics()])))
+//        HouseView()
+        var vm = HouseViewModel()
+        var env = SharedHouseData.shared
+        env.showTempOutOfRangeWarning = true
+        return HouseView(viewModel: HouseViewModel(dataSource: HouseViewDataMock()))
+        
+//        return HouseView(viewModel: vm)
             .preferredColorScheme(.dark)
-            .environmentObject(GlobalIndicators.shared)
+            .environmentObject(SharedHouseData.shared)
     }
 }
 
@@ -102,7 +103,7 @@ class HouseViewDataMock: House {
     
     var finishTimer: Timer?
     
-    var indicators = GlobalIndicators.shared
+    var indicators = SharedHouseData.shared
 
     var percentHostsChecked: Double?
     
@@ -111,11 +112,11 @@ class HouseViewDataMock: House {
             Task {
                 let totalHosts = 10.0
                 var checkedHosts = Double.zero
-                
-                GlobalIndicators.shared.updateProgress = 0.0
-                
+
+                SharedHouseData.shared.updateProgress = 0.0
+
                 timeToFinish = Date() + 5.0
-                
+
                 DispatchQueue.main.async {
                     self.finishTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self, ttf = self.timeToFinish, dur = 5.0] _ in
                         guard let self = self else { return }
@@ -141,6 +142,8 @@ class HouseViewDataMock: House {
                 percentHostsChecked = checkedHosts / totalHosts
                 var fanB = FanCharacteristics()
                 fanB.airspaceFanModel = "2.5e"
+                fanB.interlock1 = true
+                fanB.damper = .operating
                 fanB.macAddr = UUID.init().uuidString
                 await Task.sleep(1_500_000_000)
                 continuation.yield(fanB)
@@ -159,10 +162,10 @@ class HouseViewDataMock: House {
                 finishTimer?.invalidate()
                 finishTimer = nil
             }
-            
+
         }
     }
     override init () {
-        GlobalIndicators.shared.updateProgress = nil
+        SharedHouseData.shared.updateProgress = nil
     }
 }

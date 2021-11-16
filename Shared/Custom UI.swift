@@ -9,22 +9,38 @@ import Foundation
 import SwiftUI
 import Combine
 
-extension Image {
-    static var fanLarge = Image("fanLarge")
-    static var fanIcon = Image("fanIcon")
-    static var flame = Image(systemName: "flame.fill")
-    static var interlock = Image(systemName: "wind")
-    static var leaf = Image(systemName: "leaf.arrow.circlepath")
-    static var network = Image(systemName: "link")
-    static var question = Image(systemName: "questionmark")
-    static var settings = Image(systemName: "gear")
-    static var speed = Image(systemName: "speedometer")
-    static var thermometer = Image(systemName: "thermometer")
-    static var timer = Image(systemName: "timer")
-    static var rainDrops =  Image(systemName: "cloud.sun")
-    static var bell = Image(systemName: "bell")
-}
+struct IdentifiableImage: Identifiable, Hashable {
+    static var fanLarge = IdentifiableImage(named: "fanLarge")
+    static var fanIcon = IdentifiableImage(named: "fanIcon")
+    static var flame = IdentifiableImage(named: "flame.fill")
+    static var damper = IdentifiableImage(named: "wind")
+    static var leaf = IdentifiableImage(named: "leaf.arrow.circlepath")
+    static var network = IdentifiableImage(named: "link")
+    static var question = IdentifiableImage(named: "questionmark")
+    static var settings = IdentifiableImage(named: "gear")
+    static var interlock = IdentifiableImage(named: "speedometer")
+    static var thermometer = IdentifiableImage(named: "thermometer")
+    static var timer = IdentifiableImage(named: "timer")
+    static var rainDrops =  IdentifiableImage(named: "cloud.sun")
+    static var bell = IdentifiableImage(named: "bell")
+    static var info = IdentifiableImage(named: "info.circle.fill")
 
+    var image: Image
+    private var imageName: String
+    var id: String {
+        imageName
+    }
+    init (named: String) {
+        let i = UIImage(systemName: named) ?? UIImage(named: named) ?? UIImage(systemName:  "xmark.octagon.fill")!
+        let img = Image(uiImage: i).renderingMode(.template)
+        imageName = named
+        image = img
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(imageName)
+    }
+}
 extension UIColor {
     static var main = UIColor(named: "main")!
     static var segmentControllerText = UIColor(named: "segmentControllerText")!
@@ -59,7 +75,7 @@ struct OverlaySheetRender: ViewModifier {
     func body (content: Content) -> some View {
         content
             .sheet(item: $activeSheet, onDismiss: {
-                defer { data.timerWheelPosition = 0 }
+                defer { Task { await data.setTimerWheel(to: 0) } }
                 if data.timerWheelPosition > 0 {
                     data.setTimer(addHours: data.timerWheelPosition)
                 }
@@ -325,8 +341,8 @@ extension RangeSlider {
 
 struct Utilities_Previews: PreviewProvider {
     struct GlobalIndicatorHolder {
-        static var globalIndicator: GlobalIndicators {
-            let retVal = GlobalIndicators.shared
+        static var sharedHouseData: SharedHouseData {
+            let retVal = SharedHouseData.shared
             retVal.updateProgress = 0.5
             return retVal
         }
@@ -365,7 +381,7 @@ struct Utilities_Previews: PreviewProvider {
                 Text("test")
             }
             .pulldownRefresh { }
-            .environmentObject(GlobalIndicatorHolder.globalIndicator)
+            .environmentObject(GlobalIndicatorHolder.sharedHouseData)
     }
 }
 
