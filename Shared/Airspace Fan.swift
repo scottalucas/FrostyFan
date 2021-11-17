@@ -11,35 +11,27 @@ import Combine
 
 @main
 struct AirspaceFanApp: App {
-//    let house = House.shared
-//    let location = Location()
-//    let appStatus = ApplicationStatus.shared
-//    let weather: Weather
+    let location = Location()
+    let weather = Weather()
     let sharedHouseData = SharedHouseData.shared
     
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(sharedHouseData)
-//                .environmentObject(weather)
-//                .environmentObject(location)
-//                .environmentObject(house)
+                .environmentObject(weather)
+                .environmentObject(location)
         }
     }
     
     init () {
-//        weather = Weather()
         UITableView.appearance().backgroundColor = .main
         UITableView.appearance().separatorColor = .main
+        UIPageControl.appearance().currentPageIndicatorTintColor = .main
+        UIPageControl.appearance().pageIndicatorTintColor = .main.withAlphaComponent(0.25)
+
     }
 }
-//
-//class GlobalIndicators: ObservableObject {
-//    static var shared: GlobalIndicators = GlobalIndicators()
-//    @Published var updateProgress: Double?
-//    @Published var houseStatus = HouseStatus()
-//    private init() {}
-//}
 
 private struct ProgressKey: EnvironmentKey {
     static let defaultValue: Double? = nil

@@ -76,8 +76,6 @@ class SharedHouseData: ObservableObject {
     @Published var fault = FaultLevel.none
     @Published var alarmLevel = FaultLevel.none
     @Published var useAlarmColor = false
-    @Published var temperature: Double?
-    @Published var showTempOutOfRangeWarning = false
     private init () {}
 }
 

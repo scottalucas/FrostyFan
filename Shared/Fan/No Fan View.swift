@@ -19,6 +19,7 @@ struct NoFanView: View {
             .overlay (alignment: .center) {
                     if sharedHouseData.updateProgress != nil {
                             RefreshIndicator()
+                            .tint(.main)
                     } else {
                         Text("No fans found")
                     }

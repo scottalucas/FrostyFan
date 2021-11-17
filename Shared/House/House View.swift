@@ -33,7 +33,7 @@ struct HouseView: View {
                 .tag(2)
         }
         .foregroundColor(.main)
-        .tint(.main)
+        .tint(.background)
         .accentColor(.main)
         .onAppear {
             Task {
@@ -71,8 +71,8 @@ struct FanViewPageContainer: View {
                                 .tag(view.id)
                         }
                     }
-                    .tabViewStyle(PageTabViewStyle(indexDisplayMode: .always))
-                    .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .always))
+                    .tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))
+                    .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .automatic))
             }
         }
         .safeAreaInset(edge: .bottom) { Color.clear.frame(height: 70) }
@@ -86,14 +86,15 @@ struct HouseViewPreviews: PreviewProvider {
 
     static var previews: some View {
 //        HouseView()
-        var vm = HouseViewModel()
-        var env = SharedHouseData.shared
-        env.showTempOutOfRangeWarning = true
+        let vm = HouseViewModel()
+        let env = SharedHouseData.shared
+
         return HouseView(viewModel: HouseViewModel(dataSource: HouseViewDataMock()))
         
 //        return HouseView(viewModel: vm)
             .preferredColorScheme(.dark)
             .environmentObject(SharedHouseData.shared)
+            .environmentObject(Weather())
     }
 }
 

@@ -27,24 +27,6 @@ class FanViewModel: ObservableObject {
     @Published var offDateText: String?
     @Published var showDamperWarning = false
     @Published var showInterlockWarning = false
-//    {
-//        guard let offDate = timerOffDate else { return nil }
-//        let formatter = DateFormatter()
-//        formatter.dateFormat = "h:mm a"
-//        return "Off at \(formatter.string(from: offDate))"
-//    }
-//
-//    private var fanStatus: FanStatus = FanStatus() {
-//        willSet {
-//        let (newLamps, newBlink) = setFanLamps(from: newValue)
-//            fanStatusText = newLamps.diplayedLabels.reduce("", { (old, new) in
-//                return old + new + "\r"
-//            })
-//            fanStatusIcons = newLamps.displayedIcons
-//            indicatedAlarm = newBlink
-//        }
-//    }
-//    private var fanLamps = FanLamps()
     private var displayedMotorSpeed: Int?
     private var displayMotor = PassthroughSubject<AnyPublisher<Double, Never>, Never>()
     
@@ -54,7 +36,6 @@ class FanViewModel: ObservableObject {
         print("view model init for \(chars.ipAddr)")
         self.model = FanModel(usingChars: chars)
         self.chars = chars
-//        sharedHouseData = houseData
         startSubscribers(initialChars: chars)
     }
     
@@ -191,8 +172,8 @@ class FanViewModel: ObservableObject {
         
         model.$fanCharacteristics
             .prepend(chars)
-            .map { $0?.speed }
-            .receive(on: DispatchQueue.main)
+            .compactMap { $0?.speed }
+            .print()
             .assign(to: &$currentMotorSpeed)
 
         model.$fanCharacteristics

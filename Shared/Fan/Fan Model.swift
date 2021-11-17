@@ -10,45 +10,11 @@ import Combine
 import SwiftUI
 
 class FanModel: ObservableObject {
-//    @EnvironmentObject var globalIndicators: GlobalIndicators
     @Published var fanCharacteristics: FanCharacteristics?
-//    @Published var fanStatus = FanStatus()
     @Published var motorContext: Motor.Context = .standby
     @Published var timerContext: FanTimer.Context = .standby
     private var motor: MotorDelegate!
     private var timer: TimerDelegate!
-//    {
-//        didSet {
-////            guard let chars = fanCharacteristics, let indicatorObj = globalIndicators.fanAlarmDict[chars.macAddr] else { return }
-//            switch motorContext {
-//                case .standby:
-////                    indicatorObj.remove(.)
-//                    fanStatus.remove(.speedAdjusting)
-//                    if timerContext == .standby { startKeepalive() }
-//                case .adjusting:
-//                    fanStatus.insert(.speedAdjusting)
-//                    stopKeepalive()
-//                case .fault:
-//                    fanStatus.remove(.speedAdjusting)
-//                    stopKeepalive()
-//            }
-//        }
-//    }
-//    {
-//        didSet {
-////            guard let chars = fanCharacteristics else { return }
-//            switch timerContext {
-//                case .standby:
-//                    if motorContext == .standby { startKeepalive() }
-//                case .adjusting:
-//                    fanStatus.insert(.timerAdjusting)
-//                    startKeepalive()
-//                case .fault:
-//                    fanStatus.remove(.timerAdjusting)
-//                    stopKeepalive()
-//            }
-//        }
-//    }
     private var updateTimer: Timer?
     private var bag = Set<AnyCancellable>()
     
@@ -58,27 +24,6 @@ class FanModel: ObservableObject {
         startKeepalive()
         print("init fan model \(chars.ipAddr)")
     }
-    
-//    private func updateFanLamps () {
-//        guard let chars = fanCharacteristics else { return }
-//        if chars.timer > 0 {
-//            fanStatus.insert(.nonZeroTimeRemaining)
-//        } else {
-//            fanStatus.remove(.nonZeroTimeRemaining)
-//        }
-//
-//        if chars.interlock1 || chars.interlock2 {
-//            fanStatus.insert(.interlockActive)
-//        } else {
-//            fanStatus.remove(.interlockActive)
-//        }
-//
-//        if chars.damper == .operating {
-//            fanStatus.insert(.damperOperating)
-//        } else {
-//            fanStatus.remove(.damperOperating)
-//        }
-//    }
     
     func setFan(toSpeed finalTarget: Int) async {
         motorContext = .adjusting
@@ -97,7 +42,6 @@ class FanModel: ObservableObject {
     
     func setFan(addHours hours: Int) async {
         guard let chars = fanCharacteristics, hours > 0 else {
-//            fanStatus.insert(.timerAdjustmentFailed)
             timerContext = .fault
             return
         }
@@ -503,7 +447,6 @@ final class FanTimer: TimerDelegate {
 }
 
 protocol MotorDelegate {
-//    var refresh: AsyncThrowingStream<FanCharacteristics, Error> { get }
     func setSpeedAsync (to: Int) -> AsyncThrowingStream<FanCharacteristics, Error>
     init(atAddr: String)
 }

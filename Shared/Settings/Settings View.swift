@@ -8,14 +8,15 @@
 import SwiftUI
 
 struct SettingsView: View {
-//    @EnvironmentObject var weather: Weather
-//    @EnvironmentObject var location: Location
+    //    @EnvironmentObject var weather: Weather
+    @EnvironmentObject var location: Location
     @Environment(\.scenePhase) var scenePhase
     @AppStorage(StorageKey.temperatureAlarmEnabled.key) var temperatureAlertsEnabled: Bool = false
     @AppStorage(StorageKey.interlockAlarmEnabled.key) var interlockAlertsEnabled: Bool = false
     @AppStorage(StorageKey.locationAvailable.key) var locationPermission: Location.LocationPermission = .unknown
     @AppStorage(StorageKey.locLat.key) var latStr: String?
     @AppStorage(StorageKey.locLon.key) var lonStr: String?
+    @State var test = true
     
     private var coordinatesAvailable: Bool {
         latStr != nil && lonStr != nil
@@ -24,157 +25,107 @@ struct SettingsView: View {
     var body: some View {
         ZStack {
             Color.main
-                .ignoresSafeArea()
+                .ignoresSafeArea(.all, edges: .top)
             VStack {
                 SettingsBackgound()
                 List {
-                    if locationPermission == .deviceProhibited {
-                        Section(header: Text("Location")) {
-                            HStack {
-                                Text("Location off for this device")
-                                    .foregroundColor(.main)
-                                Spacer()
-                                Button(action: {
-                                    UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!)
-                                }, label: {
-                                    Text("Change Settings")
-                                        .padding(5)
-                                        .background(Color.main)
-                                        .clipShape(RoundedRectangle(cornerRadius: 5.0))
-                                })
-                            }
-                        }
-                    }
-                    else if locationPermission == .appProhibited {
-                        Section(header: Text("Location")) {
-                            HStack {
-                                Text("Location disabled for Toasty")
-                                    .foregroundColor(.main)
-                                Spacer()
-                                Button(action: {
-                                    UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!)
-                                }, label: {
-                                    Text("Change Settings")
-                                        .padding(5)
-                                        .background(Color.main)
-                                        .clipShape(RoundedRectangle(cornerRadius: 5.0))
-                                })
-                            }
-                        }
-                    }
-                    else if (locationPermission == .appAllowed || locationPermission == .unknown), !coordinatesAvailable {
-                        Section(header: Text("Location")) {
-                            HStack {
-                                Text("Status: not set")
-                                    .foregroundColor(.main)
-                                Spacer()
-                                Button(action: {
-//                                    location.updateLocation() //FIX
-                                }, label: {
-                                    Text("Set Location")
-                                        .padding(5)
-                                        .background(Color.main)
-                                        .clipShape(RoundedRectangle(cornerRadius: 5.0))
-                                })
-                            }
-                        }
-                    }
-                    else if (locationPermission == .appAllowed || locationPermission == .unknown), coordinatesAvailable {
-                        Section(header: Text("Location")) {
-                            HStack {
-                                Text("Status: available")
-                                    .foregroundColor(.main)
-                                Spacer()
-                                Button(action: {
-//                                    location.clearLocation() //FIX
-                                }, label: {
-                                    Text("Erase Location")
-                                        .padding(5)
-                                        .background(Color.main)
-                                        .clipShape(RoundedRectangle(cornerRadius: 5.0))
-                                })
-                            }
-                        }
-                    }
-                    else {
-                        Section(header: Text("Location")) {
-                            HStack {
-                                Text("Location status unknown")
-                                    .foregroundColor(.main)
-                                Spacer()
-                                Button(action: {
-//                                    location.updateLocation() //FIX
-                                }, label: {
-                                    Text("Set Location")
-                                        .padding(5)
-                                        .background(Color.main)
-                                        .clipShape(RoundedRectangle(cornerRadius: 5.0))
-                                })
-                            }
-                        }
-                    }
-                    Section(header: Text("Alerts")) {
-                        VStack {
-                            if
-                                locationPermission == .appAllowed, coordinatesAvailable {
+                    Section(header: Text("Location").foregroundColor(.background)) {
+                        switch (locationPermission, coordinatesAvailable) {
+                            case (.appProhibited, _):
                                 HStack {
-                                    Text("Temperature")
-                                        .foregroundColor(.main)
-                                    Toggle("Enable", isOn: $temperatureAlertsEnabled)
+                                    Text("Location disabled for Toasty")
+                                        .settingsAppearance(.lineLabel)
+                                    Spacer()
+                                    Button(action: {
+                                        UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!)
+                                    }, label: {
+                                        Text("Change Settings")
+                                            .settingsAppearance(.buttonLabel)
+                                    })
                                 }
-                            }
-                            HStack {
-                                Text("Interlock")
-                                    .foregroundColor(.main)
-                                Toggle("Interlock", isOn: $interlockAlertsEnabled)
-                            }
+                            case (.deviceProhibited, _):
+                                HStack {
+                                    Text("Location off for this device")
+                                        .settingsAppearance(.lineLabel)
+                                    Spacer()
+                                    Button(action: {
+                                        UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!)
+                                    }, label: {
+                                        Text("Change Settings")
+                                            .settingsAppearance(.buttonLabel)
+                                    })
+                                }
+                            case (.appAllowed, false), (.unknown, false):
+                                HStack {
+                                    Text("Location unknown")
+                                        .settingsAppearance(.lineLabel)
+                                    Spacer()
+                                    Button(action: {
+                                        location.updateLocation()
+                                    }, label: {
+                                        Text("Set Location")
+                                            .settingsAppearance(.buttonLabel)
+                                    })
+                                }
+                            case (_, true):
+                                HStack {
+                                    Text("Location saved")
+                                        .settingsAppearance(.lineLabel)
+                                    Spacer()
+                                    Button(action: {
+                                        location.clearLocation()
+                                    }, label: {
+                                        Text("Erase Location")
+                                            .settingsAppearance(.buttonLabel)
+                                    })
+                                }
                         }
-                        .toggleStyle(SwitchToggleStyle(tint: .main))
                     }
-                    if
-                        locationPermission == .appAllowed, coordinatesAvailable, temperatureAlertsEnabled {
-                        Section(header: Text("temperature alert range")) {
+                    Section(header: Text("Alerts").settingsAppearance(.header)) {
+                        if coordinatesAvailable {
                             VStack {
-                                TemperatureSelector()
-                                    .padding(.top, 25)
-                                    .padding(.bottom, 10)
+                                Toggle("Interlock", isOn: $interlockAlertsEnabled)
+                                Toggle("Temperature", isOn: $temperatureAlertsEnabled)
                             }
-                        }
-                    }                }
-                    .background(Color.main)
-                    .foregroundColor(.white)
-                Spacer()
-                HStack {
-                    VStack (alignment: .leading) {
-//                        if let tempStr = weather.currentTempStr {
-//                            Text("Outside temperature: \(tempStr)")
-//                                .foregroundColor(.white)
-//                                .italic()
-//                        } //FIX
-                        if (locationPermission == .appAllowed || locationPermission == .unknown), coordinatesAvailable
-                        {
-                            Text("Location: \(latStr!), \(lonStr!)")
-                                .foregroundColor(.white)
-                                .italic()
+                            .toggleStyle(SwitchToggleStyle(tint: .main))
+                            .settingsAppearance(.lineLabel)
+                        } else {
+                            Toggle("Interlock", isOn: $interlockAlertsEnabled)
+                                .toggleStyle(SwitchToggleStyle(tint: .main))
+                                .settingsAppearance(.lineLabel)
                         }
                     }
-                    .font(.body)
-                    Spacer()
+                    if (coordinatesAvailable && temperatureAlertsEnabled) {
+                        Section(header: Text("temperature alert range").settingsAppearance(.header)) {
+                            TemperatureSelector()
+                                .padding(.top, 25)
+                                .padding(.bottom, 10)
+                        }
+                    }
+                    //                    }
+                    //                                                .background(Color.main)
                 }
-                .padding()
+                .foregroundColor(.main)
+                //                        HStack {
+                //                            VStack (alignment: .leading) {
+                //                        if let tempStr = weather.currentTempStr {
+                //                            Text("Outside temperature: \(tempStr)")
+                //                                .foregroundColor(.white)
+                //                                .italic()
+                //                        } //FIX
+                //                        if (locationPermission == .appAllowed || locationPermission == .unknown), coordinatesAvailable
+                //                        {
+                //                            Text("Location: \(latStr!), \(lonStr!)")
+                //                                .foregroundColor(.white)
+                //                                .italic()
+                //                        }
+                //                    }
+                //                                .font(.body)
+                //                                Spacer()
             }
+            .listStyle(GroupedListStyle())
+            Spacer()
         }
-        .listStyle(GroupedListStyle())
-//        .onChange(of: scenePhase, perform: { scene in
-//            switch scene {
-//            case .background, .inactive:
-//                break
-//            case .active:
-//                location.getLocationPermission()
-//            @unknown default:
-//                break
-//            }
-//        })
     }
 }
 
@@ -239,11 +190,42 @@ struct SettingsBackgound: View {
     }
 }
 
+struct SettingsAppearance: ViewModifier {
+    enum Position { case header, lineLabel, buttonLabel }
+    var position: Position
+    func body(content: Content) -> some View {
+        switch position {
+            case .lineLabel:
+                content
+                    .foregroundColor(Color.main)
+                    .background(Color.clear)
+            case .buttonLabel:
+                content
+                    .padding(5)
+                    .background(Color.main)
+                    .clipShape(RoundedRectangle(cornerRadius: 5.0))
+                    .foregroundColor(Color.background)
+            case .header:
+                content
+                    .foregroundColor(Color.background)
+                    .background(Color.clear)
+        }
+    }
+}
+
+
+extension View {
+    func settingsAppearance (_ position: SettingsAppearance.Position) -> some View {
+        modifier(SettingsAppearance(position: position))
+    }
+}
+
 struct Settings_View_Previews: PreviewProvider {
-//    static var house = House.shared
+    //    static var house = House.shared
     static var previews: some View {
         SettingsView()
-//            .environmentObject(Weather())
-//            .environmentObject(Location())
+//            .preferredColorScheme(.dark)
+        //            .environmentObject(Weather())
+        //            .environmentObject(Location())
     }
 }

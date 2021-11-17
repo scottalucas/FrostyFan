@@ -11,7 +11,7 @@ import Combine
 import SwiftUI
 
 class Weather: ObservableObject {
-//    @ObservedObject var house = House.shared
+//    private var sharedHouseData = SharedHouseData.shared
     @AppStorage(StorageKey.lowTempLimit.key) var lowTempLimit: Double = 55
     @AppStorage(StorageKey.highTempLimit.key) var highTempLimit: Double = 75
 //    @AppStorage var houseConfiguredAlarms: Alarm.House
@@ -28,6 +28,8 @@ class Weather: ObservableObject {
         willSet {
             guard let t = newValue else {
                 currentTempStr = nil
+                tooHot = false
+                tooCold = false
                 return
             }
             let tempFormatter = NumberFormatter()
@@ -35,11 +37,13 @@ class Weather: ObservableObject {
             tempFormatter.negativeFormat = "-#0\u{00B0}"
             tempFormatter.roundingMode = .halfDown
             currentTempStr = tempFormatter.string(from: NSNumber(value: t))
+            tooCold = t < lowTempLimit
+            tooHot = t > highTempLimit
         }
     }
-    private var checkTimer = Timer.publish(every: (15.0 * 60.0), on: .main, in: .common)
+//    private var checkTimer = Timer.publish(every: (15.0 * 60.0), on: .main, in: .common)
     private var forecast = Array<(Date, Double)>()
-    private var bag = Set<AnyCancellable>()
+//    private var bag = Set<AnyCancellable>()
     
     fileprivate var queryElements:[URLQueryItem]? {
         get {
@@ -58,52 +62,89 @@ class Weather: ObservableObject {
         let forecastD = forecastData ?? Data()
         let forecastObj = (try? decoder.decode(WeatherObject.self, from: forecastD)).map { $0.hourly } ?? nil
         forecast = forecastObj.map { convertToDateArray(byHour: $0) } ?? Array<(Date, Double)>()
-
-        Deferred { Just(Date()) }
-            .merge (with: checkTimer)
-            .sink(receiveValue: { [weak self] _ in
-                guard let self = self else { return }
+        startChecking()
+//
+//        Deferred { Just(Date()) }
+//            .merge (with: checkTimer)
+//            .sink(receiveValue: { [weak self] _ in
+//                guard let self = self else { return }
+//                let lastUpdate = self.lastUpdate.map { Date(timeIntervalSince1970: $0) } ?? .distantPast
+////                let fansAreRunning = self.house.fans.map { $0.speed }.filter({ $0 > 0 }).count > 0
+//                self.updateCurrentTemp()
+//                let nextUpdate = WeatherCheckInterval.nextRecommendedDate(
+//                    forTemp: self.currentTemp,
+//                    fromLastUpdate: lastUpdate,
+//                    highTempLimitSet: self.highTempLimit,
+//                    lowTempLimitSet: self.lowTempLimit,
+//                    tempAlarmSet: self.tempAlarmSet,
+//                    fansRunning: true) //FIX
+//                if Date() > nextUpdate {
+//                    Task {
+//                        await self.load()
+//                    }
+//                }
+//            })
+//            .store(in: &bag)
+    }
+    
+    private func startChecking () {
+        Task {
+            while true {
                 let lastUpdate = self.lastUpdate.map { Date(timeIntervalSince1970: $0) } ?? .distantPast
-//                let fansAreRunning = self.house.fans.map { $0.speed }.filter({ $0 > 0 }).count > 0
-                self.updateCurrentTemp()
-                let nextUpdate = WeatherCheckInterval.nextRecommendedDate(
+                if Date () > WeatherCheckInterval.nextRecommendedDate (
                     forTemp: self.currentTemp,
                     fromLastUpdate: lastUpdate,
                     highTempLimitSet: self.highTempLimit,
                     lowTempLimitSet: self.lowTempLimit,
                     tempAlarmSet: self.tempAlarmSet,
-                    fansRunning: true) //FIX
-                if Date() > nextUpdate {
-                    self.load()
+                    fansRunning: true
+                ) {
+                    do {
+                        try await load()
+                    } catch {
+                        print ("Error getting weather \(error.localizedDescription)")
+                    }
                 }
-            })
-            .store(in: &bag)
+                await Task.sleep(15 * 60 * 1_000_000_000)
+            }
+        }
     }
 
-    private func load () {
-        guard let qE = queryElements else { return }
+    private func load () async throws {
+        guard let qE = queryElements else { throw ConnectionError.decodeError("Could not get query elements from \(queryElements?.description ?? "elements not available")") }
         var components = URLComponents()
         components.host = "api.openweathermap.org"
         components.scheme = "http"
         components.path = "/data/2.5/onecall"
         components.queryItems = qE
-        WeatherLoader(components: components)?
-            .getWeather
-            .sink(receiveCompletion: { [weak self] comp in
-                if case .failure = comp {
-                    self?.forecastData = Data()
-                }
-            }, receiveValue: { [weak self] weatherObj in
-                guard let self = self else { return }
-                var newForcast = self.convertToDateArray(byHour: weatherObj.hourly ?? [])
-                weatherObj.current?.temp.map { newForcast.append((Date(), $0)) }
-                newForcast.sort(by: { $0.0 < $1.0 })
-                self.forecast = newForcast
-                self.forecastData = weatherObj.data()
-                self.lastUpdate = Date().timeIntervalSince1970
-                self.updateCurrentTemp()
-            })
-            .store(in: &bag)
+        if let loader = WeatherLoader(components: components) {
+            var weatherObj: WeatherObject
+            weatherObj = try await loader.load()
+            var newForcast = self.convertToDateArray(byHour: weatherObj.hourly ?? [])
+            weatherObj.current?.temp.map { newForcast.append((Date(), $0)) }
+            newForcast.sort(by: { $0.0 < $1.0 })
+            self.forecast = newForcast
+            self.forecastData = weatherObj.data()
+            self.lastUpdate = Date().timeIntervalSince1970
+            self.updateCurrentTemp()
+        }
+//        WeatherLoader(components: components)?
+//            .getWeather
+//            .sink(receiveCompletion: { [weak self] comp in
+//                if case .failure = comp {
+//                    self?.forecastData = Data()
+//                }
+//            }, receiveValue: { [weak self] weatherObj in
+//                guard let self = self else { return }
+//                var newForcast = self.convertToDateArray(byHour: weatherObj.hourly ?? [])
+//                weatherObj.current?.temp.map { newForcast.append((Date(), $0)) }
+//                newForcast.sort(by: { $0.0 < $1.0 })
+//                self.forecast = newForcast
+//                self.forecastData = weatherObj.data()
+//                self.lastUpdate = Date().timeIntervalSince1970
+//                self.updateCurrentTemp()
+//            })
+//            .store(in: &bag)
         return
     }
     
@@ -118,29 +159,26 @@ class Weather: ObservableObject {
     }
     
     private func updateCurrentTemp () {
+        guard !forecast.isEmpty else {
+            currentTemp = nil
+            return
+        }
         currentTemp = forecast.reduce((.distantPast, 0.0)) { (last, next) in
             return (abs(Date().timeIntervalSince(last.0)) > abs(Date().timeIntervalSince(next.0))) ? next : last
         }.1
-        currentTemp.map {
-            tooCold = $0 <= lowTempLimit ? true : false
-            tooHot = $0 >= highTempLimit ? true : false
-        }
-        
     }
     
     struct WeatherLoader {
         var urlSession = URLSession.shared
         let decoder = JSONDecoder()
-        let getWeather: AnyPublisher<WeatherObject, ConnectionError>
+        let url: URL
         init? (components: URLComponents) {
             guard let url = components.url else { return nil }
-            getWeather = urlSession.dataTaskPublisher(for: url)
-                .map(\.data)
-                .decode(type: WeatherObject.self, decoder: decoder)
-                .mapError({ err in
-                    ConnectionError.cast(err)
-                })
-                .eraseToAnyPublisher()
+            self.url = url
+        }
+        func load() async throws -> WeatherObject {
+                let weatherData = try await urlSession.data(from: url).0
+                return try decoder.decode(WeatherObject.self, from: weatherData)
         }
     }
 }

@@ -89,7 +89,6 @@ struct ControllerRender: View {
                             VStack {
                                 IdentifiableImage.timer.image
                                     .resizable()
-//                                    .foregroundColor(.main)
                                     .scaledToFit()
                                     .frame(width: nil, height: 40)
                                 if viewModel.offDateText != nil {
@@ -99,9 +98,6 @@ struct ControllerRender: View {
                             }
                             .padding(.bottom, 15)
                         })
-                    //                    if viewModel.fanStatusText != nil {
-                    //                        Text(viewModel.fanStatusText ?? "")
-                    //                    }
                 }
             }
             SpeedController(viewModel: viewModel)
@@ -111,13 +107,14 @@ struct ControllerRender: View {
 }
 
 struct FanImageRender: View {
+    @EnvironmentObject var sharedHouseData: SharedHouseData
+    @EnvironmentObject var weather: Weather
     @Binding var angle: Angle
     @Binding var activeSheet: OverlaySheet?
     @State private var verticalOffset = CGFloat.zero
     var viewModel: FanViewModel
     
     var body: some View {
-        //        VStack() {
         ZStack(alignment: .top) {
             VStack {
                 IdentifiableImage.fanIcon.image
@@ -135,7 +132,6 @@ struct FanImageRender: View {
             .offset(y: 100)
             Color.clear
                 .background(.thinMaterial)
-            //                .ignoresSafeArea()
             VStack {
                 Button(action: {
                     activeSheet = .detail
@@ -147,6 +143,10 @@ struct FanImageRender: View {
                 })
                 RefreshIndicator()
                     .padding(.top, 40)
+                    .tint(.main)
+                if let temp = weather.currentTempStr, sharedHouseData.updateProgress == nil {
+                    Text(temp)
+                }
             }
             .fixedSize(horizontal: false, vertical: true)
             .buttonStyle(BorderlessButtonStyle())
@@ -161,6 +161,7 @@ struct FanImageRender: View {
 
 struct FanNameRender: View {
     @EnvironmentObject var sharedHouseData: SharedHouseData
+    @EnvironmentObject var weather: Weather
     @Binding var activeSheet: OverlaySheet?
     @Binding var name: String
     @Binding var showDamperWarning: Bool
@@ -175,7 +176,7 @@ struct FanNameRender: View {
                     }
                 Spacer()
                 HStack {
-                    if sharedHouseData.showTempOutOfRangeWarning {
+                    if weather.tooCold || weather.tooCold {
                         IdentifiableImage.thermometer.image
                     }
                     if showDamperWarning {
@@ -205,7 +206,6 @@ struct FanImageOffsetKey: PreferenceKey {
 struct FanImageOffsetReader: ViewModifier {
     private var offsetView: some View {
         GeometryReader { geometry in
-            //            Color.clear.preference(key: FanImageOffsetKey.self, value: 100)
             Color.clear.preference(key: FanImageOffsetKey.self, value: geometry.frame(in: .global).midY)
         }
     }
