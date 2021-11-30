@@ -368,7 +368,7 @@ struct FanStatusLoader {
 
 final class Motor: MotorDelegate {
                         
-                        enum Context { case adjusting, standby, fault }
+    enum Context { case adjusting, standby, fault }
     private var ipAddr: String
     private var context: Context = .standby
     

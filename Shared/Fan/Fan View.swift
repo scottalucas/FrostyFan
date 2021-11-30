@@ -30,7 +30,8 @@ struct FanView: View {
     
     var body: some View {
         ZStack {
-            FanImageRender(angle: $angle, activeSheet: $activeSheet, viewModel: viewModel)
+            FanImageRender(activeSheet: $activeSheet, viewModel: viewModel)
+                .ignoresSafeArea()
             ControllerRender(viewModel: viewModel, activeSheet: $activeSheet)
                 .padding(.bottom, 45)
             FanNameRender(activeSheet: $activeSheet, name: $name, showDamperWarning: $viewModel.showDamperWarning, showInterlockWarning: $viewModel.showInterlockWarning)
@@ -106,56 +107,50 @@ struct ControllerRender: View {
     }
 }
 
+struct BaseFanImage: View {
+    var body: some View {
+        IdentifiableImage.fanIcon.image
+            .resizable()
+            .scaleEffect(1.75)
+            .aspectRatio(1.0, contentMode: .fit)
+    }
+}
+
 struct FanImageRender: View {
     @EnvironmentObject var sharedHouseData: SharedHouseData
     @EnvironmentObject var weather: Weather
-    @Binding var angle: Angle
     @Binding var activeSheet: OverlaySheet?
-    @State private var verticalOffset = CGFloat.zero
-    var viewModel: FanViewModel
+    @State private var fanFrame: CGRect = .zero
+    @ObservedObject var viewModel: FanViewModel
     
     var body: some View {
-        ZStack(alignment: .top) {
-            VStack {
-                IdentifiableImage.fanIcon.image
-                    .resizable()
-                    .aspectRatio(1.0, contentMode: .fit)
-                    .rotationEffect(angle)
-                    .scaleEffect(1.5)
+        VStack {
+            ZStack (alignment: .center) {
+                RotatingView(rpm: $viewModel.displayFanRpm, baseView: BaseFanImage(), symmetry: .degrees(60.0), transition: .slow)
+                    .frame(maxHeight: .infinity)
                     .clipped()
-                    .readFanOffset()
-                    .onPreferenceChange(FanImageOffsetKey.self) { midpoint in
-                        verticalOffset = midpoint
+                Color.clear.background(.ultraThinMaterial)
+                VStack {
+                    Button(action: {
+                        activeSheet = .detail
+                    }, label: {
+                        IdentifiableImage.info.image
+                            .resizable()
+                            .frame(width: 35, height: 35)
+                            .aspectRatio(1.0, contentMode: .fill)
+                    })
+                    RefreshIndicator()
+                        .padding(.top, 40)
+                        .tint(.main)
+                    if let temp = weather.currentTempStr, sharedHouseData.updateProgress == nil {
+                        Text(temp)
                     }
-                Spacer()
-            }
-            .offset(y: 100)
-            Color.clear
-                .background(.thinMaterial)
-            VStack {
-                Button(action: {
-                    activeSheet = .detail
-                }, label: {
-                    IdentifiableImage.info.image
-                        .resizable()
-                        .frame(width: 35, height: 35)
-                        .aspectRatio(1.0, contentMode: .fill)
-                })
-                RefreshIndicator()
-                    .padding(.top, 40)
-                    .tint(.main)
-                if let temp = weather.currentTempStr, sharedHouseData.updateProgress == nil {
-                    Text(temp)
                 }
+                .buttonStyle(BorderlessButtonStyle())
             }
-            .fixedSize(horizontal: false, vertical: true)
-            .buttonStyle(BorderlessButtonStyle())
-            .padding(.horizontal)
-            .alignmentGuide(VerticalAlignment.top, computeValue: { dim in
-                -verticalOffset + dim.height/2
-            })
+            Spacer()
         }
-        .ignoresSafeArea()
+//        .clipped()
     }
 }
 
@@ -196,9 +191,9 @@ struct FanNameRender: View {
 }
 
 struct FanImageOffsetKey: PreferenceKey {
-    static var defaultValue: CGFloat = .zero
+    static var defaultValue: CGRect = .zero
     
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
         value = nextValue()
     }
 }
@@ -206,7 +201,9 @@ struct FanImageOffsetKey: PreferenceKey {
 struct FanImageOffsetReader: ViewModifier {
     private var offsetView: some View {
         GeometryReader { geometry in
-            Color.clear.preference(key: FanImageOffsetKey.self, value: geometry.frame(in: .global).midY)
+            let inset = geometry.safeAreaInsets.top
+            Color.clear
+                .preference(key: FanImageOffsetKey.self, value: geometry.frame(in: .global))
         }
     }
     
@@ -240,6 +237,7 @@ struct FanView_Previews: PreviewProvider {
         init () {
             var a = FanCharacteristics()
             a.airspaceFanModel = "4300"
+            a.speed = 1
             chars = a
         }
     }
@@ -252,18 +250,23 @@ struct FanView_Previews: PreviewProvider {
     }
     static var chars = FanMock().chars
     static var previews: some View {
-        var fan = FanCharacteristics()
-        fan.timer = 0
+        let fan = FanMock().chars
         let vm = FanViewModel(chars: fan)
-        //        vm.offDateText = "test"
-        return ControllerRender(viewModel: vm, activeSheet: .mock(nil))
-        //            .environmentObject(env)
-        //        FanView(initialCharacteristics: chars)
-        //            .environment(\.updateProgress, nil)
-        //            .environmentObject(InjectedIndicators.indicators)
-            .preferredColorScheme(.light)
-            .foregroundColor(.main)
-            .tint(.main)
-            .accentColor(.main)
+        return Group {
+            FanView(initialCharacteristics: fan)
+//                .environmentObject(SharedHouseData.shared)
+//                .environmentObject(Weather())
+                .preferredColorScheme(.light)
+                .foregroundColor(.main)
+                .tint(.main)
+                .accentColor(.main)
+            FanImageRender(activeSheet: .constant(nil), viewModel: vm)
+            VStack {
+                BaseFanImage()
+                Spacer()
+            }
+        }
+        .environmentObject(SharedHouseData.shared)
+        .environmentObject(Weather())
     }
 }

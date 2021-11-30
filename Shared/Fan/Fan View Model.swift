@@ -20,6 +20,7 @@ class FanViewModel: ObservableObject {
 //    @Published var fanStatusIcons = Array<Image>()
     @Published var fanRotationDuration: Double = 0.0
     @Published var currentMotorSpeed: Int?
+    @Published var displayFanRpm = Int.zero
     @Published var useAlarmColor = false
     @Published var showTimerIcon = true
     @Published var fatalFault = false
@@ -198,6 +199,17 @@ class FanViewModel: ObservableObject {
             .map { FanViewModel.speedTable[$0] ?? 1 }
             .map { $0 + 1 }
             .assign(to: &$selectorSegments)
+        
+        model.$fanCharacteristics
+            .compactMap { $0?.speed }
+            .prepend ( chars.speed )
+            .combineLatest( $selectorSegments )
+            .map { (speed, levels) -> Int in
+                let s = Double ( speed )
+                let l = Double ( levels )
+                return Int ( s * 50.0 / l )
+            }.assign(to: &$displayFanRpm)
+        
         
         $currentMotorSpeed
             .compactMap { $0 }

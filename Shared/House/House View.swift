@@ -85,13 +85,10 @@ struct FanViewPageContainer: View {
 struct HouseViewPreviews: PreviewProvider {
 
     static var previews: some View {
-//        HouseView()
         let vm = HouseViewModel()
         let env = SharedHouseData.shared
 
         return HouseView(viewModel: HouseViewModel(dataSource: HouseViewDataMock()))
-        
-//        return HouseView(viewModel: vm)
             .preferredColorScheme(.dark)
             .environmentObject(SharedHouseData.shared)
             .environmentObject(Weather())

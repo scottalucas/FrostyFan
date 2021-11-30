@@ -20,7 +20,7 @@ class House {
         return AsyncThrowingStream<FanCharacteristics, Error> { continuation in
             Task {
                 var hosts = NetworkAddress.hosts
-                hosts.append("192.168.1.67:8080")
+                hosts.append("192.168.1.179:8080")
                 let totalHosts = Double(hosts.count)
                 guard totalHosts > 0 else { continuation.finish(throwing: ConnectionError.serverError("No hosts")) ; return }
                 var checkedHosts = Double.zero

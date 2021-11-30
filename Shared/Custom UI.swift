@@ -338,7 +338,6 @@ extension RangeSlider {
     }
 }
 
-
 struct Utilities_Previews: PreviewProvider {
     struct GlobalIndicatorHolder {
         static var sharedHouseData: SharedHouseData {
