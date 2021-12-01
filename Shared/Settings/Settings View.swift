@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct SettingsView: View {
-    //    @EnvironmentObject var weather: Weather
     @EnvironmentObject var location: Location
     @Environment(\.scenePhase) var scenePhase
     @AppStorage(StorageKey.temperatureAlarmEnabled.key) var temperatureAlertsEnabled: Bool = false
@@ -16,7 +15,12 @@ struct SettingsView: View {
     @AppStorage(StorageKey.locationAvailable.key) var locationPermission: Location.LocationPermission = .unknown
     @AppStorage(StorageKey.locLat.key) var latStr: String?
     @AppStorage(StorageKey.locLon.key) var lonStr: String?
-    @State var test = true
+    @State private var initTempAlertsEnabled = false
+    @State private var initInterlockAlertsEnabled = false
+    @State private var initLocationPermission: Location.LocationPermission = .unknown
+    @State private var initLatStr: String?
+    @State private var initLonStr: String?
+    @Binding var activeSheet: OverlaySheet?
     
     private var coordinatesAvailable: Bool {
         latStr != nil && lonStr != nil
@@ -27,7 +31,6 @@ struct SettingsView: View {
             Color.main
                 .ignoresSafeArea(.all, edges: .top)
             VStack {
-                SettingsBackgound()
                 List {
                     Section(header: Text("Location").foregroundColor(.background)) {
                         switch (locationPermission, coordinatesAvailable) {
@@ -106,26 +109,45 @@ struct SettingsView: View {
                     //                                                .background(Color.main)
                 }
                 .foregroundColor(.main)
-                //                        HStack {
-                //                            VStack (alignment: .leading) {
-                //                        if let tempStr = weather.currentTempStr {
-                //                            Text("Outside temperature: \(tempStr)")
-                //                                .foregroundColor(.white)
-                //                                .italic()
-                //                        } //FIX
-                //                        if (locationPermission == .appAllowed || locationPermission == .unknown), coordinatesAvailable
-                //                        {
-                //                            Text("Location: \(latStr!), \(lonStr!)")
-                //                                .foregroundColor(.white)
-                //                                .italic()
-                //                        }
-                //                    }
-                //                                .font(.body)
-                //                                Spacer()
             }
             .listStyle(GroupedListStyle())
             Spacer()
+                .toolbar {
+                    ToolbarItem(placement: .principal) {
+                        VStack (alignment: .center, spacing: 0) {
+                            HStack (alignment: .firstTextBaseline) {
+                                Button("Cancel") {
+                                    temperatureAlertsEnabled = initTempAlertsEnabled
+                                    interlockAlertsEnabled = initInterlockAlertsEnabled
+                                    locationPermission = initLocationPermission
+                                    latStr = initLatStr
+                                    lonStr = initLonStr
+                                    activeSheet = nil
+                                }
+                                Spacer()
+                                Text("Settings").font(.largeTitle)
+                                Spacer()
+                                Button("Commit") {
+                                    activeSheet = nil
+                                }
+                            }
+                            Divider()
+                                .ignoresSafeArea(.all, edges: [.leading, .trailing])
+                                .background(Color.background)
+                            Spacer()
+                        }
+                        .foregroundColor(.background)
+                    }
+                }
         }
+        .navigationBarBackButtonHidden(true)
+        .onAppear(perform: {
+            initTempAlertsEnabled = temperatureAlertsEnabled
+            initInterlockAlertsEnabled = interlockAlertsEnabled
+            initLocationPermission = locationPermission
+            initLatStr = latStr
+            initLonStr = lonStr
+        })
     }
 }
 
@@ -223,8 +245,10 @@ extension View {
 struct Settings_View_Previews: PreviewProvider {
     //    static var house = House.shared
     static var previews: some View {
-        SettingsView()
-//            .preferredColorScheme(.dark)
+        NavigationView {
+            SettingsView(activeSheet: .constant(nil))
+        }
+        //            .preferredColorScheme(.dark)
         //            .environmentObject(Weather())
         //            .environmentObject(Location())
     }

@@ -205,34 +205,33 @@ class FanViewModel: ObservableObject {
             .prepend ( chars.speed )
             .combineLatest( $selectorSegments )
             .map { (speed, levels) -> Int in
-                let s = Double ( speed )
-                let l = Double ( levels )
-                return Int ( s * 50.0 / l )
-            }.assign(to: &$displayFanRpm)
-        
-        
-        $currentMotorSpeed
-            .compactMap { $0 }
-            .sink(receiveValue: { [weak self] spd in
-                guard let self = self else { return }
-                guard spd != 0 else {
-                    self.displayMotor.send(Just(0.0).eraseToAnyPublisher())
-                    return
-                }
-                let scaleFactor = 3.5
-                let s = Double (spd)
-                self.displayMotor.send (
-                    Timer.publish(every: scaleFactor * 1/s, on: .main, in: .common)
-                        .autoconnect()
-                        .map { _ in scaleFactor * 1/s }
-                        .eraseToAnyPublisher())
-            })
-            .store(in: &bag)
-
-        displayMotor
-            .switchToLatest()
-            .receive(on: DispatchQueue.main)
-            .assign(to: &$fanRotationDuration)
+                return Int ( Double ( speed ) * 50.0 / Double ( levels ) )
+            }
+            .assign(to: &$displayFanRpm)
+//
+//
+//        $currentMotorSpeed
+//            .compactMap { $0 }
+//            .sink(receiveValue: { [weak self] spd in
+//                guard let self = self else { return }
+//                guard spd != 0 else {
+//                    self.displayMotor.send(Just(0.0).eraseToAnyPublisher())
+//                    return
+//                }
+//                let scaleFactor = 3.5
+//                let s = Double (spd)
+//                self.displayMotor.send (
+//                    Timer.publish(every: scaleFactor * 1/s, on: .main, in: .common)
+//                        .autoconnect()
+//                        .map { _ in scaleFactor * 1/s }
+//                        .eraseToAnyPublisher())
+//            })
+//            .store(in: &bag)
+//
+//        displayMotor
+//            .switchToLatest()
+//            .receive(on: DispatchQueue.main)
+//            .assign(to: &$fanRotationDuration)
         }
     }
 

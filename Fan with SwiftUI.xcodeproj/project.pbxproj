@@ -39,7 +39,6 @@
 		936F79D8259FADD500AACA53 /* Timer Sheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 936F79D7259FADD500AACA53 /* Timer Sheet.swift */; };
 		936F79E2259FADFC00AACA53 /* Detail Sheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 936F79E1259FADFC00AACA53 /* Detail Sheet.swift */; };
 		936F79E8259FAE0F00AACA53 /* Name Sheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 936F79E7259FAE0F00AACA53 /* Name Sheet.swift */; };
-		936F79EE259FB59900AACA53 /* Sheet Protocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 936F79ED259FB59900AACA53 /* Sheet Protocol.swift */; };
 		937F7C5025952138009E4754 /* Custom Operators.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937F7C4F25952138009E4754 /* Custom Operators.swift */; };
 		937F7C5125952138009E4754 /* Custom Operators.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937F7C4F25952138009E4754 /* Custom Operators.swift */; };
 		937F7C5725952358009E4754 /* Custom Errors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937F7C5625952358009E4754 /* Custom Errors.swift */; };
@@ -112,7 +111,6 @@
 		936F79D7259FADD500AACA53 /* Timer Sheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Timer Sheet.swift"; sourceTree = "<group>"; };
 		936F79E1259FADFC00AACA53 /* Detail Sheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Detail Sheet.swift"; sourceTree = "<group>"; };
 		936F79E7259FAE0F00AACA53 /* Name Sheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Name Sheet.swift"; sourceTree = "<group>"; };
-		936F79ED259FB59900AACA53 /* Sheet Protocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sheet Protocol.swift"; sourceTree = "<group>"; };
 		937F7C4F25952138009E4754 /* Custom Operators.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Custom Operators.swift"; sourceTree = "<group>"; };
 		937F7C5625952358009E4754 /* Custom Errors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Custom Errors.swift"; sourceTree = "<group>"; };
 		937F7C612595239B009E4754 /* Custom UI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Custom UI.swift"; sourceTree = "<group>"; };
@@ -290,7 +288,6 @@
 				936F79E1259FADFC00AACA53 /* Detail Sheet.swift */,
 				936F79E7259FAE0F00AACA53 /* Name Sheet.swift */,
 				93CF0A082731E43E00307298 /* Fatal Fault Sheet.swift */,
-				936F79ED259FB59900AACA53 /* Sheet Protocol.swift */,
 			);
 			path = Sheets;
 			sourceTree = "<group>";
@@ -461,7 +458,6 @@
 				934C8AC925AB926F0037906C /* Alarm Model.swift in Sources */,
 				930CFFC5258188F400E8E979 /* Fan View.swift in Sources */,
 				93D1EEB1273EF88600D7DF77 /* Pulldown Refresh.swift in Sources */,
-				936F79EE259FB59900AACA53 /* Sheet Protocol.swift in Sources */,
 				930CFF942581884B00E8E979 /* House View Model.swift in Sources */,
 				936F79E2259FADFC00AACA53 /* Detail Sheet.swift in Sources */,
 				93CF0A092731E44100307298 /* Fatal Fault Sheet.swift in Sources */,

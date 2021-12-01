@@ -9,6 +9,7 @@ import SwiftUI
 
 struct DetailSheet: View {
     var data = [DetailSheetEntry]()
+    @Binding var activeSheet: OverlaySheet?
     
     let columns = [
         GridItem(.flexible()),
@@ -17,47 +18,46 @@ struct DetailSheet: View {
     
     var body: some View {
         ZStack {
-            DetailSheetBackground()
             VStack {
                 Spacer()
                 LazyVGrid(columns: columns, alignment: .leading, spacing: 20, pinnedViews: []) {
                     ForEach(data, id: \.self) { item in
-                            item
+                        item
                             .lineLimit(1)
                             .truncationMode(.head)
-                                .foregroundColor(.background)
-                        }
+                            .foregroundColor(.background)
                     }
-                    .padding(.horizontal)
+                }
+                .padding(.horizontal)
                 Spacer()
             }
+            .background (Color.main)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    VStack (alignment: .center, spacing: 0) {
+                        HStack (alignment: .firstTextBaseline) {
+                            Button("Back") {
+                                activeSheet = nil
+                            }
+                            Spacer()
+                            Text("Fan Details").font(.largeTitle)
+                        }
+                        Divider()
+                            .background(Color.background)
+                            .ignoresSafeArea(.all, edges: [.leading, .trailing])
+                        Spacer()
+                    }
+                    .foregroundColor(.background)
+                }
+            }
         }
-     }
-    init (chars: FanCharacteristics) {
+        .navigationBarBackButtonHidden(true)
+    }
+    init (chars: FanCharacteristics, activeSheet: Binding<OverlaySheet?>) {
+        _activeSheet = activeSheet
         data = chars.labelValueDictionary
             .sorted(by: { $0.0 < $1.0 })
             .map { (key, value) in DetailSheetEntry(label: key, value: value) }
-    }
-}
-
-struct DetailSheetBackground: View {
-    var body: some View {
-        ZStack {
-            Color.main
-                .ignoresSafeArea()
-            VStack (alignment: .center, spacing: 0) {
-                HStack (alignment: .firstTextBaseline) {
-                    Text("Fan Details").font(.largeTitle)
-                        .foregroundColor(Color.background)
-                    Spacer()
-                }
-                Divider()
-                    .frame(width: nil, height: 1, alignment: .center)
-                    .background(Color.background)
-                Spacer()
-            }
-            .padding()
-        }
     }
 }
 
@@ -89,8 +89,9 @@ struct DetailSheet_Previews: PreviewProvider {
     return c
     }
     static var previews: some View {
-        
-        DetailSheet(chars: chars)
+        NavigationView {
+            DetailSheet(chars: chars, activeSheet: .constant(.detail))
+        }
 
 //        DetailSheetEntry(label: "Speed", value: "10")
 //            .padding()

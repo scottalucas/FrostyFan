@@ -8,24 +8,26 @@
 import SwiftUI
 //(initialValue: String, key: String)
 struct TimerSheet: View {
-    @Binding var wheelPosition: Int
+    @State var wheelPosition = Int.zero
+    @Binding var activeSheet: OverlaySheet?
     var timeOnTimer: Int
     var offText: String = ""
-//    var fanViewModel: FanViewModel
+    var fanViewModel: FanViewModel
     var maxKeypresses: Int {
         13 - (Int(timeOnTimer/60) + (timeOnTimer%60 != 0 ? 1 : 0))
     }
-//    var offTimeMinutes: Int {
-//        timeOnTimer
-//    }
-//    var offDateText: String {
-////        fanViewModel.offDateTxt
-//        return "test"
-//    }
+    //    var offTimeMinutes: Int {
+    //        timeOnTimer
+    //    }
+    //    var offDateText: String {
+    ////        fanViewModel.offDateTxt
+    //        return "test"
+    //    }
     
     var body: some View {
         ZStack {
-            TimerSheetBackground(timeText: offText)
+            Color.main.ignoresSafeArea()
+            //                TimerSheetBackground(timeText: offText)
             VStack {
                 if (maxKeypresses == 0) {
                     Color.background
@@ -39,16 +41,54 @@ struct TimerSheet: View {
                         .frame(width: nil, height: 60)
                 } else {
                     TimerSheetSpinner(hoursToAdd: $wheelPosition, maxKeypresses: maxKeypresses)
-                    .background(Color.background)
+                        .background(Color.background)
+                        .pickerStyle(.wheel)
                 }
             }
+            .toolbar {
+//                ToolbarItem(placement: .cancellationAction) {
+//                    Button("Cancel", action: {
+//                        activeSheet = nil
+//                    })
+//                }
+//                ToolbarItem(placement: .confirmationAction) {
+//                    Button("Confirm", action: {
+//                        fanViewModel.setTimer(addHours: wheelPosition)
+//                        activeSheet = nil
+//                    })
+//                }
+                ToolbarItem(placement: .principal) {
+                    VStack (alignment: .center, spacing: 0) {
+                        HStack(alignment: .firstTextBaseline) {
+                            Button("Cancel", action: {
+                                activeSheet = nil
+                            })
+                            Spacer()
+                            Text("Timer").font(.title)
+                            Spacer()
+                            Button("Confirm", action: {
+                                fanViewModel.setTimer(addHours: wheelPosition)
+                                activeSheet = nil
+                            })
+                        }
+                        Divider()
+                            .background(Color.background)
+                            .ignoresSafeArea(.all, edges: [.leading, .trailing])
+                        Spacer()
+                    }
+                }
+            }
+            .navigationBarBackButtonHidden(true)
+            .background(Color.main)
             .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
             .padding()
             .shadow(radius: /*@START_MENU_TOKEN@*/10/*@END_MENU_TOKEN@*/)
+            
+            .foregroundColor(.background)
+            .onAppear(perform: {
+                wheelPosition = .zero
+            })
         }
-        .onAppear(perform: {
-            wheelPosition = .zero
-        })
     }
 }
 
@@ -61,14 +101,14 @@ struct TimerPickerDataSource {
     var elements: [Element] {
         pressRange.map { idx in
             switch idx {
-            case 0:
-                return Element(id: idx, text: "Don't change")
-            case let i where i == pressRange.max():
-                return Element(id: idx, text: "Set to 12 hours")
-            case 1:
-                return Element(id: idx, text: "Add an hour")
-            default:
-                return Element(id: idx, text: "Add \(idx) hours")
+                case 0:
+                    return Element(id: idx, text: "Don't change")
+                case let i where i == pressRange.max():
+                    return Element(id: idx, text: "Set to 12 hours")
+                case 1:
+                    return Element(id: idx, text: "Add an hour")
+                default:
+                    return Element(id: idx, text: "Add \(idx) hours")
             }
         }
     }
@@ -121,9 +161,10 @@ struct TimerSheetSpinner: View {
 
 struct Timer_View_Previews: PreviewProvider {
     static var previews: some View {
-        VStack {
-//            TimerSheet(fanViewModel: FanViewModel())
-            TimerSheetBackground(timeText: "10:03 PM")
+        //        VStack {
+        //            TimerSheet(fanViewModel: FanViewModel())
+        NavigationView {
+            TimerSheet(activeSheet: .constant(nil), timeOnTimer: 0, fanViewModel: FanViewModel())
         }
     }
 }

@@ -12,19 +12,22 @@ struct RefreshIndicator: View {
     @EnvironmentObject private var sharedHouseData: SharedHouseData
     var body: some View {
         if let update = sharedHouseData.updateProgress {
-            GeometryReader { geo in
-                HStack {
-                    Spacer()
-                    VStack {
-                        ProgressView(value: update)
-                        Text("Scanning...")
+            Color.clear
+                .overlay (
+                    GeometryReader { geo in
+                        HStack {
+                            Spacer()
+                            VStack {
+                                ProgressView(value: update)
+                                Text("Scanning...")
+                            }
+                            .frame(
+                                maxWidth: min(200, geo.size.width * 0.8),
+                                maxHeight: geo.size.height)
+                            Spacer()
+                        }
                     }
-                    .frame(
-                        maxWidth: min(200, geo.size.width * 0.8),
-                        maxHeight: geo.size.height)
-                    Spacer()
-                }
-            }
+                )
         }
     }
 }

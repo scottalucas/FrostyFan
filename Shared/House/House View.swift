@@ -17,24 +17,10 @@ struct HouseView: View {
     @State private var fanLabel: String = "Fan"
     
     var body: some View {
-        TabView (selection: $currentTab) {
             FanViewPageContainer (viewModel: viewModel)
-                .ignoresSafeArea(.all, edges: [.top, .bottom])
-                .tabItem {
-                    IdentifiableImage.fanIcon.image
-                    Text(sharedHouseData.updateProgress == nil ? "Fan" : "Scanning")
-                }
-                .tag(1)
-            SettingsView()
-                .tabItem {
-                    IdentifiableImage.bell.image
-                    Text("Alarms")
-                }
-                .tag(2)
-        }
-        .foregroundColor(.main)
-        .tint(.background)
-        .accentColor(.main)
+                .foregroundColor(.main)
+                .tint(.background)
+                .accentColor(.main)
         .onAppear {
             Task {
                try? await viewModel.scan()
@@ -58,7 +44,7 @@ struct FanViewPageContainer: View {
     @State private var revealControlOffset = CGFloat.zero
 
     var body: some View {
-        Group {
+        VStack {
             switch viewModel.fanViews.count {
                 case 0:
                     NoFanView()
@@ -75,7 +61,6 @@ struct FanViewPageContainer: View {
                     .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .automatic))
             }
         }
-        .safeAreaInset(edge: .bottom) { Color.clear.frame(height: 70) }
         .pulldownRefresh {
             try? await viewModel.scan()
         }
@@ -138,23 +123,23 @@ class HouseViewDataMock: House {
                 continuation.yield(fanA)
                 checkedHosts += 1
                 percentHostsChecked = checkedHosts / totalHosts
-                var fanB = FanCharacteristics()
-                fanB.airspaceFanModel = "2.5e"
-                fanB.interlock1 = true
-                fanB.damper = .operating
-                fanB.macAddr = UUID.init().uuidString
-                await Task.sleep(1_500_000_000)
-                continuation.yield(fanB)
-                checkedHosts += 1
-                percentHostsChecked = checkedHosts / totalHosts
-                await Task.sleep(500_000_000)
-                var fanC = FanCharacteristics()
-                fanC.airspaceFanModel = "4300"
-                fanC.macAddr = UUID.init().uuidString
-                continuation.yield(fanC)
-                checkedHosts += 1
-                percentHostsChecked = checkedHosts / totalHosts
-                await Task.sleep(1_000_000_000)
+//                var fanB = FanCharacteristics()
+//                fanB.airspaceFanModel = "2.5e"
+//                fanB.interlock1 = true
+//                fanB.damper = .operating
+//                fanB.macAddr = UUID.init().uuidString
+//                await Task.sleep(1_500_000_000)
+//                continuation.yield(fanB)
+//                checkedHosts += 1
+//                percentHostsChecked = checkedHosts / totalHosts
+//                await Task.sleep(500_000_000)
+//                var fanC = FanCharacteristics()
+//                fanC.airspaceFanModel = "4300"
+//                fanC.macAddr = UUID.init().uuidString
+//                continuation.yield(fanC)
+//                checkedHosts += 1
+//                percentHostsChecked = checkedHosts / totalHosts
+//                await Task.sleep(1_000_000_000)
                 indicators.updateProgress = nil
                 continuation.finish(throwing: nil)
                 finishTimer?.invalidate()

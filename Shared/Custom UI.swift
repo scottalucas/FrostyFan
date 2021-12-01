@@ -62,41 +62,41 @@ extension Color {
     static var controlsBackground = Color(.controlsBackground)
 }
 
-extension View {
-    func overlaySheet(dataSource source: FanViewModel, activeSheet: Binding<OverlaySheet?>) -> some View {
-        modifier(OverlaySheetRender(dataSource: source, activeSheet: activeSheet))
-    }
-}
+//extension View {
+//    func overlaySheet(dataSource source: FanViewModel, activeSheet: Binding<OverlaySheet?>) -> some View {
+//        modifier(OverlaySheetRender(dataSource: source, activeSheet: activeSheet))
+//    }
+//}
 
-struct OverlaySheetRender: ViewModifier {
-    @Binding var activeSheet: OverlaySheet?
-    @ObservedObject var data: FanViewModel
-    
-    func body (content: Content) -> some View {
-        content
-            .sheet(item: $activeSheet, onDismiss: {
-                defer { Task { await data.setTimerWheel(to: 0) } }
-                if data.timerWheelPosition > 0 {
-                    data.setTimer(addHours: data.timerWheelPosition)
-                }
-            }) {
-                switch $0 {
-                    case .detail:
-                        DetailSheet(chars: data.chars)
-                    case .fanName:
-                        NameSheet(storageKey: StorageKey.fanName(data.chars.macAddr))
-                    case .timer:
-                        TimerSheet(wheelPosition: $data.timerWheelPosition, timeOnTimer: data.chars.timer)
-                    case .fatalFault:
-                        FatalFaultSheet()
-                }
-            }
-    }
-    init (dataSource: FanViewModel, activeSheet: Binding<OverlaySheet?>) {
-        self._activeSheet = activeSheet
-        self.data = dataSource
-    }
-}
+//struct OverlaySheetRender: ViewModifier {
+//    @Binding var activeSheet: OverlaySheet?
+//    @ObservedObject var data: FanViewModel
+//
+//    func body (content: Content) -> some View {
+//        content
+//            .sheet(item: $activeSheet, onDismiss: {
+//                defer { Task { await data.setTimerWheel(to: 0) } }
+//                if data.timerWheelPosition > 0 {
+//                    data.setTimer(addHours: data.timerWheelPosition)
+//                }
+//            }) {
+//                switch $0 {
+//                    case .detail:
+//                        DetailSheet(chars: data.chars, activeSheet: $activeSheet)
+//                    case .fanName:
+//                        NameSheet(sheet: .constant(.fanName), storageKey: StorageKey.fanName(data.chars.macAddr))
+//                    case .timer:
+//                        TimerSheet(wheelPosition: $data.timerWheelPosition, activeSheet: $activeSheet, timeOnTimer: data.chars.timer)
+//                    case .fatalFault:
+//                        FatalFaultSheet()
+//                }
+//            }
+//    }
+//    init (dataSource: FanViewModel, activeSheet: Binding<OverlaySheet?>) {
+//        self._activeSheet = activeSheet
+//        self.data = dataSource
+//    }
+//}
 
 struct WidthPreferenceKey: PreferenceKey {
     static var defaultValue: CGFloat = .zero

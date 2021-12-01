@@ -9,31 +9,60 @@ import SwiftUI
 
 struct NameSheet: View {
     @AppStorage var name: String
+    @Binding var activeSheet: OverlaySheet?
+    @State private var newName = "new name"
     var body: some View {
         ZStack {
-            NameSheetBackground(name: name)
+            Color.main.ignoresSafeArea()
             VStack {
                 Spacer()
-                VStack (alignment: .leading, spacing: 8.0) {
-                    HStack {
-                        Spacer ()
-                    }
-                    TextField(name, text: $name)
-                        .font(/*@START_MENU_TOKEN@*/.title/*@END_MENU_TOKEN@*/)
-                        .padding(.horizontal, 20)
-                        .padding(/*@START_MENU_TOKEN@*/.vertical/*@END_MENU_TOKEN@*/, 5)
-                        .background(Color.background)
-                        .foregroundColor(.main)
-                        .clipShape(RoundedRectangle(cornerRadius: /*@START_MENU_TOKEN@*/25.0/*@END_MENU_TOKEN@*/))
-                        .shadow(radius: 10)
-                        .padding(.horizontal, 20)
-                }
+                TextField("", text: $newName)
+                    .font(/*@START_MENU_TOKEN@*/.title/*@END_MENU_TOKEN@*/)
+                    .padding(.horizontal, 20)
+                    .padding(/*@START_MENU_TOKEN@*/.vertical/*@END_MENU_TOKEN@*/, 5)
+                    .background(Color.background)
+                    .foregroundColor(.main)
+                    .clipShape(Capsule())
+                    .shadow(radius: 10)
+//                    .padding(.horizontal, 20)
+                Text("Current name is \" \(name)\"").font(.italic(.body)())
+                    .padding(.top, 4)
+                    .foregroundColor(.background)
                 Spacer()
             }
+            .padding()
         }
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                VStack(alignment: .center, spacing: 0) {
+                    HStack (alignment: .firstTextBaseline) {
+                        Button("Cancel") {
+                            activeSheet = nil
+                        }
+                        Spacer()
+                        Text("Update Name")
+                            .font(.largeTitle)
+                            .foregroundColor(.background)
+                        Spacer()
+                        Button("Confirm") {
+                            name = newName
+                            activeSheet = nil
+                        }
+                    }
+                    Divider()
+                        .ignoresSafeArea(.all, edges: [.leading, .trailing])
+                        .background(Color.background)
+                    Spacer()
+                }
+                .foregroundColor(.background)
+            }
+        }
+            .navigationBarBackButtonHidden(true)
+        
      }
     
-    init (storageKey: StorageKey) {
+    init (sheet: Binding<OverlaySheet?>, storageKey: StorageKey) {
+        _activeSheet = sheet
         _name = AppStorage(wrappedValue: "Name", storageKey.key)
     }
 }
@@ -46,9 +75,9 @@ struct NameSheetBackground: View {
                 .ignoresSafeArea()
             VStack (alignment: .center, spacing: 0) {
                 HStack (alignment: .firstTextBaseline) {
-                    Text("Fan Name").font(.largeTitle)
+                    Text(name).font(.largeTitle)
                     Spacer()
-                    Text(name)
+                    Text("Fan Name").font(.largeTitle)
                 }
                 .foregroundColor(Color.background)
                 Divider()
@@ -71,8 +100,10 @@ struct NameSheet_Previews: PreviewProvider {
     }
     
     static var previews: some View {
-        
-        NameSheet(storageKey: .fanName("String"))
+        NavigationView {
+            NameSheet(sheet: .constant(.fanName), storageKey: .fanName("String"))
+            
+        }
 
 //        DetailSheetEntry(label: "Speed", value: "10")
 //            .padding()
