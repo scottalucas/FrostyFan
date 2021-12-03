@@ -248,8 +248,8 @@ struct Settings_View_Previews: PreviewProvider {
         NavigationView {
             SettingsView(activeSheet: .constant(nil))
         }
-        //            .preferredColorScheme(.dark)
-        //            .environmentObject(Weather())
-        //            .environmentObject(Location())
+                    .preferredColorScheme(.dark)
+                    .environmentObject(Weather())
+                    .environmentObject(Location())
     }
 }

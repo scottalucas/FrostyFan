@@ -174,7 +174,6 @@ class FanViewModel: ObservableObject {
         model.$fanCharacteristics
             .prepend(chars)
             .compactMap { $0?.speed }
-            .print()
             .assign(to: &$currentMotorSpeed)
 
         model.$fanCharacteristics

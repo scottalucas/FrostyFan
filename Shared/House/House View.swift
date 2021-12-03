@@ -96,25 +96,25 @@ class HouseViewDataMock: House {
                 let totalHosts = 10.0
                 var checkedHosts = Double.zero
 
-                SharedHouseData.shared.updateProgress = 0.0
-
-                timeToFinish = Date() + 5.0
-
-                DispatchQueue.main.async {
-                    self.finishTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self, ttf = self.timeToFinish, dur = 5.0] _ in
-                        guard let self = self else { return }
-                        guard let ttf = ttf else {
-                            self.indicators.updateProgress = nil
-                            return
-                        }
-                        let percentTimeLeft = (ttf.timeIntervalSinceReferenceDate - Date().timeIntervalSinceReferenceDate) / dur
-                        guard (0...1) ~= percentTimeLeft else {
-                            self.indicators.updateProgress = nil
-                            return
-                        }
-                        self.indicators.updateProgress = max(self.percentHostsChecked ?? 0.0, 1 - percentTimeLeft)
-                    }
-                }
+//                SharedHouseData.shared.scanning = true
+//
+//                timeToFinish = Date() + 5.0
+//
+//                DispatchQueue.main.async {
+//                    self.finishTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self, ttf = self.timeToFinish, dur = 5.0] _ in
+//                        guard let self = self else { return }
+//                        guard let ttf = ttf else {
+//                            self.indicators.updateProgress = nil
+//                            return
+//                        }
+//                        let percentTimeLeft = (ttf.timeIntervalSinceReferenceDate - Date().timeIntervalSinceReferenceDate) / dur
+//                        guard (0...1) ~= percentTimeLeft else {
+//                            self.indicators.updateProgress = nil
+//                            return
+//                        }
+//                        self.indicators.updateProgress = max(self.percentHostsChecked ?? 0.0, 1 - percentTimeLeft)
+//                    }
+//                }
 
                 await Task.sleep(1_000_000_000)
                 var fanA = FanCharacteristics()
@@ -140,15 +140,15 @@ class HouseViewDataMock: House {
 //                checkedHosts += 1
 //                percentHostsChecked = checkedHosts / totalHosts
 //                await Task.sleep(1_000_000_000)
-                indicators.updateProgress = nil
+//                indicators.updateProgress = nil
                 continuation.finish(throwing: nil)
-                finishTimer?.invalidate()
-                finishTimer = nil
+//                finishTimer?.invalidate()
+//                finishTimer = nil
             }
 
         }
     }
     override init () {
-        SharedHouseData.shared.updateProgress = nil
+//        SharedHouseData.shared.updateProgress = nil
     }
 }

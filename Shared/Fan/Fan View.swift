@@ -179,8 +179,9 @@ struct FanImageRender: View {
                     RefreshIndicator()
                         .padding(.top, 40)
                         .tint(.main)
-                    if let temp = weather.currentTempStr, sharedHouseData.updateProgress == nil {
+                    if let temp = weather.currentTempStr, !sharedHouseData.scanning {
                         Text(temp)
+                            .padding(.top, 20)
                     }
                     Spacer()
                 }
@@ -287,7 +288,7 @@ struct FanView_Previews: PreviewProvider {
     struct InjectedIndicators {
         static var indicators: SharedHouseData {
             let retVal = SharedHouseData.shared
-            retVal.updateProgress = 0.5
+            retVal.scanning = true
             return retVal
         }
     }

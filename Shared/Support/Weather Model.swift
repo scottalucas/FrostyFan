@@ -36,7 +36,7 @@ class Weather: ObservableObject {
             tempFormatter.positiveFormat = "#0\u{00B0}"
             tempFormatter.negativeFormat = "-#0\u{00B0}"
             tempFormatter.roundingMode = .halfDown
-            currentTempStr = tempFormatter.string(from: NSNumber(value: t))
+            currentTempStr = Measurement(value: t, unit: UnitTemperature.fahrenheit).formatted()
             tooCold = t < lowTempLimit
             tooHot = t > highTempLimit
         }

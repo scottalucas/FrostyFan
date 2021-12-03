@@ -10,16 +10,20 @@ import SwiftUI
 
 struct RefreshIndicator: View {
     @EnvironmentObject private var sharedHouseData: SharedHouseData
+    @State private var start = Date()
     var body: some View {
-        if let update = sharedHouseData.updateProgress {
+        if sharedHouseData.scanning {
             Color.clear
                 .overlay (
                     GeometryReader { geo in
                         HStack {
                             Spacer()
                             VStack {
-                                ProgressView(value: update)
-                                Text("Scanning...")
+                                TimelineView( .periodic( from: .now, by: 0.1 ) ) { context in
+                                    ProgressView(value: (context.date.timeIntervalSinceReferenceDate - start.timeIntervalSinceReferenceDate) / sharedHouseData.scanDuration)
+                                }
+                                    Text("Scanning...")
+                                    
                             }
                             .frame(
                                 maxWidth: min(200, geo.size.width * 0.8),
@@ -28,7 +32,12 @@ struct RefreshIndicator: View {
                         }
                     }
                 )
+                .onChange(of: sharedHouseData.scanning) { scanning in
+                    print("Scanning: \(scanning)")
+                    if scanning { start = Date() }
+                }
         }
+        
     }
 }
 

@@ -342,7 +342,7 @@ struct Utilities_Previews: PreviewProvider {
     struct GlobalIndicatorHolder {
         static var sharedHouseData: SharedHouseData {
             let retVal = SharedHouseData.shared
-            retVal.updateProgress = 0.5
+            retVal.scanning = true
             return retVal
         }
     }

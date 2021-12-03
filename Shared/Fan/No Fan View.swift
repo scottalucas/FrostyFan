@@ -17,12 +17,12 @@ struct NoFanView: View {
         Rectangle ()
             .foregroundColor(Color(.clear))
             .overlay (alignment: .center) {
-                    if sharedHouseData.updateProgress != nil {
-                            RefreshIndicator()
-                            .tint(.main)
-                    } else {
-                        Text("No fans found")
-                    }
+                if sharedHouseData.scanning {
+                    RefreshIndicator()
+                        .tint(.main)
+                } else {
+                    Text("No fans found")
+                }
             }
             .padding([.top, .bottom], 50)
     }
@@ -32,7 +32,7 @@ struct No_Fan_View_Previews: PreviewProvider {
     struct InjectedIndicators {
         static var indicators: SharedHouseData {
             let retVal = SharedHouseData.shared
-            retVal.updateProgress = 0.2
+            retVal.scanning = true
             return retVal
         }
     }
