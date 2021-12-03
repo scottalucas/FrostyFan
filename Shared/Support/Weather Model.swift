@@ -17,26 +17,27 @@ class Weather: ObservableObject {
 //    @AppStorage var houseConfiguredAlarms: Alarm.House
     @AppStorage(StorageKey.temperatureAlarmEnabled.key) var tempAlarmSet = false
     @AppStorage(StorageKey.locationAvailable.key) var locationPermission: Location.LocationPermission = .unknown
-    @AppStorage(StorageKey.locLat.key) var latitude: Double?
-    @AppStorage(StorageKey.locLon.key) var longitude: Double?
-    @AppStorage(StorageKey.lastForecastUpdate.key) var lastUpdate: Double?
+//    @AppStorage(StorageKey.locLat.key) var latitude: Double?
+//    @AppStorage(StorageKey.locLon.key) var longitude: Double?
+    @AppStorage(StorageKey.coordinate.key) var coordinateData: Data? //decodes to Coordinate
+    @AppStorage(StorageKey.lastForecastUpdate.key) var lastUpdateData: Data? //decodes to Date
     @AppStorage(StorageKey.forecast.key) var forecastData: Data?
-    @Published private (set) var currentTempStr: String?
+    @Published private (set) var currentTemp: Measurement<UnitTemperature>?
     @Published private (set) var tooHot: Bool = false
     @Published private (set) var tooCold: Bool = false
-    private var currentTemp: Double? {
+    private var currentTempValue: Double? {
         willSet {
             guard let t = newValue else {
-                currentTempStr = nil
+                currentTemp = nil
                 tooHot = false
                 tooCold = false
                 return
             }
-            let tempFormatter = NumberFormatter()
-            tempFormatter.positiveFormat = "#0\u{00B0}"
-            tempFormatter.negativeFormat = "-#0\u{00B0}"
-            tempFormatter.roundingMode = .halfDown
-            currentTempStr = Measurement(value: t, unit: UnitTemperature.fahrenheit).formatted()
+//            let tempFormatter = NumberFormatter()
+//            tempFormatter.positiveFormat = "#0\u{00B0}"
+//            tempFormatter.negativeFormat = "-#0\u{00B0}"
+//            tempFormatter.roundingMode = .halfDown
+            currentTemp = Measurement(value: t, unit: UnitTemperature.fahrenheit)
             tooCold = t < lowTempLimit
             tooHot = t > highTempLimit
         }
@@ -47,7 +48,7 @@ class Weather: ObservableObject {
     
     fileprivate var queryElements:[URLQueryItem]? {
         get {
-            guard let lat = latitude, let lon = longitude else { return nil }
+            guard let lat = coordinateData?.decodeCoordinate?.lat, let lon = coordinateData?.decodeCoordinate?.lon else { return nil }
             var accumElements:[URLQueryItem] = []
             accumElements.append(URLQueryItem(name: "lat", value: String(format: "%f", lat)))
             accumElements.append(URLQueryItem(name: "lon", value: String(format: "%f", lon)))
@@ -90,15 +91,17 @@ class Weather: ObservableObject {
     private func startChecking () {
         Task {
             while true {
-                let lastUpdate = self.lastUpdate.map { Date(timeIntervalSince1970: $0) } ?? .distantPast
-                if Date () > WeatherCheckInterval.nextRecommendedDate (
-                    forTemp: self.currentTemp,
-                    fromLastUpdate: lastUpdate,
-                    highTempLimitSet: self.highTempLimit,
-                    lowTempLimitSet: self.lowTempLimit,
-                    tempAlarmSet: self.tempAlarmSet,
-                    fansRunning: true
-                ) {
+                let lastUpdate = self.lastUpdateData?.decodeDate ?? .distantPast
+                if true
+//                    if Date () > WeatherCheckInterval.nextRecommendedDate (
+//                    forTemp: self.currentTemp,
+//                    fromLastUpdate: lastUpdate,
+//                    highTempLimitSet: self.highTempLimit,
+//                    lowTempLimitSet: self.lowTempLimit,
+//                    tempAlarmSet: self.tempAlarmSet,
+//                    fansRunning: true
+//                )
+                {
                     do {
                         try await load()
                     } catch {
@@ -124,8 +127,8 @@ class Weather: ObservableObject {
             weatherObj.current?.temp.map { newForcast.append((Date(), $0)) }
             newForcast.sort(by: { $0.0 < $1.0 })
             self.forecast = newForcast
-            self.forecastData = weatherObj.data()
-            self.lastUpdate = Date().timeIntervalSince1970
+            self.forecastData = weatherObj.data
+            self.lastUpdateData = Date().data
             self.updateCurrentTemp()
         }
 //        WeatherLoader(components: components)?
@@ -163,9 +166,10 @@ class Weather: ObservableObject {
             currentTemp = nil
             return
         }
-        currentTemp = forecast.reduce((.distantPast, 0.0)) { (last, next) in
+        let val = forecast.reduce((.distantPast, 0.0)) { (last, next) in
             return (abs(Date().timeIntervalSince(last.0)) > abs(Date().timeIntervalSince(next.0))) ? next : last
         }.1
+        currentTemp = Measurement(value: val, unit: UnitTemperature.fahrenheit)
     }
     
     struct WeatherLoader {
@@ -226,7 +230,7 @@ class WeatherObject: Codable {
         var temp: Double?
     }
     
-    func data () -> Data {
+    var data: Data {
         let encoder = JSONEncoder()
         return (try? encoder.encode(self)) ?? Data()
     }

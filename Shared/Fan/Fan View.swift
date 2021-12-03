@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-enum OverlaySheet: String, Identifiable, CaseIterable {
+enum OverlaySheet: String, Identifiable {
     var id: String { self.rawValue }
     case fanName
     case timer
@@ -28,24 +28,24 @@ struct FanView: View {
     @State var pullDownOffset = CGFloat.zero
     @State private var angle = Angle.zero
 //    @State private var activeSheet: OverlaySheet?
-    @State private var aSheet: OverlaySheet?
+    @State private var activeSheet: OverlaySheet?
     
     var body: some View {
         NavigationView {
             ZStack {
-                NavigationLink(tag: OverlaySheet.fanName, selection: $aSheet, destination: { NameSheet(sheet: $aSheet, storageKey: StorageKey.fanName(id)) }, label: {})
-                NavigationLink(tag: OverlaySheet.timer, selection: $aSheet, destination: { TimerSheet(activeSheet: $aSheet, timeOnTimer: viewModel.chars.timer, fanViewModel: viewModel) }, label: {})
-                NavigationLink(tag: OverlaySheet.detail, selection: $aSheet, destination: { DetailSheet(chars: viewModel.chars, activeSheet: $aSheet) }, label: {})
-                NavigationLink(tag: OverlaySheet.fatalFault, selection: $aSheet, destination: { FatalFaultSheet() }, label: {})
-                NavigationLink(tag: OverlaySheet.settings, selection: $aSheet, destination: { SettingsView(activeSheet: $aSheet) }, label: {})
+                NavigationLink(tag: OverlaySheet.fanName, selection: $activeSheet, destination: { NameSheet(sheet: $activeSheet, storageKey: StorageKey.fanName(id)) }, label: {})
+                NavigationLink(tag: OverlaySheet.timer, selection: $activeSheet, destination: { TimerSheet(activeSheet: $activeSheet, timeOnTimer: viewModel.chars.timer, fanViewModel: viewModel) }, label: {})
+                NavigationLink(tag: OverlaySheet.detail, selection: $activeSheet, destination: { DetailSheet(chars: viewModel.chars, activeSheet: $activeSheet) }, label: {})
+                NavigationLink(tag: OverlaySheet.fatalFault, selection: $activeSheet, destination: { FatalFaultSheet() }, label: {})
+                NavigationLink(tag: OverlaySheet.settings, selection: $activeSheet, destination: { SettingsView(activeSheet: $activeSheet) }, label: {})
                 
-                FanImageRender(activeSheet: $aSheet, viewModel: viewModel)
+                FanImageRender(activeSheet: $activeSheet, viewModel: viewModel)
                     .ignoresSafeArea()
-                ControllerRender(viewModel: viewModel, activeSheet: $aSheet)
+                ControllerRender(viewModel: viewModel, activeSheet: $activeSheet)
 //                    .padding(.bottom, 45)
                 .toolbar(content: {
                     ToolbarItem(placement: .principal) {
-                        FanNameRender(activeSheet: $aSheet, name: $name, showDamperWarning: $viewModel.showDamperWarning, showInterlockWarning: $viewModel.showInterlockWarning)
+                        FanNameRender(activeSheet: $activeSheet, name: $name, showDamperWarning: $viewModel.showDamperWarning, showInterlockWarning: $viewModel.showInterlockWarning)
                             .padding(.bottom, 35)
                     }
                 })
@@ -79,7 +79,7 @@ struct FanView: View {
 //        }
         .onChange(of: viewModel.fatalFault) { fault in
             guard fault else { return }
-            aSheet = .fatalFault
+            activeSheet = .fatalFault
         }
         .onAppear {
             viewModel.refreshFan()
@@ -179,8 +179,8 @@ struct FanImageRender: View {
                     RefreshIndicator()
                         .padding(.top, 40)
                         .tint(.main)
-                    if let temp = weather.currentTempStr, !sharedHouseData.scanning {
-                        Text(temp)
+                    if let temp = weather.currentTemp, !sharedHouseData.scanning {
+                        Text(temp.formatted())
                             .padding(.top, 20)
                     }
                     Spacer()

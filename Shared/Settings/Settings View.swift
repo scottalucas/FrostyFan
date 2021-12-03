@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CoreLocation
 
 struct SettingsView: View {
     @EnvironmentObject var location: Location
@@ -13,17 +14,15 @@ struct SettingsView: View {
     @AppStorage(StorageKey.temperatureAlarmEnabled.key) var temperatureAlertsEnabled: Bool = false
     @AppStorage(StorageKey.interlockAlarmEnabled.key) var interlockAlertsEnabled: Bool = false
     @AppStorage(StorageKey.locationAvailable.key) var locationPermission: Location.LocationPermission = .unknown
-    @AppStorage(StorageKey.locLat.key) var latStr: String?
-    @AppStorage(StorageKey.locLon.key) var lonStr: String?
+    @AppStorage(StorageKey.coordinate.key) var coordinateData: Data?
     @State private var initTempAlertsEnabled = false
     @State private var initInterlockAlertsEnabled = false
     @State private var initLocationPermission: Location.LocationPermission = .unknown
-    @State private var initLatStr: String?
-    @State private var initLonStr: String?
+    @State private var initCoord: Data?
     @Binding var activeSheet: OverlaySheet?
     
     private var coordinatesAvailable: Bool {
-        latStr != nil && lonStr != nil
+        coordinateData != nil
     }
     
     var body: some View {
@@ -72,8 +71,14 @@ struct SettingsView: View {
                                 }
                             case (_, true):
                                 HStack {
-                                    Text("Location saved")
-                                        .settingsAppearance(.lineLabel)
+                                    VStack {
+                                        Text("Location saved")
+                                            .settingsAppearance(.lineLabel)
+                                        if let lat = coordinateData?.decodeCoordinate?.lat, let lon = coordinateData?.decodeCoordinate?.lon {
+                                            Text("\(lat.latitudeStr) \(lon.longitudeStr)")
+                                                .font(.caption)
+                                        }
+                                    }
                                     Spacer()
                                     Button(action: {
                                         location.clearLocation()
@@ -105,8 +110,6 @@ struct SettingsView: View {
                                 .padding(.bottom, 10)
                         }
                     }
-                    //                    }
-                    //                                                .background(Color.main)
                 }
                 .foregroundColor(.main)
             }
@@ -120,8 +123,7 @@ struct SettingsView: View {
                                     temperatureAlertsEnabled = initTempAlertsEnabled
                                     interlockAlertsEnabled = initInterlockAlertsEnabled
                                     locationPermission = initLocationPermission
-                                    latStr = initLatStr
-                                    lonStr = initLonStr
+                                    coordinateData = initCoord
                                     activeSheet = nil
                                 }
                                 Spacer()
@@ -145,15 +147,16 @@ struct SettingsView: View {
             initTempAlertsEnabled = temperatureAlertsEnabled
             initInterlockAlertsEnabled = interlockAlertsEnabled
             initLocationPermission = locationPermission
-            initLatStr = latStr
-            initLonStr = lonStr
+            initCoord = coordinateData
         })
     }
 }
 
 struct TemperatureSelector: View {
-    @AppStorage(StorageKey.lowTempLimit.key) var lowTemp: Double = 55
-    @AppStorage(StorageKey.highTempLimit.key) var highTemp: Double = 80
+    @AppStorage(StorageKey.lowTempLimit.key) var lowTempData: Data?
+    @AppStorage(StorageKey.highTempLimit.key) var highTempData: Data?
+    @State private var lowTemp: Double = 55
+    @State private var highTemp: Double = 80
     private let min = 40.0
     private let max = 85.0
     
@@ -175,9 +178,7 @@ struct TemperatureSelector: View {
                 style.strokeWeight = 2.0
                 style.labelOffset = CGSize(width: 0, height: -30)
                 style.labelStyle = RangeSlider.LabelStyle()
-                style.labelStyle?
-                    .numberFormat
-                    .positiveFormat = "##\u{00B0}"
+                style.labelStyle?.formatter = { inputValue in Measurement(value: inputValue, unit: UnitTemperature.fahrenheit).formatted() }
                 style.labelStyle?.color = .main
             },
             leftHandleFormatter: { style in
@@ -186,10 +187,18 @@ struct TemperatureSelector: View {
                 style.strokeWeight = 2.0
                 style.labelOffset = CGSize(width: 0, height: -30)
                 style.labelStyle = RangeSlider.LabelStyle()
-                style.labelStyle?
-                    .numberFormat
-                    .positiveFormat = "##\u{00B0}"
+                style.labelStyle?.formatter = { inputValue in Measurement(value: inputValue, unit: UnitTemperature.fahrenheit).formatted() }
                 style.labelStyle?.color = .main
+            })
+            .onChange(of: lowTemp) { newLowTemp in
+                lowTempData = Measurement(value: newLowTemp, unit: UnitTemperature.fahrenheit).data
+            }
+            .onChange(of: highTemp) { newHighTemp in
+                highTempData = Measurement(value: newHighTemp, unit: UnitTemperature.fahrenheit).data
+            }
+            .onAppear(perform: {
+                lowTemp = lowTempData?.decodeTemperature?.value ?? 55.0
+                highTemp = highTempData?.decodeTemperature?.value ?? 80.0
             })
     }
 }
@@ -243,13 +252,19 @@ extension View {
 }
 
 struct Settings_View_Previews: PreviewProvider {
-    //    static var house = House.shared
+    static var loc: Location {
+        @AppStorage(StorageKey.coordinate.key) var coordData: Data?
+        coordData = CLLocation(latitude: 38, longitude: -122).data
+        return Location()
+    }
     static var previews: some View {
         NavigationView {
             SettingsView(activeSheet: .constant(nil))
         }
                     .preferredColorScheme(.dark)
                     .environmentObject(Weather())
-                    .environmentObject(Location())
+                    .environmentObject(loc)
+                    .environment(\.locale, .init(identifier: "de"))
+
     }
 }

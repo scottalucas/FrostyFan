@@ -8,6 +8,7 @@
 import Foundation
 import Combine
 import SwiftUI
+import CoreLocation
 
 extension Comparable {
     func clamped(to limits: ClosedRange<Self>) -> Self {
@@ -108,6 +109,55 @@ extension Publisher {
                                 }
                             }
 }
+
+extension Data {
+    var decodeTemperature: Measurement<UnitTemperature>? {
+        let decoder = PropertyListDecoder()
+        return try? decoder.decode(Measurement.self, from: self)
+    }
+}
+
+extension Data {
+    var decodeCoordinate: Coordinate? {
+        let decoder = PropertyListDecoder()
+        return try? decoder.decode(Coordinate.self, from: self)
+    }
+}
+
+extension Data {
+    var decodeDate: Date? {
+        let decoder = PropertyListDecoder()
+        return try? decoder.decode(Date.self, from: self)
+    }
+}
+
+extension Measurement {
+    var data: Data? {
+        let encoder = PropertyListEncoder()
+        return try? encoder.encode(self)
+    }
+}
+
+struct Coordinate: Codable {
+    var lat: Double
+    var lon: Double
+}
+
+extension CLLocation {
+    var data: Data? {
+        let encoder = PropertyListEncoder()
+        let coord = Coordinate(lat: self.coordinate.latitude, lon: self.coordinate.longitude)
+        return try? encoder.encode(coord)
+    }
+}
+
+extension Date {
+    var data: Data? {
+        let encoder = PropertyListEncoder()
+        return try? encoder.encode(self)
+    }
+}
+
 //
 //extension Task {
 //    static func sleep(seconds: Double) async throws {

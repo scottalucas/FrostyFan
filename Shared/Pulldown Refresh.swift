@@ -36,6 +36,8 @@ struct RefreshIndicator: View {
                     print("Scanning: \(scanning)")
                     if scanning { start = Date() }
                 }
+        } else {
+            EmptyView()
         }
         
     }

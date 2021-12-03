@@ -174,7 +174,7 @@ protocol UserDefaultsProtocol {
 extension UserDefaults: UserDefaultsProtocol {}
 
 enum StorageKey {
-    case interlockAlarmEnabled, temperatureAlarmEnabled, lowTempLimit, highTempLimit, locationAvailable, forecast, lastForecastUpdate, locLat, locLon, fanName (String), fanAdjustingSpeed (String), fanDamperOperating (String), noValue
+    case interlockAlarmEnabled, temperatureAlarmEnabled, lowTempLimit, highTempLimit, locationAvailable, forecast, lastForecastUpdate, coordinate, fanName (String), fanAdjustingSpeed (String), fanDamperOperating (String), noValue
     
     var key: String {
         switch self {
@@ -192,10 +192,12 @@ enum StorageKey {
             return "forecast"
         case .lastForecastUpdate:
             return "lastForecastUpdate"
-        case .locLat:
-            return "locLat"
-        case .locLon:
-            return "locLon"
+//        case .locLat:
+//            return "locLat"
+//        case .locLon:
+//            return "locLon"
+            case .coordinate:
+                return "coordinate"
         case .fanName(let macAddr):
             return "name\(macAddr)"
         case .fanAdjustingSpeed (let macAddr):
