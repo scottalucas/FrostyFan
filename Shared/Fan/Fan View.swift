@@ -27,7 +27,6 @@ struct FanView: View {
     
     @State var pullDownOffset = CGFloat.zero
     @State private var angle = Angle.zero
-//    @State private var activeSheet: OverlaySheet?
     @State private var activeSheet: OverlaySheet?
     
     var body: some View {

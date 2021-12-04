@@ -83,9 +83,6 @@ class House {
                         }
                     }
                 }
-//                finishTimer?.invalidate()
-//                finishTimer = nil
-//                sharedHouseData.updateProgress = nil
                 sharedHouseData.scanning = false
                 continuation.finish()
             }
@@ -105,7 +102,14 @@ class SharedHouseData: ObservableObject {
     @Published var fault = FaultLevel.none
     @Published var alarmLevel = FaultLevel.none
     @Published var useAlarmColor = false
+    var fansOperating: Bool {
+        return fanOperationalStatus.values.reduce(false, { (last, next) in last || next })
+    }
+    private var fanOperationalStatus = Dictionary<String, Bool>()
     private init () {}
+    func updateOperationalStatus(forMacAddr macAddr: String, to: Bool) {
+        fanOperationalStatus.updateValue(to, forKey: macAddr)
+    }
 }
 
     

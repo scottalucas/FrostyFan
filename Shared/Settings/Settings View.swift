@@ -10,6 +10,7 @@ import CoreLocation
 
 struct SettingsView: View {
     @EnvironmentObject var location: Location
+    @EnvironmentObject var weather: Weather
     @Environment(\.scenePhase) var scenePhase
     @AppStorage(StorageKey.temperatureAlarmEnabled.key) var temperatureAlertsEnabled: Bool = false
     @AppStorage(StorageKey.interlockAlarmEnabled.key) var interlockAlertsEnabled: Bool = false
@@ -75,8 +76,8 @@ struct SettingsView: View {
                                         Text("Location saved")
                                             .settingsAppearance(.lineLabel)
                                         if let lat = coordinateData?.decodeCoordinate?.lat, let lon = coordinateData?.decodeCoordinate?.lon {
-                                            Text("\(lat.latitudeStr) \(lon.longitudeStr)")
-                                                .font(.caption)
+                                            Text("\(lat.latitudeStr)   \(lon.longitudeStr)")
+                                                .font(.caption2.italic())
                                         }
                                     }
                                     Spacer()
@@ -108,6 +109,30 @@ struct SettingsView: View {
                             TemperatureSelector()
                                 .padding(.top, 25)
                                 .padding(.bottom, 10)
+                        }
+                    }
+                    if let weatherError = weather.retrievalError {
+                        Section(header: Text("Weather Error").settingsAppearance(.header)) {
+                            VStack (alignment: .leading)
+                            {
+                                HStack {
+                                    Text("Could not get outside temperature")
+                                    Spacer()
+                                    Button(action: {
+                                        weather.check()
+                                    }, label: {
+                                        Text("Try Again")
+                                            .settingsAppearance(.buttonLabel)
+                                    })
+                                }
+                            Text( ( weatherError as? ConnectionError)?.description ?? "Unknown error")
+                                    .font(.caption2)
+                                    .lineLimit(3)
+//                                    .layoutPriority(1)
+                                    .padding(.trailing)
+                                    .padding(.leading, 15)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
                         }
                     }
                 }

@@ -110,6 +110,13 @@ extension Publisher {
                             }
 }
 
+extension Task where Success == Never, Failure == Never {
+    static func sleep (interval: TimeInterval) async throws {
+        let nanoSeconds = UInt64 ( interval * 1_000_000_000 )
+        try await Task.sleep(nanoseconds: nanoSeconds)
+    }
+}
+
 extension Data {
     var decodeTemperature: Measurement<UnitTemperature>? {
         let decoder = PropertyListDecoder()

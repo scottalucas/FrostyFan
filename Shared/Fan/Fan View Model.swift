@@ -207,6 +207,17 @@ class FanViewModel: ObservableObject {
                 return Int ( Double ( speed ) * 50.0 / Double ( levels ) )
             }
             .assign(to: &$displayFanRpm)
+        
+        model.$fanCharacteristics
+            .prepend(chars)
+            .compactMap { chars -> (Int, String)? in
+                guard let spd = chars?.speed, let macAddr = chars?.macAddr else { return nil }
+                return (spd, macAddr)
+            }
+            .sink(receiveValue: { (spd, mac) in
+                SharedHouseData.shared.updateOperationalStatus(forMacAddr: mac, to: spd > 0)
+            })
+            .store(in: &bag)
 //
 //
 //        $currentMotorSpeed
