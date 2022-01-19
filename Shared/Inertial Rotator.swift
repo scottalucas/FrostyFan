@@ -10,14 +10,14 @@ import SwiftUI
 
 struct RotatingView<V>: View where V: View {
     @Binding var rpm: Int
-    @StateObject var driver: IntertialRotator
+    @StateObject var driver: InertialRotator
     var rotationSymmetry: Angle
     var rotatedView: V
     var speeds = [10, 20, 50, 0]
     
     struct BaseView<BaseView>: View where BaseView: View {
         var pacer: Date
-        var driver: IntertialRotator
+        var driver: InertialRotator
         var base: BaseView
         @State private var ang = Angle.zero
         
@@ -40,7 +40,7 @@ struct RotatingView<V>: View where V: View {
     }
     var body: some View {
             TimelineView(
-                IntertialRotator.Scheduler(driver: driver)
+                InertialRotator.Scheduler(driver: driver)
             ) { timeline in
                 BaseView(pacer: timeline.date, driver: driver, base: rotatedView)
             }
@@ -48,15 +48,15 @@ struct RotatingView<V>: View where V: View {
                 driver.nextRpm = newRpm
             }
     }
-    init (rpm: Binding<Int>, baseView: V, symmetry: Angle, transition: IntertialRotator.TransitionSpeed) {
+    init (rpm: Binding<Int>, baseView: V, symmetry: Angle, transition: InertialRotator.TransitionSpeed) {
         rotatedView = baseView
         rotationSymmetry = symmetry
         self._rpm = rpm
-        _driver = StateObject(wrappedValue: IntertialRotator(initialRpm: rpm.wrappedValue, standardRotation: symmetry, transitionSpeed: transition))
+        _driver = StateObject(wrappedValue: InertialRotator(initialRpm: rpm.wrappedValue, standardRotation: symmetry, transitionSpeed: transition))
     }
 }
 
-class IntertialRotator: ObservableObject {
+class InertialRotator: ObservableObject {
     var nextRpm: Int
     var animationSpec: RotationSpec = RotationSpec()
     var scheduler: Scheduler!
@@ -79,15 +79,15 @@ class IntertialRotator: ObservableObject {
     }
 }
 
-extension IntertialRotator {
+extension InertialRotator {
     struct Scheduler: TimelineSchedule {
-        var driver: IntertialRotator
+        var driver: InertialRotator
         func entries(from startDate: Date, mode: TimelineScheduleMode) -> Entries {
             return Entries(driver: driver, last: .distantPast)
         }
         
         struct Entries: Sequence, IteratorProtocol {
-            var driver: IntertialRotator
+            var driver: InertialRotator
             var last: Date
             
             mutating func next() -> Date? {
@@ -100,7 +100,7 @@ extension IntertialRotator {
     }
 }
 
-extension IntertialRotator {
+extension InertialRotator {
     struct RotationSpec {
         var animation: Animation
         var duration: TimeInterval
@@ -111,7 +111,7 @@ extension IntertialRotator {
         private var type: AnimateType
         static var atRestDuration = TimeInterval(0.5)
         enum AnimateType { case spinUp, spinDown, atRest, atSpeed }
-        static func get(driver: IntertialRotator) -> RotationSpec {
+        static func get(driver: InertialRotator) -> RotationSpec {
             let calcRpm: Double = Double ( max ( driver.lastRpm, driver.nextRpm ) )
             guard calcRpm > 0 else { return RotationSpec(type: .atRest, duration: atRestDuration, angle: .zero) } // at rest
             let stdA = driver.standardAngle
@@ -146,7 +146,7 @@ extension IntertialRotator {
     }
 }
 
-extension IntertialRotator {
+extension InertialRotator {
     enum TransitionSpeed: Double {
         case slow = 2.0, standard = 1.0, fast = 0.8
         func angle(standardAngle: Angle) -> Angle {
@@ -157,4 +157,20 @@ extension IntertialRotator {
         }
     }
     
+}
+
+struct RotatingViewModifier: ViewModifier {
+    @Binding var rpm: Int
+    var rotationSymmetry: Angle
+    var transitionSpeed : InertialRotator.TransitionSpeed
+    
+    func body(content: Content) -> some View {
+        RotatingView(rpm: $rpm, baseView: content, symmetry: Angle(degrees: 90.0), transition: .standard)
+    }
+}
+
+extension View {
+    func rotatingView(speed: Binding<Int>, symmetry: Angle, transitionSpeed: InertialRotator.TransitionSpeed = .standard) -> some View {
+        modifier(RotatingViewModifier(rpm: speed, rotationSymmetry: symmetry, transitionSpeed: transitionSpeed))
+    }
 }

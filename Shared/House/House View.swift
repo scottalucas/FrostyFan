@@ -17,32 +17,42 @@ struct HouseView: View {
     @State private var fanLabel: String = "Fan"
     
     var body: some View {
-            FanViewPageContainer (viewModel: viewModel)
-                .foregroundColor(.main)
-                .tint(.background)
-                .accentColor(.main)
-        .onAppear {
-            Task {
-               try? await viewModel.scan()
+        FanViewPageContainer (viewModel: viewModel)
+            .foregroundColor(.main)
+            .tint(.background)
+            .accentColor(.main)
+            .onAppear {
+                Task {
+                    try? await viewModel.scan()
+                }
             }
-        }
+            .background(
+//                VStack {
+//                    Text ( viewModel.displayedFanID )
+//                    Text ( "Speed: \(viewModel.displayedRPM)" )
+//                }
+                IdentifiableImage.fanIcon.image
+                    .resizable()
+                    .scaleEffect(1.75)
+                    .aspectRatio(1.0, contentMode: .fit)
+                    .rotatingView(speed: $viewModel.displayedRPM, symmetry: .degrees(90.0))
+                )
+            .background(
+            )
     }
     
     init(viewModel: HouseViewModel? = nil) {
-        if let vm = viewModel {
-            _viewModel = StateObject.init(wrappedValue: vm)
-        } else {
-            _viewModel = StateObject.init(wrappedValue: HouseViewModel())
-        }
+        _viewModel = StateObject(wrappedValue: viewModel ?? HouseViewModel())
     }
 }
 
 struct FanViewPageContainer: View {
     typealias IPAddr = String
     @StateObject var viewModel: HouseViewModel
-    @State private var selectedFan: String = ""
+//    @Binding var selectedFan: FanView.MACAddr?
     @State private var revealControlOffset = CGFloat.zero
-
+    @State private var selectedFan: FanView.MACAddr = "not set"
+    
     var body: some View {
         VStack {
             switch viewModel.fanViews.count {
@@ -51,10 +61,14 @@ struct FanViewPageContainer: View {
                 case 1:
                     viewModel.fanViews.first?.eraseToAnyView() ?? NoFanView().eraseToAnyView()
                 default:
-                    TabView (selection: $selectedFan) {
+                    TabView (selection: $viewModel.displayedFanID) {
                         ForEach (Array(viewModel.fanViews)) { view in
-                            view
-                                .tag(view.id)
+                            ZStack {
+                                view
+                                    .tag(view.id)
+                                Text(selectedFan)
+                                    .offset(x: 0, y: -50)
+                            }
                         }
                     }
                     .tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))
@@ -116,20 +130,21 @@ class HouseViewDataMock: House {
 //                    }
 //                }
 
-                await Task.sleep(1_000_000_000)
+                try! await Task.sleep(nanoseconds: 1_000_000_000)
                 var fanA = FanCharacteristics()
                 fanA.airspaceFanModel = "3.5e"
                 fanA.macAddr = UUID.init().uuidString
                 continuation.yield(fanA)
                 checkedHosts += 1
                 percentHostsChecked = checkedHosts / totalHosts
-//                var fanB = FanCharacteristics()
-//                fanB.airspaceFanModel = "2.5e"
-//                fanB.interlock1 = true
-//                fanB.damper = .operating
-//                fanB.macAddr = UUID.init().uuidString
-//                await Task.sleep(1_500_000_000)
-//                continuation.yield(fanB)
+                var fanB = FanCharacteristics()
+                fanB.airspaceFanModel = "2.5e"
+                fanB.interlock1 = true
+                fanB.damper = .operating
+                fanB.macAddr = UUID.init().uuidString
+                fanB.speed = 2
+                try? await Task.sleep(nanoseconds: 1_500_000_000)
+                continuation.yield(fanB)
 //                checkedHosts += 1
 //                percentHostsChecked = checkedHosts / totalHosts
 //                await Task.sleep(500_000_000)

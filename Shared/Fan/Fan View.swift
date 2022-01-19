@@ -38,8 +38,8 @@ struct FanView: View {
                 NavigationLink(tag: OverlaySheet.fatalFault, selection: $activeSheet, destination: { FatalFaultSheet() }, label: {})
                 NavigationLink(tag: OverlaySheet.settings, selection: $activeSheet, destination: { SettingsView(activeSheet: $activeSheet) }, label: {})
                 
-                FanImageRender(activeSheet: $activeSheet, viewModel: viewModel)
-                    .ignoresSafeArea()
+//                FanImageRender(activeSheet: $activeSheet, viewModel: viewModel)
+//                    .ignoresSafeArea()
                 ControllerRender(viewModel: viewModel, activeSheet: $activeSheet)
 //                    .padding(.bottom, 45)
                 .toolbar(content: {

@@ -22,6 +22,8 @@ class Weather: ObservableObject {
     @Published private (set) var tooHot: Bool = false
     @Published private (set) var tooCold: Bool = false
     @Published private (set) var retrievalError: Error? = ConnectionError.serverError("Just would NOT work.")
+
+    private var forecast = Array<(Date, Double)>()
     private var currentTempValue: Double? {
         willSet {
             guard let t = newValue else {
@@ -35,7 +37,6 @@ class Weather: ObservableObject {
             tooHot = t > highTempLimit
         }
     }
-    private var forecast = Array<(Date, Double)>()
     fileprivate var queryElements:[URLQueryItem]? {
         get {
             guard let lat = coordinateData?.decodeCoordinate?.lat, let lon = coordinateData?.decodeCoordinate?.lon else { return nil }
@@ -71,18 +72,17 @@ class Weather: ObservableObject {
                     ) {
                         try await load()
                     }
-                    try await Task.sleep(interval: TimeInterval(WeatherCheckInterval.frequent.rawValue) * 0.1) //run the loop fast enough to respond as conditions change
                 } catch {
                     retrievalError = error
-                    print ("Error getting weather \(error.localizedDescription)")
-                    break
+                    print ("Error getting weather \((error as? ConnectionError)?.description ?? "unknown error")")
                 }
+                try! await Task.sleep(interval: TimeInterval(WeatherCheckInterval.frequent.rawValue) * 0.1) //run the loop fast enough to respond as conditions change
             }
         }
     }
     
     private func load () async throws {
-        guard let qE = queryElements else { throw ConnectionError.decodeError("Could not get query elements from \(queryElements?.description ?? "elements not available")") }
+        guard let qE = queryElements else { throw ConnectionError.decodeError("Query elements not available, coordinate data is \(coordinateData?.description ?? "nil"), coordinates are lon: \(coordinateData?.decodeCoordinate?.lon.description ?? "nil"), lat: \(coordinateData?.decodeCoordinate?.lon.description ?? "nil").") }
         var components = URLComponents()
         components.host = "api.openweathermap.org"
         components.scheme = "http"

@@ -111,7 +111,7 @@ struct SettingsView: View {
                                 .padding(.bottom, 10)
                         }
                     }
-                    if let weatherError = weather.retrievalError {
+                    if let weatherError = weather.retrievalError, coordinatesAvailable, temperatureAlertsEnabled {
                         Section(header: Text("Weather Error").settingsAppearance(.header)) {
                             VStack (alignment: .leading)
                             {
