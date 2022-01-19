@@ -156,6 +156,11 @@ struct FanImageRender: View {
     @Binding var activeSheet: OverlaySheet?
     @State private var fanFrame: CGRect = .zero
     @ObservedObject var viewModel: FanViewModel
+    private var tempFormatter: MeasurementFormatter {
+        let m = MeasurementFormatter()
+        m.numberFormatter.maximumFractionDigits = 0
+        return m
+    }
     
     var body: some View {
         VStack {
@@ -179,7 +184,7 @@ struct FanImageRender: View {
                         .padding(.top, 40)
                         .tint(.main)
                     if let temp = weather.currentTemp, !sharedHouseData.scanning {
-                        Text(temp.formatted())
+                        Text(tempFormatter.string(from: temp))
                             .padding(.top, 20)
                     }
                     Spacer()
@@ -189,7 +194,7 @@ struct FanImageRender: View {
             }
             Spacer()
         }
-//        .clipped()
+        .clipped()
     }
 }
 
