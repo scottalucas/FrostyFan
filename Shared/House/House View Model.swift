@@ -37,6 +37,7 @@ class HouseViewModel: ObservableObject {
     }
 
     func scan () async throws {
+        guard !SharedHouseData.shared.scanning else { return }
         fanViews.removeAll()
 //        fanSpeedPublishers.removeAll()
         for try await item in dataSource.scan() {

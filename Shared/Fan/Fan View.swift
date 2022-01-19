@@ -30,7 +30,7 @@ struct FanView: View {
     @State private var activeSheet: OverlaySheet?
     
     var body: some View {
-        NavigationView {
+//        NavigationView {
             ZStack {
                 NavigationLink(tag: OverlaySheet.fanName, selection: $activeSheet, destination: { NameSheet(sheet: $activeSheet, storageKey: StorageKey.fanName(id)) }, label: {})
                 NavigationLink(tag: OverlaySheet.timer, selection: $activeSheet, destination: { TimerSheet(activeSheet: $activeSheet, timeOnTimer: viewModel.chars.timer, fanViewModel: viewModel) }, label: {})
@@ -38,7 +38,7 @@ struct FanView: View {
                 NavigationLink(tag: OverlaySheet.fatalFault, selection: $activeSheet, destination: { FatalFaultSheet() }, label: {})
                 NavigationLink(tag: OverlaySheet.settings, selection: $activeSheet, destination: { SettingsView(activeSheet: $activeSheet) }, label: {})
                 
-//                FanImageRender(activeSheet: $activeSheet, viewModel: viewModel)
+                FanInfoAreaRender(activeSheet: $activeSheet, viewModel: viewModel)
 //                    .ignoresSafeArea()
                 ControllerRender(viewModel: viewModel, activeSheet: $activeSheet)
 //                    .padding(.bottom, 45)
@@ -49,33 +49,6 @@ struct FanView: View {
                     }
                 })
             }
-            //            .toolbar(content: {
-//                ToolbarItem(placement: .principal, content: {
-//                    HStack {
-//                    }
-//                })
-//            })
-//            .toolbar {
-//                ToolbarItem(placement: .bottomBar) {
-//                    HStack {
-//                        IdentifiableImage.bell.image
-//                            .resizable()
-//                            .aspectRatio(1.0, contentMode: .fit)
-//                            .padding(.leading)
-//                        Spacer()
-//                    }
-//                }
-//            }
-        }
-        .navigationViewStyle(StackNavigationViewStyle())
-            
-//        .overlaySheet(dataSource: viewModel, activeSheet: $activeSheet)
-//        .onReceive(viewModel.$fanRotationDuration) { val in
-//            self.angle = .zero
-//            withAnimation(Animation.linear(duration: val)) {
-//                self.angle = .degrees(179.99)
-//            }
-//        }
         .onChange(of: viewModel.fatalFault) { fault in
             guard fault else { return }
             activeSheet = .fatalFault
@@ -90,6 +63,7 @@ struct FanView: View {
         _name = AppStorage(wrappedValue: "\(chars.airspaceFanModel)", StorageKey.fanName(chars.macAddr).key)
         _viewModel = StateObject.init(wrappedValue: FanViewModel(chars: chars))
         print("init fan view model \(chars.airspaceFanModel) selector segments \(viewModel.selectorSegments)")
+        
     }
 }
 
@@ -150,7 +124,7 @@ struct BaseFanImage: View {
     }
 }
 
-struct FanImageRender: View {
+struct FanInfoAreaRender: View {
     @EnvironmentObject var sharedHouseData: SharedHouseData
     @EnvironmentObject var weather: Weather
     @Binding var activeSheet: OverlaySheet?
@@ -163,12 +137,6 @@ struct FanImageRender: View {
     }
     
     var body: some View {
-        VStack {
-            ZStack (alignment: .center) {
-                RotatingView(rpm: $viewModel.displayFanRpm, baseView: BaseFanImage(), symmetry: .degrees(60.0), transition: .slow)
-                    .frame(maxHeight: .infinity)
-                    .clipped()
-                Color.clear.background(.ultraThinMaterial)
                 VStack (alignment: .center, spacing: 5)
                 {
                     Spacer()
@@ -182,7 +150,6 @@ struct FanImageRender: View {
                     })
                     RefreshIndicator()
                         .padding(.top, 40)
-                        .tint(.main)
                     if let temp = weather.currentTemp, !sharedHouseData.scanning {
                         Text(tempFormatter.string(from: temp))
                             .padding(.top, 20)
@@ -191,10 +158,6 @@ struct FanImageRender: View {
                 }
                 .fixedSize(horizontal: false, vertical: true)
                 .buttonStyle(BorderlessButtonStyle())
-            }
-            Spacer()
-        }
-        .clipped()
     }
 }
 
@@ -305,9 +268,9 @@ struct FanView_Previews: PreviewProvider {
             //                .environmentObject(SharedHouseData.shared)
             //                .environmentObject(Weather())
                 .preferredColorScheme(.light)
-                .foregroundColor(.main)
-                .tint(.main)
-                .accentColor(.main)
+//                .foregroundColor(.main)
+//                .tint(.main)
+//                .accentColor(.main)
             FanNameRender(activeSheet: .constant(nil), name: .constant("Test"), showDamperWarning: .constant(true), showInterlockWarning: .constant(true))
 //            FanImageRender(activeSheet: .constant(nil), viewModel: vm)
 //            VStack {
@@ -317,5 +280,6 @@ struct FanView_Previews: PreviewProvider {
         }
         .environmentObject(SharedHouseData.shared)
         .environmentObject(Weather())
+        .foregroundColor(.main)
     }
 }
