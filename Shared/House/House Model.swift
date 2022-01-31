@@ -47,7 +47,9 @@ class House {
 //            }
             Task {
                 var hosts = NetworkAddress.hosts
-//                hosts.append("192.168.1.180:8080")
+                //FIX: remove after testing
+                hosts = []
+                hosts.append("10.0.0.128:8080")
                 let totalHosts = Double(hosts.count)
                 guard totalHosts > 0 else { continuation.finish(throwing: ConnectionError.serverError("No hosts")) ; return }
                 var checkedHosts = Double.zero
@@ -68,6 +70,7 @@ class House {
                 
                 await withTaskGroup(of: (IPAddr, Data?).self) { group in
                     for ip in hosts {
+                        print("Scanning \(ip)")
                         guard let url = URL(string: "http://\(ip)/fanspd.cgi?dir=\(FanModel.Action.refresh.rawValue)") else { continue }
                         group.addTask {
                             let d = try? await session.data(from: url).0
@@ -94,21 +97,20 @@ class SharedHouseData: ObservableObject {
     enum FaultLevel { case major, minor, none }
     static var shared = SharedHouseData()
     var scanDuration: Double = 5.0
-    @Published var scanning = false {
-        didSet {
-            print("Set scanning: \(scanning)")
-        }
-    }
+    @Published var scanning = false
     @Published var fault = FaultLevel.none
     @Published var alarmLevel = FaultLevel.none
     @Published var useAlarmColor = false
+    @Published var fanRPMs = Dictionary<String, Int>()
     var fansOperating: Bool {
-        return fanOperationalStatus.values.reduce(false, { (last, next) in last || next })
+        return fanRPMs.values.reduce(false, { (last, next) in
+            if next != 0 { return true } else { return last }
+        })
     }
-    private var fanOperationalStatus = Dictionary<String, Bool>()
     private init () {}
-    func updateOperationalStatus(forMacAddr macAddr: String, to: Bool) {
-        fanOperationalStatus.updateValue(to, forKey: macAddr)
+    func updateOperationalStatus(forMacAddr macAddr: String, to: Int) {
+        print("updating status for \(macAddr)")
+        fanRPMs.updateValue(to, forKey: macAddr)
     }
 }
 

@@ -30,6 +30,7 @@ struct RefreshIndicator: View {
                                 maxHeight: geo.size.height)
                             Spacer()
                         }
+                        .accentColor(.main)
                     }
                 )
                 .onChange(of: sharedHouseData.scanning) { scanning in

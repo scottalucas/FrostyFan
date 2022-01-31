@@ -62,6 +62,17 @@ extension Color {
     static var controlsBackground = Color(.controlsBackground)
 }
 
+struct BackgroundTaskIdentifier {
+    static var tempertureOutOfRange = "com.porchdog.whf001.WeatherMonitor.backgroundWeatherCheck"
+}
+
+struct CustomFormatter {
+    static var temperture: MeasurementFormatter {
+            let m = MeasurementFormatter()
+            m.numberFormatter.maximumFractionDigits = 0
+            return m
+    }
+}
 //extension View {
 //    func overlaySheet(dataSource source: FanViewModel, activeSheet: Binding<OverlaySheet?>) -> some View {
 //        modifier(OverlaySheetRender(dataSource: source, activeSheet: activeSheet))

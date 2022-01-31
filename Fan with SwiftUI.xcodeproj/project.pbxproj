@@ -58,6 +58,7 @@
 		93D1EEB2273EF88600D7DF77 /* Pulldown Refresh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93D1EEB0273EF88600D7DF77 /* Pulldown Refresh.swift */; };
 		93D1EEB427418A0A00D7DF77 /* Segmented Indicator Picker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93D1EEB327418A0900D7DF77 /* Segmented Indicator Picker.swift */; };
 		93D1EEB527418A0A00D7DF77 /* Segmented Indicator Picker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93D1EEB327418A0900D7DF77 /* Segmented Indicator Picker.swift */; };
+		93DAC5CD2798E60F00B778C8 /* Weather Monitor Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93DAC5CC2798E60F00B778C8 /* Weather Monitor Model.swift */; };
 		93EFF7DD27557635000E3308 /* Inertial Rotator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93EFF7DC27557635000E3308 /* Inertial Rotator.swift */; };
 		93EFF7DE27557635000E3308 /* Inertial Rotator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93EFF7DC27557635000E3308 /* Inertial Rotator.swift */; };
 		93F31BD4267002370056DCA1 /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 93F31BD3267002370056DCA1 /* Launch Screen.storyboard */; };
@@ -123,6 +124,7 @@
 		93CF9547258984A1004BBD49 /* Fan View Model.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Fan View Model.swift"; sourceTree = "<group>"; };
 		93D1EEB0273EF88600D7DF77 /* Pulldown Refresh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Pulldown Refresh.swift"; sourceTree = "<group>"; };
 		93D1EEB327418A0900D7DF77 /* Segmented Indicator Picker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Segmented Indicator Picker.swift"; sourceTree = "<group>"; };
+		93DAC5CC2798E60F00B778C8 /* Weather Monitor Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Weather Monitor Model.swift"; sourceTree = "<group>"; };
 		93EFF7DC27557635000E3308 /* Inertial Rotator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Inertial Rotator.swift"; sourceTree = "<group>"; };
 		93F31BD3267002370056DCA1 /* Launch Screen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = "Launch Screen.storyboard"; sourceTree = "<group>"; };
 		93F31BEE2670130C0056DCA1 /* Fan.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Fan.png; path = Assets.xcassets/Fan.png; sourceTree = "<group>"; };
@@ -192,6 +194,7 @@
 				930CFF872581882E00E8E979 /* Fan */,
 				930CFFA12581885A00E8E979 /* House */,
 				93C94E4E259E871F005A3D43 /* Sheets */,
+				938E65E227A5C1B50011B0B9 /* Weather */,
 				933A987C25AAA9060084C535 /* Support */,
 				930CFFBB258188A300E8E979 /* Settings */,
 			);
@@ -277,12 +280,20 @@
 		933A987C25AAA9060084C535 /* Support */ = {
 			isa = PBXGroup;
 			children = (
-				933A987D25AAA9240084C535 /* Weather Model.swift */,
 				934C8AB925AB92380037906C /* Location Model.swift */,
 				934C8AC825AB926F0037906C /* Alarm Model.swift */,
 				934C8ACF25AB92AB0037906C /* Storage Model.swift */,
 			);
 			path = Support;
+			sourceTree = "<group>";
+		};
+		938E65E227A5C1B50011B0B9 /* Weather */ = {
+			isa = PBXGroup;
+			children = (
+				933A987D25AAA9240084C535 /* Weather Model.swift */,
+				93DAC5CC2798E60F00B778C8 /* Weather Monitor Model.swift */,
+			);
+			path = Weather;
 			sourceTree = "<group>";
 		};
 		93C94E4E259E871F005A3D43 /* Sheets */ = {
@@ -479,6 +490,7 @@
 				930CFF4E2581878D00E8E979 /* Airspace Fan.swift in Sources */,
 				936F79D8259FADD500AACA53 /* Timer Sheet.swift in Sources */,
 				9380A2B227359DBA0000F465 /* No Fan View.swift in Sources */,
+				93DAC5CD2798E60F00B778C8 /* Weather Monitor Model.swift in Sources */,
 				933A987E25AAA9240084C535 /* Weather Model.swift in Sources */,
 				934C8ABA25AB92380037906C /* Location Model.swift in Sources */,
 				93CF9548258984A1004BBD49 /* Fan View Model.swift in Sources */,
@@ -647,6 +659,7 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
@@ -657,7 +670,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
-				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Release;
 		};

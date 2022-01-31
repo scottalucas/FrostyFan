@@ -7,6 +7,7 @@
 
 import Foundation
 import Combine
+import SwiftUI
 
 enum AdjustmentError: Error {
     typealias E = Self
@@ -84,3 +85,87 @@ enum ConnectionError: Error {
         }
     }
 }
+
+enum WeatherRetrievalError: Error {
+    case noLocation
+    case badUrl
+    case decodeError
+    case throttle (lastUpdate: String)
+    case serverError (Int?)
+    
+    var description: String {
+        switch self {
+            case .noLocation:
+                return "Location not permitted or not set"
+            case .badUrl:
+                return "Bad URL"
+            case .decodeError:
+                return "Could not decode data returned from weather service"
+            case .throttle (let lastUpdate):
+                return "Throttled weather service, last update was \(lastUpdate)"
+            case .serverError (let error):
+                var errorDesc = ""
+                switch error {
+                    case nil:
+                        errorDesc = "Unknown error"
+                    case .some(let errorCode):
+                        switch errorCode {
+                            case 401:
+                                errorDesc = "API key error or wrong subscription type request."
+                            case 404:
+                                errorDesc = "Wrong location or API format."
+                            case 429:
+                                errorDesc = "API call rate exceeded."
+                            case 500, 502, 503, 504:
+                                errorDesc = "API key error or wrong subscription type request."
+                            default:
+                                errorDesc = "Open weather map error \(errorCode)."
+                        }
+                }
+                return "Server error \(errorDesc)."
+        }
+    }
+}
+
+enum BackgroundTaskError: Error {
+    case notAuthorized
+    case fanNotOperating
+    case tempAlarmNotSet
+    case noCurrentTemp
+    case taskCancelled
+    
+    var description: String {
+        switch self {
+            case .notAuthorized:
+                return "User has disabled notifications."
+            case .fanNotOperating:
+                return "No fans are operating"
+            case .tempAlarmNotSet:
+                return "User has disabled temperature alarms"
+            case .noCurrentTemp:
+                return "No current temperature provided"
+            case .taskCancelled:
+                return "Task cancelled"
+        }
+    }
+}
+/*
+guard await UNUserNotificationCenter.current().getStatus() == .authorized else {
+    print("Notifications not authorized.")
+    task.setTaskCompleted(success: true)
+    return
+}
+guard house.fansOperating, monitor.tempAlarmSet else {
+    print("Background task not required, fan operating: \(house.fansOperating), alarm set: \(monitor.tempAlarmSet)")
+    task.setTaskCompleted(success: true)
+    return
+}
+
+await monitor.updateWeatherAlarmStatus()
+
+guard let currentTemp = monitor.currentTemp else {
+    print("Valid current temp not available.")
+    task.setTaskCompleted(success: false)
+    return
+}
+*/

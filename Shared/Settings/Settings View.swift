@@ -7,10 +7,11 @@
 
 import SwiftUI
 import CoreLocation
+import UserNotifications
 
 struct SettingsView: View {
     @EnvironmentObject var location: Location
-    @EnvironmentObject var weather: Weather
+    @EnvironmentObject var weather: WeatherMonitor
     @Environment(\.scenePhase) var scenePhase
     @AppStorage(StorageKey.temperatureAlarmEnabled.key) var temperatureAlertsEnabled: Bool = false
     @AppStorage(StorageKey.interlockAlarmEnabled.key) var interlockAlertsEnabled: Bool = false
@@ -20,6 +21,7 @@ struct SettingsView: View {
     @State private var initInterlockAlertsEnabled = false
     @State private var initLocationPermission: Location.LocationPermission = .unknown
     @State private var initCoord: Data?
+    @State private var weatherError: Error?
     @Binding var activeSheet: OverlaySheet?
     
     private var coordinatesAvailable: Bool {
@@ -111,7 +113,7 @@ struct SettingsView: View {
                                 .padding(.bottom, 10)
                         }
                     }
-                    if let weatherError = weather.retrievalError, coordinatesAvailable, temperatureAlertsEnabled {
+                    if weatherError != nil, coordinatesAvailable, temperatureAlertsEnabled {
                         Section(header: Text("Weather Error").settingsAppearance(.header)) {
                             VStack (alignment: .leading)
                             {
@@ -119,13 +121,20 @@ struct SettingsView: View {
                                     Text("Could not get outside temperature")
                                     Spacer()
                                     Button(action: {
-                                        weather.check()
+                                        Task {
+                                            do {
+//                                                let _ = try await weather.simpleCheck()
+                                                self.weatherError = nil
+                                            } catch {
+                                                self.weatherError = error
+                                            }
+                                        }
                                     }, label: {
                                         Text("Try Again")
                                             .settingsAppearance(.buttonLabel)
                                     })
                                 }
-                            Text( ( weatherError as? ConnectionError)?.description ?? "Unknown error")
+                            Text ( (weatherError! as? ConnectionError).map { $0.description } ?? weatherError!.localizedDescription )
                                     .font(.caption2)
                                     .lineLimit(3)
 //                                    .layoutPriority(1)
@@ -173,6 +182,36 @@ struct SettingsView: View {
             initInterlockAlertsEnabled = interlockAlertsEnabled
             initLocationPermission = locationPermission
             initCoord = coordinateData
+            Task {
+                do {
+//                    let _ = try await weather.simpleCheck()
+                    weatherError = nil
+                } catch {
+                    weatherError = error
+                }
+            }
+        })
+        .onChange(of: interlockAlertsEnabled, perform: { enabled in
+            UNUserNotificationCenter.current().getNotificationSettings(completionHandler: { settings in
+                if settings.authorizationStatus != .authorized {
+                    UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge], completionHandler: { (approved, _) in
+                        if !approved {
+                            interlockAlertsEnabled = false
+                        }
+                    })
+                }
+            })
+        })
+        .onChange(of: temperatureAlertsEnabled, perform: { enabled in
+            UNUserNotificationCenter.current().getNotificationSettings(completionHandler: { settings in
+                if settings.authorizationStatus != .authorized {
+                    UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge], completionHandler: { (approved, _) in
+                        if !approved {
+                            interlockAlertsEnabled = false
+                        }
+                    })
+                }
+            })
         })
     }
 }
@@ -287,7 +326,7 @@ struct Settings_View_Previews: PreviewProvider {
             SettingsView(activeSheet: .constant(nil))
         }
                     .preferredColorScheme(.dark)
-                    .environmentObject(Weather())
+                    .environmentObject(WeatherMonitor.shared)
                     .environmentObject(loc)
                     .environment(\.locale, .init(identifier: "de"))
 

@@ -13,6 +13,7 @@ struct ContentView: View {
         HouseView()
             .background(Color.background)
             .foregroundColor(.main)
+
     }
     
     init () {

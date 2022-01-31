@@ -25,6 +25,32 @@ class TestViewModel: ObservableObject {
         }
     }
 }
+class TestWeatherItems {
+    static var testWeatherresult = Weather.WeatherResult.init(currentTemp: Measurement<UnitTemperature>.init(value: 35, unit: .fahrenheit), forecast: [
+        (Date(timeIntervalSinceNow: 1 * 3600), Measurement<UnitTemperature>.init(value: 40, unit: .fahrenheit)),
+        (Date(timeIntervalSinceNow: 2 * 3600), Measurement<UnitTemperature>.init(value: 45, unit: .fahrenheit)),
+        (Date(timeIntervalSinceNow: 3 * 3600), Measurement<UnitTemperature>.init(value: 50, unit: .fahrenheit)),
+        (Date(timeIntervalSinceNow: 4 * 3600), Measurement<UnitTemperature>.init(value: 55, unit: .fahrenheit)),
+        (Date(timeIntervalSinceNow: 5 * 3600), Measurement<UnitTemperature>.init(value: 60, unit: .fahrenheit)),
+        (Date(timeIntervalSinceNow: 6 * 3600), Measurement<UnitTemperature>.init(value: 65, unit: .fahrenheit)),
+        (Date(timeIntervalSinceNow: 7 * 3600), Measurement<UnitTemperature>.init(value: 70, unit: .fahrenheit)),
+        (Date(timeIntervalSinceNow: 8 * 3600), Measurement<UnitTemperature>.init(value: 75, unit: .fahrenheit)),
+    ])
+    static var testWeatherObj: Data {
+        let current = Weather.WeatherObject.Current.init(temp: 76)
+        let forecast = [
+            Weather.WeatherObject.Hourly.init(dt: Int(Date(timeIntervalSinceNow: 1 * 3600).timeIntervalSince1970), temp: 60),
+            Weather.WeatherObject.Hourly.init(dt: Int(Date(timeIntervalSinceNow: 2 * 3600).timeIntervalSince1970), temp: 65),
+            Weather.WeatherObject.Hourly.init(dt: Int(Date(timeIntervalSinceNow: 3 * 3600).timeIntervalSince1970), temp: 70),
+            Weather.WeatherObject.Hourly.init(dt: Int(Date(timeIntervalSinceNow: 4 * 3600).timeIntervalSince1970), temp: 75),
+            Weather.WeatherObject.Hourly.init(dt: Int(Date(timeIntervalSinceNow: 5 * 3600).timeIntervalSince1970), temp: 80),
+            Weather.WeatherObject.Hourly.init(dt: Int(Date(timeIntervalSinceNow: 6 * 3600).timeIntervalSince1970), temp: 85),
+            Weather.WeatherObject.Hourly.init(dt: Int(Date(timeIntervalSinceNow: 7 * 3600).timeIntervalSince1970), temp: 90),
+            Weather.WeatherObject.Hourly.init(dt: Int(Date(timeIntervalSinceNow: 8 * 3600).timeIntervalSince1970), temp: 100)
+            ]
+        return Weather.WeatherObject.init(current: current, hourly: forecast).data
+    }
+}
 
 //class MockUserDefaults: UserDefaultsProtocol {
 //    let encoder = JSONEncoder()

@@ -20,7 +20,6 @@ class FanViewModel: ObservableObject {
 //    @Published var fanStatusIcons = Array<Image>()
     @Published var fanRotationDuration: Double = 0.0
     @Published var currentMotorSpeed: Int?
-    @Published var displayFanRpm = Int.zero
     @Published var useAlarmColor = false
     @Published var showTimerIcon = true
     @Published var fatalFault = false
@@ -28,21 +27,20 @@ class FanViewModel: ObservableObject {
     @Published var offDateText: String?
     @Published var showDamperWarning = false
     @Published var showInterlockWarning = false
+    @Published var displayFanRpm = Int.zero
     private var displayedMotorSpeed: Int?
     private var displayMotor = PassthroughSubject<AnyPublisher<Double, Never>, Never>()
     
     private var bag = Set<AnyCancellable>()
     
     init (chars: FanCharacteristics) {
-        print("view model init for \(chars.ipAddr)")
         self.model = FanModel(usingChars: chars)
         self.chars = chars
         startSubscribers(initialChars: chars)
     }
-    
+
     convenience init () {
         let chars = FanCharacteristics()
-//        let houseData = SharedHouseData.shared
         self.init(chars: chars)
     }
     
@@ -173,6 +171,32 @@ class FanViewModel: ObservableObject {
         
         model.$fanCharacteristics
             .prepend(chars)
+            .compactMap { optChars -> (addr: String, spd: Int)? in
+                guard let chars = optChars else { return nil }
+                return (chars.macAddr, chars.speed)
+            }
+            .combineLatest ( $selectorSegments )
+            .map { (speedId, levels) -> (addr: String, rpm: Int) in
+                let rpm = Int ( Double ( speedId.spd ) * 50.0 / Double ( levels ) )
+                return (speedId.addr, rpm)
+            }
+            .sink(receiveValue: { idRpm in
+                SharedHouseData.shared.updateOperationalStatus(forMacAddr: idRpm.addr, to: idRpm.rpm)
+            })
+            .store(in: &bag)
+//
+//        $displayFanRpm
+//            .handleEvents(receiveOutput: { rpm in
+//                print("rpm \(rpm) in \(self.mark)")
+//            })
+//            .sink(receiveCompletion: { _ in }, receiveValue: { _ in })
+//            .store(in: &bag)
+        
+//            .compactMap { $0?.speed }
+//            .assign(to: &$displayFanRpm)
+        
+        model.$fanCharacteristics
+            .prepend(chars)
             .compactMap { $0?.speed }
             .assign(to: &$currentMotorSpeed)
 
@@ -198,26 +222,7 @@ class FanViewModel: ObservableObject {
             .map { FanViewModel.speedTable[$0] ?? 1 }
             .map { $0 + 1 }
             .assign(to: &$selectorSegments)
-        
-        model.$fanCharacteristics
-            .compactMap { $0?.speed }
-            .prepend ( chars.speed )
-            .combineLatest( $selectorSegments )
-            .map { (speed, levels) -> Int in
-                return Int ( Double ( speed ) * 50.0 / Double ( levels ) )
-            }
-            .assign(to: &$displayFanRpm)
-        
-        model.$fanCharacteristics
-            .prepend(chars)
-            .compactMap { chars -> (Int, String)? in
-                guard let spd = chars?.speed, let macAddr = chars?.macAddr else { return nil }
-                return (spd, macAddr)
-            }
-            .sink(receiveValue: { (spd, mac) in
-                SharedHouseData.shared.updateOperationalStatus(forMacAddr: mac, to: spd > 0)
-            })
-            .store(in: &bag)
+
 //
 //
 //        $currentMotorSpeed

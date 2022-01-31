@@ -9,6 +9,7 @@ import Foundation
 import Combine
 import SwiftUI
 import CoreLocation
+import BackgroundTasks
 
 extension Comparable {
     func clamped(to limits: ClosedRange<Self>) -> Self {
@@ -119,28 +120,43 @@ extension Task where Success == Never, Failure == Never {
 
 extension Data {
     var decodeTemperature: Measurement<UnitTemperature>? {
-        let decoder = PropertyListDecoder()
+        let decoder = JSONDecoder()
         return try? decoder.decode(Measurement.self, from: self)
     }
 }
 
 extension Data {
     var decodeCoordinate: Coordinate? {
-        let decoder = PropertyListDecoder()
+        let decoder = JSONDecoder()
         return try? decoder.decode(Coordinate.self, from: self)
     }
 }
 
 extension Data {
     var decodeDate: Date? {
-        let decoder = PropertyListDecoder()
+        let decoder = JSONDecoder()
         return try? decoder.decode(Date.self, from: self)
+    }
+}
+
+extension Data {
+    var decodeWeatherResult: Weather.WeatherResult? {
+        let decoder = JSONDecoder()
+        guard !self.isEmpty, let weatherObj = try? decoder.decode(Weather.WeatherObject.self, from: self), let currentT = weatherObj.current?.temp, let hourly = weatherObj.hourly else { return nil }
+        let forecast: Weather.Forecast = hourly
+            .compactMap({
+                guard let dt = $0.dt, let temp = $0.temp else {
+                    return nil
+                }
+                return (Date(timeIntervalSince1970: TimeInterval(dt)), Weather.TempMeasurement(value: temp, unit: .fahrenheit))
+            })
+        return Weather.WeatherResult.init(currentTemp: Weather.TempMeasurement(value: currentT, unit: .fahrenheit), forecast: forecast)
     }
 }
 
 extension Measurement {
     var data: Data? {
-        let encoder = PropertyListEncoder()
+        let encoder = JSONEncoder()
         return try? encoder.encode(self)
     }
 }
@@ -152,7 +168,7 @@ struct Coordinate: Codable {
 
 extension CLLocation {
     var data: Data? {
-        let encoder = PropertyListEncoder()
+        let encoder = JSONEncoder()
         let coord = Coordinate(lat: self.coordinate.latitude, lon: self.coordinate.longitude)
         return try? encoder.encode(coord)
     }
@@ -160,8 +176,18 @@ extension CLLocation {
 
 extension Date {
     var data: Data? {
-        let encoder = PropertyListEncoder()
+        let encoder = JSONEncoder()
         return try? encoder.encode(self)
+    }
+}
+
+extension UNUserNotificationCenter {
+    func getStatus () async -> UNAuthorizationStatus {
+        await withCheckedContinuation( { continuation in
+            UNUserNotificationCenter.current().getNotificationSettings(completionHandler: { settings in
+                continuation.resume(returning: settings.authorizationStatus)
+            })
+        })
     }
 }
 

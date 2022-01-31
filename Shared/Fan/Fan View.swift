@@ -126,15 +126,15 @@ struct BaseFanImage: View {
 
 struct FanInfoAreaRender: View {
     @EnvironmentObject var sharedHouseData: SharedHouseData
-    @EnvironmentObject var weather: Weather
+    @EnvironmentObject var weather: WeatherMonitor
     @Binding var activeSheet: OverlaySheet?
     @State private var fanFrame: CGRect = .zero
     @ObservedObject var viewModel: FanViewModel
-    private var tempFormatter: MeasurementFormatter {
-        let m = MeasurementFormatter()
-        m.numberFormatter.maximumFractionDigits = 0
-        return m
-    }
+//    private var tempFormatter: MeasurementFormatter {
+//        let m = MeasurementFormatter()
+//        m.numberFormatter.maximumFractionDigits = 0
+//        return m
+//    }
     
     var body: some View {
                 VStack (alignment: .center, spacing: 5)
@@ -151,7 +151,7 @@ struct FanInfoAreaRender: View {
                     RefreshIndicator()
                         .padding(.top, 40)
                     if let temp = weather.currentTemp, !sharedHouseData.scanning {
-                        Text(tempFormatter.string(from: temp))
+                        Text(CustomFormatter.temperture.string(from: temp))
                             .padding(.top, 20)
                     }
                     Spacer()
@@ -163,7 +163,7 @@ struct FanInfoAreaRender: View {
 
 struct FanNameRender: View {
     @EnvironmentObject var sharedHouseData: SharedHouseData
-    @EnvironmentObject var weather: Weather
+    @EnvironmentObject var weather: WeatherMonitor
     @Binding var activeSheet: OverlaySheet?
     @Binding var name: String
     @Binding var showDamperWarning: Bool
@@ -279,7 +279,7 @@ struct FanView_Previews: PreviewProvider {
 //            }
         }
         .environmentObject(SharedHouseData.shared)
-        .environmentObject(Weather())
+        .environmentObject(WeatherMonitor.shared)
         .foregroundColor(.main)
     }
 }

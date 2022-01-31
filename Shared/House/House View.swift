@@ -80,7 +80,7 @@ struct HouseViewPreviews: PreviewProvider {
         return HouseView(viewModel: HouseViewModel(dataSource: HouseViewDataMock()))
             .preferredColorScheme(.dark)
             .environmentObject(SharedHouseData.shared)
-            .environmentObject(Weather())
+            .environmentObject(WeatherMonitor.shared)
             .background(Color.background)
             .foregroundColor(.main)
     }

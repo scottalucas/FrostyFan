@@ -62,12 +62,6 @@ final class HouseLamps: OptionSet, RawRepresentable, Equatable {
         return labelArr
     }
     
-//    var displayedIcons: [Image] {
-//        var labelArr = Array<Image>()
-//        if self.contains(.showTemperatureWarning) { labelArr.append(.thermometer) }
-//        return labelArr
-//    }
-    
     internal init (rawValue: Int) {
         self.rawValue = rawValue
     }
@@ -163,9 +157,3 @@ final class FanLamps: OptionSet, RawRepresentable {
         self.rawValue = rawValue
     }
 }
-
-extension Notification.Name {
-    static let removeFan = Notification.Name("removeFan")
-}
-
-//extension FanLamps: ObservableObject {}
