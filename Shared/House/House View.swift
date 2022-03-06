@@ -10,7 +10,7 @@ import Combine
 
 struct HouseView: View {
     typealias IPAddr = String
-    @EnvironmentObject private var sharedHouseData: SharedHouseData
+    @EnvironmentObject private var sharedHouseData: HouseMonitor
     @StateObject var viewModel: HouseViewModel
     @State private var currentTab: Int = 0
     @State private var info: String = ""
@@ -75,11 +75,11 @@ struct HouseViewPreviews: PreviewProvider {
 
     static var previews: some View {
         let vm = HouseViewModel()
-        let env = SharedHouseData.shared
+        let env = HouseMonitor.shared
 
         return HouseView(viewModel: HouseViewModel(dataSource: HouseViewDataMock()))
             .preferredColorScheme(.dark)
-            .environmentObject(SharedHouseData.shared)
+            .environmentObject(HouseMonitor.shared)
             .environmentObject(WeatherMonitor.shared)
             .background(Color.background)
             .foregroundColor(.main)
@@ -92,12 +92,12 @@ class HouseViewDataMock: House {
     
     var finishTimer: Timer?
     
-    var indicators = SharedHouseData.shared
+    var indicators = HouseMonitor.shared
 
     var percentHostsChecked: Double?
     
     override func scan () -> AsyncThrowingStream<FanCharacteristics, Error> {
-        SharedHouseData.shared.scanning = true
+        HouseMonitor.shared.scanning = true
         return AsyncThrowingStream <FanCharacteristics, Error> { continuation in
             Task {
                 let totalHosts = 10.0
@@ -129,7 +129,7 @@ class HouseViewDataMock: House {
 //                await Task.sleep(1_000_000_000)
 //                indicators.updateProgress = nil
                 continuation.finish(throwing: nil)
-                SharedHouseData.shared.scanning = false
+                HouseMonitor.shared.scanning = false
 //                finishTimer?.invalidate()
 //                finishTimer = nil
             }

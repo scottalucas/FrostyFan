@@ -140,6 +140,13 @@ extension Data {
 }
 
 extension Data {
+    var decodeLocationPermission: Location.LocationPermission? {
+        let decoder = JSONDecoder()
+        return try? decoder.decode(Location.LocationPermission.self, from: self)
+    }
+}
+
+extension Data { //where Data contains a WeatherObject
     var decodeWeatherResult: Weather.WeatherResult? {
         let decoder = JSONDecoder()
         guard !self.isEmpty, let weatherObj = try? decoder.decode(Weather.WeatherObject.self, from: self), let currentT = weatherObj.current?.temp, let hourly = weatherObj.hourly else { return nil }
@@ -164,6 +171,10 @@ extension Measurement {
 struct Coordinate: Codable {
     var lat: Double
     var lon: Double
+    var data: Data? {
+        let encoder = JSONEncoder()
+        return try? encoder.encode(self)
+    }
 }
 
 extension CLLocation {
@@ -181,6 +192,27 @@ extension Date {
     }
 }
 
+extension Date: RawRepresentable {
+    private static let formatter = ISO8601DateFormatter()
+    
+    public var rawValue: String {
+        Date.formatter.string(from: self)
+    }
+    
+    public init?(rawValue: String) {
+        self = Date.formatter.date(from: rawValue) ?? Date()
+    }
+}
+
+extension Array {
+    /// Returns a new `Array` made by appending a given element to the `Array`.
+    func appending(_ newElement: Element) -> Array {
+        var a = Array(self)
+        a.append(newElement)
+        return a
+    }
+}
+
 extension UNUserNotificationCenter {
     func getStatus () async -> UNAuthorizationStatus {
         await withCheckedContinuation( { continuation in
@@ -188,6 +220,16 @@ extension UNUserNotificationCenter {
                 continuation.resume(returning: settings.authorizationStatus)
             })
         })
+    }
+}
+
+@propertyWrapper struct ClampedWeatherRetrieval {
+    var wrappedValue: Date {
+        didSet { wrappedValue = wrappedValue.clamped(to: (Storage.lastForecastUpdate.addingTimeInterval(15 * 60)...(.distantFuture))) }
+    }
+    
+    init(wrappedValue: Date) {
+        self.wrappedValue = wrappedValue.clamped(to: (Storage.lastForecastUpdate.addingTimeInterval(15 * 60)...(.distantFuture)))
     }
 }
 

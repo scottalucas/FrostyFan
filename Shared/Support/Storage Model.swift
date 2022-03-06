@@ -166,48 +166,211 @@ import CoreLocation
 //    }
 //}
 
-protocol UserDefaultsProtocol {
-    func data(forKey: String) -> Data?
-    func set(_:Any?, forKey: String)
-}
-
-extension UserDefaults: UserDefaultsProtocol {}
-
-enum StorageKey {
-    case interlockAlarmEnabled, temperatureAlarmEnabled, lowTempLimit, highTempLimit, locationAvailable, forecast, lastForecastUpdate, coordinate, fanName (String), fanAdjustingSpeed (String), fanDamperOperating (String), noValue
-    
+//protocol UserDefaultsProtocol {
+//    func data(forKey: String) -> Data?
+//    func set(_:Any?, forKey: String)
+//}
+//
+//extension UserDefaults: UserDefaultsProtocol {}
+enum StorageKey: Equatable {
+    case interlockAlarmEnabled, //bool
+         temperatureAlarmEnabled, //bool
+         lowTempLimit, //double
+         highTempLimit, //double
+         //         locationAvailable,
+         forecast, //data, decode to WeatherResult
+         lastForecastUpdate, //Date
+         coordinate, //data, decode to Coordinate
+         fanName (String) //string
     var key: String {
         switch self {
-        case .interlockAlarmEnabled:
-            return "interlock"
-        case .temperatureAlarmEnabled:
-            return "tempAlarm"
-        case .lowTempLimit:
-            return "lowTempLimit"
-        case .highTempLimit:
-            return "highTempLimit"
-        case .locationAvailable:
-            return "locAvailable"
-        case .forecast:
-            return "forecast"
-        case .lastForecastUpdate:
-            return "lastForecastUpdate"
-//        case .locLat:
-//            return "locLat"
-//        case .locLon:
-//            return "locLon"
+            case .interlockAlarmEnabled:
+                return "interlock"
+            case .temperatureAlarmEnabled:
+                return "tempAlarm"
+            case .lowTempLimit:
+                return "lowTempLimit"
+            case .highTempLimit:
+                return "highTempLimit"
+                //        case .locationAvailable:
+                //            return "locAvailable"
+            case .forecast:
+                return "forecast"
+            case .lastForecastUpdate:
+                return "lastForecastUpdate"
+                //        case .locLat:
+                //            return "locLat"
+                //        case .locLon:
+                //            return "locLon"
             case .coordinate:
                 return "coordinate"
-        case .fanName(let macAddr):
-            return "name\(macAddr)"
-        case .fanAdjustingSpeed (let macAddr):
-            return "adjustingSpeed\(macAddr)"
-        case .fanDamperOperating (let macAddr):
-                return "damperOperating\(macAddr)"
-        case .noValue:
-            return "default"
+            case .fanName(let macAddr):
+                return "name\(macAddr)"
         }
     }
+}
+
+struct Storage {
+    static var interlockAlarmEnabled: Bool {
+        get {
+            UserDefaults.standard.object(forKey: StorageKey.interlockAlarmEnabled.key) == nil ? false : UserDefaults.standard.bool(forKey: StorageKey.interlockAlarmEnabled.key)
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: StorageKey.interlockAlarmEnabled.key)
+        }
+    }
+    static var temperatureAlarmEnabled: Bool {
+        get {
+            UserDefaults.standard.object(forKey: StorageKey.temperatureAlarmEnabled.key) == nil ? false : UserDefaults.standard.bool(forKey: StorageKey.temperatureAlarmEnabled.key)
+        }
+        set {
+             UserDefaults.standard.set(newValue, forKey: StorageKey.temperatureAlarmEnabled.key)
+        }
+    }
+    
+    static var lowTempLimit: Double? {
+        get {
+            UserDefaults.standard.object(forKey: StorageKey.lowTempLimit.key) == nil ? nil : UserDefaults.standard.double(forKey: StorageKey.lowTempLimit.key)
+        }
+        set {
+             UserDefaults.standard.set(newValue, forKey: StorageKey.lowTempLimit.key)
+        }
+    }
+    
+    static var highTempLimit: Double? {
+        get {
+            UserDefaults.standard.object(forKey: StorageKey.highTempLimit.key) == nil ? nil : UserDefaults.standard.double(forKey: StorageKey.highTempLimit.key)
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: StorageKey.highTempLimit.key)
+        }
+    }
+
+    static var storedWeather: Weather.WeatherResult? {
+        get {
+            UserDefaults.standard.object(forKey: StorageKey.forecast.key) == nil ? nil : UserDefaults.standard.data(forKey: StorageKey.forecast.key)?.decodeWeatherResult
+        }
+        set {
+            guard let val = newValue else {
+                UserDefaults.standard.set(nil, forKey: StorageKey.forecast.key)
+                return
+            }
+            let obj = Weather.WeatherObject(fromResult: val).data
+            UserDefaults.standard.set(obj, forKey: StorageKey.forecast.key)
+        }
+    }
+    
+    static var lastForecastUpdate: Date {
+        get {
+            UserDefaults.standard.data(forKey: StorageKey.lastForecastUpdate.key)?.decodeDate ?? .distantPast
+        } set {
+            UserDefaults.standard.set(newValue.data, forKey: StorageKey.lastForecastUpdate.key)
+        }
+    }
+    
+    static var coordinate: Coordinate? {
+        get {
+            UserDefaults.standard.data(forKey: StorageKey.coordinate.key)?.decodeCoordinate
+        } set {
+            guard let coord = newValue else {
+                UserDefaults.standard.set(nil, forKey: StorageKey.coordinate.key)
+                return
+            }
+            UserDefaults.standard.set(coord.data, forKey: StorageKey.lastForecastUpdate.key)
+        }
+    }
+    
+    static func setName(forAddr addr: String, toName name: String) {
+        let key = StorageKey.fanName(addr).key
+        UserDefaults.standard.set(name, forKey: key)
+    }
+    
+    static func getName(forAddr addr: String) -> String {
+        let key = StorageKey.fanName(addr).key
+        return UserDefaults.standard.object(forKey: key) == nil ? "Fan \(addr)" : UserDefaults.standard.string(forKey: key) ?? "Fan \(addr)"
+    }
+
+//    func get() -> Any? {
+//        switch self {
+//            case .interlockAlarmEnabled, .temperatureAlarmEnabled:
+//                return UserDefaults.standard.bool(forKey: self.key)
+//            case .lowTempLimit, .highTempLimit:
+//                return UserDefaults.standard.double(forKey: self.key)
+//            case .forecast:
+//                return UserDefaults.standard.data(forKey: self.key)?.decodeWeatherResult
+//            case .lastForecastUpdate:
+//                return UserDefaults.standard.data(forKey: self.key)?.decodeDate
+//            case .coordinate:
+//                return UserDefaults.standard.data(forKey: self.key)?.decodeCoordinate
+//            case .fanName:
+//                return UserDefaults.standard.string(forKey: self.key)
+//        }
+//    }
+//
+//    static var interlockAlarmEnabled: Bool {
+//        UserDefaults.standard.bool(forKey: StorageKey.interlockAlarmEnabled.key)
+//    }
+//
+//    var temperatureAlarmEnabled: Bool {
+//        UserDefaults.standard.bool(forKey: StorageKey.temperatureAlarmEnabled.key)
+//    }
+//
+//    var highTempLimit: Double {
+//        UserDefaults.standard.double(forKey: StorageKey.highTempLimit.key)
+//    }
+//
+//    var lowTempLimit: Double {
+//        UserDefaults.standard.double(forKey: StorageKey.lowTempLimit.key)
+//    }
+//
+//    var storedWeather: Weather.WeatherResult? {
+//        UserDefaults.standard.data(forKey: StorageKey.forecast.key)?.decodeWeatherResult
+//    }
+//
+//    var lastUpdate: Date {
+//        UserDefaults.standard.data(forKey: StorageKey.lastForecastUpdate.key)?.decodeDate ?? .distantPast
+//    }
+//
+//    var fanCoordinates: Coordinate? {
+//        UserDefaults.standard.data(forKey: StorageKey.coordinate.key)?.decodeCoordinate
+//    }
+    
+    static func clear (_ key: StorageKey) {
+        UserDefaults.standard.set(nil, forKey: key.key)
+    }
+//
+//    func set(to value: Any) throws {
+//        switch self {
+//            case .interlockAlarmEnabled, .temperatureAlarmEnabled:
+//                guard let val = value as? Bool else { throw StorageError.typeMismatch }
+//                UserDefaults.standard.set(val, forKey: self.key)
+//            case .lowTempLimit, .highTempLimit:
+//                switch value.self {
+//                    case is Int:
+//                        UserDefaults.standard.set(Double(value as! Int), forKey: self.key)
+//                    case is Double:
+//                        UserDefaults.standard.set(value as! Double, forKey: self.key)
+//                    default:
+//                        throw StorageError.typeMismatch
+//                }
+//            case .forecast:
+//                guard let val = value as? Data else { throw StorageError.typeMismatch }
+//                UserDefaults.standard.set(val, forKey: self.key)
+//            case .lastForecastUpdate:
+//                guard let val = value as? Date else { throw StorageError.typeMismatch }
+//                UserDefaults.standard.set(val, forKey: self.key)
+//            case .coordinate:
+//                guard let val = value as? Coordinate else { throw StorageError.typeMismatch }
+//                UserDefaults.standard.set(val.data, forKey: self.key)
+//            case .fanName:
+//                guard let val = value as? String else { throw StorageError.typeMismatch }
+//                UserDefaults.standard.set(val, forKey: self.key)
+//        }
+//    }
+//
+//    enum StorageError: Error {
+//        case typeMismatch, notFound
+//    }
 }
 
 struct ENV {

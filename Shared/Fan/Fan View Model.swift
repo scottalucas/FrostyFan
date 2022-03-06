@@ -181,7 +181,7 @@ class FanViewModel: ObservableObject {
                 return (speedId.addr, rpm)
             }
             .sink(receiveValue: { idRpm in
-                SharedHouseData.shared.updateOperationalStatus(forMacAddr: idRpm.addr, to: idRpm.rpm)
+                HouseMonitor.shared.updateOperationalStatus(forMacAddr: idRpm.addr, to: idRpm.rpm)
             })
             .store(in: &bag)
 //

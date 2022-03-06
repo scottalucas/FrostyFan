@@ -15,7 +15,7 @@ struct SettingsView: View {
     @Environment(\.scenePhase) var scenePhase
     @AppStorage(StorageKey.temperatureAlarmEnabled.key) var temperatureAlertsEnabled: Bool = false
     @AppStorage(StorageKey.interlockAlarmEnabled.key) var interlockAlertsEnabled: Bool = false
-    @AppStorage(StorageKey.locationAvailable.key) var locationPermission: Location.LocationPermission = .unknown
+//    @AppStorage(StorageKey.locationAvailable.key) var locationPermission: Location.LocationPermission = .unknown
     @AppStorage(StorageKey.coordinate.key) var coordinateData: Data?
     @State private var initTempAlertsEnabled = false
     @State private var initInterlockAlertsEnabled = false
@@ -35,62 +35,66 @@ struct SettingsView: View {
             VStack {
                 List {
                     Section(header: Text("Location").foregroundColor(.background)) {
-                        switch (locationPermission, coordinatesAvailable) {
-                            case (.appProhibited, _):
-                                HStack {
-                                    Text("Location disabled for Toasty")
+                        if coordinatesAvailable {
+                            HStack {
+                                VStack {
+                                    Text("Location saved")
                                         .settingsAppearance(.lineLabel)
-                                    Spacer()
-                                    Button(action: {
-                                        UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!)
-                                    }, label: {
-                                        Text("Change Settings")
-                                            .settingsAppearance(.buttonLabel)
-                                    })
-                                }
-                            case (.deviceProhibited, _):
-                                HStack {
-                                    Text("Location off for this device")
-                                        .settingsAppearance(.lineLabel)
-                                    Spacer()
-                                    Button(action: {
-                                        UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!)
-                                    }, label: {
-                                        Text("Change Settings")
-                                            .settingsAppearance(.buttonLabel)
-                                    })
-                                }
-                            case (.appAllowed, false), (.unknown, false):
-                                HStack {
-                                    Text("Location unknown")
-                                        .settingsAppearance(.lineLabel)
-                                    Spacer()
-                                    Button(action: {
-                                        location.updateLocation()
-                                    }, label: {
-                                        Text("Set Location")
-                                            .settingsAppearance(.buttonLabel)
-                                    })
-                                }
-                            case (_, true):
-                                HStack {
-                                    VStack {
-                                        Text("Location saved")
-                                            .settingsAppearance(.lineLabel)
-                                        if let lat = coordinateData?.decodeCoordinate?.lat, let lon = coordinateData?.decodeCoordinate?.lon {
-                                            Text("\(lat.latitudeStr)   \(lon.longitudeStr)")
-                                                .font(.caption2.italic())
-                                        }
+                                    if let lat = coordinateData?.decodeCoordinate?.lat, let lon = coordinateData?.decodeCoordinate?.lon {
+                                        Text("\(lat.latitudeStr)   \(lon.longitudeStr)")
+                                            .font(.caption2.italic())
                                     }
-                                    Spacer()
-                                    Button(action: {
-                                        location.clearLocation()
-                                    }, label: {
-                                        Text("Erase Location")
-                                            .settingsAppearance(.buttonLabel)
-                                    })
                                 }
+                                Spacer()
+                                Button(action: {
+                                    location.clearLocation()
+                                }, label: {
+                                    Text("Erase Location")
+                                        .settingsAppearance(.buttonLabel)
+                                })
+                            }
+                        } else if !CLLocationManager.locationServicesEnabled() {
+                            HStack {
+                                Text("Location off for this device")
+                                    .settingsAppearance(.lineLabel)
+                                Spacer()
+                                Button(action: {
+                                    UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!)
+                                }, label: {
+                                    Text("Enable Location")
+                                        .settingsAppearance(.buttonLabel)
+                                })
+                            }
+                        } else {
+                            HStack {
+                                Text("Location unknown")
+                                    .settingsAppearance(.lineLabel)
+                                Spacer()
+                                Button(action: {
+                                    location.updateLocation()
+                                }, label: {
+                                    Text("Set Location")
+                                        .settingsAppearance(.buttonLabel)
+                                })
+                            }
                         }
+//                        switch (locationPermission, coordinatesAvailable) {
+//                            case (.appProhibited, _):
+//                                HStack {
+//                                    Text("Location disabled for Toasty")
+//                                        .settingsAppearance(.lineLabel)
+//                                    Spacer()
+//                                    Button(action: {
+//                                        UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!)
+//                                    }, label: {
+//                                        Text("Change Settings")
+//                                            .settingsAppearance(.buttonLabel)
+//                                    })
+//                                }
+//                            case (.deviceProhibited, _):
+//                            case (.appAllowed, false), (.unknown, false):
+//                            case (_, true):
+//                        }
                     }
                     Section(header: Text("Alerts").settingsAppearance(.header)) {
                         if coordinatesAvailable {
@@ -123,7 +127,7 @@ struct SettingsView: View {
                                     Button(action: {
                                         Task {
                                             do {
-//                                                let _ = try await weather.simpleCheck()
+                                               try await WeatherMonitor.shared.updateWeatherConditions()
                                                 self.weatherError = nil
                                             } catch {
                                                 self.weatherError = error
@@ -156,7 +160,6 @@ struct SettingsView: View {
                                 Button("Cancel") {
                                     temperatureAlertsEnabled = initTempAlertsEnabled
                                     interlockAlertsEnabled = initInterlockAlertsEnabled
-                                    locationPermission = initLocationPermission
                                     coordinateData = initCoord
                                     activeSheet = nil
                                 }
@@ -177,26 +180,27 @@ struct SettingsView: View {
                 }
         }
         .navigationBarBackButtonHidden(true)
-        .onAppear(perform: {
-            initTempAlertsEnabled = temperatureAlertsEnabled
-            initInterlockAlertsEnabled = interlockAlertsEnabled
-            initLocationPermission = locationPermission
-            initCoord = coordinateData
-            Task {
-                do {
-//                    let _ = try await weather.simpleCheck()
-                    weatherError = nil
-                } catch {
-                    weatherError = error
-                }
-            }
-        })
+//        .onAppear(perform: {
+////            initTempAlertsEnabled = temperatureAlertsEnabled
+////            initInterlockAlertsEnabled = interlockAlertsEnabled
+////            initLocationPermission = locationPermission
+////            initCoord = coordinateData
+////            Task {
+////                do {
+//////                    let _ = try await weather.simpleCheck()
+////                    weatherError = nil
+////                } catch {
+////                    weatherError = error
+////                }
+////            }
+//        })
         .onChange(of: interlockAlertsEnabled, perform: { enabled in
             UNUserNotificationCenter.current().getNotificationSettings(completionHandler: { settings in
                 if settings.authorizationStatus != .authorized {
                     UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge], completionHandler: { (approved, _) in
                         if !approved {
                             interlockAlertsEnabled = false
+                            temperatureAlertsEnabled = false
                         }
                     })
                 }
@@ -208,6 +212,7 @@ struct SettingsView: View {
                     UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge], completionHandler: { (approved, _) in
                         if !approved {
                             interlockAlertsEnabled = false
+                            temperatureAlertsEnabled = false
                         }
                     })
                 }

@@ -11,7 +11,7 @@ import Combine
 
 class House {
     typealias IPAddr = String
-    private var sharedHouseData = SharedHouseData.shared
+    private var sharedHouseData = HouseMonitor.shared
 //    private var timeToFinish: Date?
     private var percentHostsChecked: Double?
     private var finishTimer: Timer?
@@ -93,9 +93,9 @@ class House {
     }
 }
 
-class SharedHouseData: ObservableObject {
+class HouseMonitor: ObservableObject {
     enum FaultLevel { case major, minor, none }
-    static var shared = SharedHouseData()
+    static var shared = HouseMonitor()
     var scanDuration: Double = 5.0
     @Published var scanning = false
     @Published var fault = FaultLevel.none
@@ -108,8 +108,8 @@ class SharedHouseData: ObservableObject {
         })
     }
     private init () {}
+    
     func updateOperationalStatus(forMacAddr macAddr: String, to: Int) {
-        print("updating status for \(macAddr)")
         fanRPMs.updateValue(to, forKey: macAddr)
     }
 }

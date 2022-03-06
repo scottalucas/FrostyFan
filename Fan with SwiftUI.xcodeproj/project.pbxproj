@@ -7,80 +7,47 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		930CFF412581878D00E8E979 /* Tests_iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF402581878D00E8E979 /* Tests_iOS.swift */; };
-		930CFF4C2581878D00E8E979 /* Tests_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF4B2581878D00E8E979 /* Tests_macOS.swift */; };
 		930CFF4E2581878D00E8E979 /* Airspace Fan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF252581878B00E8E979 /* Airspace Fan.swift */; };
-		930CFF4F2581878D00E8E979 /* Airspace Fan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF252581878B00E8E979 /* Airspace Fan.swift */; };
 		930CFF502581878D00E8E979 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF262581878B00E8E979 /* ContentView.swift */; };
-		930CFF512581878D00E8E979 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF262581878B00E8E979 /* ContentView.swift */; };
 		930CFF522581878D00E8E979 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 930CFF272581878C00E8E979 /* Assets.xcassets */; };
-		930CFF532581878D00E8E979 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 930CFF272581878C00E8E979 /* Assets.xcassets */; };
 		930CFF67258187EE00E8E979 /* Network resources.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF66258187EE00E8E979 /* Network resources.swift */; };
-		930CFF68258187EE00E8E979 /* Network resources.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF66258187EE00E8E979 /* Network resources.swift */; };
 		930CFF732581881000E8E979 /* Fan Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF722581881000E8E979 /* Fan Model.swift */; };
-		930CFF742581881000E8E979 /* Fan Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF722581881000E8E979 /* Fan Model.swift */; };
 		930CFF8D2581884000E8E979 /* House Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF8C2581884000E8E979 /* House Model.swift */; };
-		930CFF8E2581884000E8E979 /* House Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF8C2581884000E8E979 /* House Model.swift */; };
 		930CFF942581884B00E8E979 /* House View Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF932581884B00E8E979 /* House View Model.swift */; };
-		930CFF952581884B00E8E979 /* House View Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF932581884B00E8E979 /* House View Model.swift */; };
 		930CFFC5258188F400E8E979 /* Fan View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFFC4258188F400E8E979 /* Fan View.swift */; };
-		930CFFC6258188F400E8E979 /* Fan View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFFC4258188F400E8E979 /* Fan View.swift */; };
 		930CFFCC258188FF00E8E979 /* House View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFFCB258188FF00E8E979 /* House View.swift */; };
-		930CFFCD258188FF00E8E979 /* House View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFFCB258188FF00E8E979 /* House View.swift */; };
 		930CFFD32581890700E8E979 /* Settings View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFFD22581890700E8E979 /* Settings View.swift */; };
-		930CFFD42581890700E8E979 /* Settings View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFFD22581890700E8E979 /* Settings View.swift */; };
 		9339093F275AC008007D528D /* RangeSlider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9339093E275AC008007D528D /* RangeSlider.swift */; };
-		93390940275AC008007D528D /* RangeSlider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9339093E275AC008007D528D /* RangeSlider.swift */; };
 		933A987E25AAA9240084C535 /* Weather Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 933A987D25AAA9240084C535 /* Weather Model.swift */; };
 		933A988425AAE47B0084C535 /* Server.plist in Resources */ = {isa = PBXBuildFile; fileRef = 933A988325AAE47B0084C535 /* Server.plist */; };
 		934C8ABA25AB92380037906C /* Location Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 934C8AB925AB92380037906C /* Location Model.swift */; };
 		934C8AC925AB926F0037906C /* Alarm Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 934C8AC825AB926F0037906C /* Alarm Model.swift */; };
-		934C8ACA25AB926F0037906C /* Alarm Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 934C8AC825AB926F0037906C /* Alarm Model.swift */; };
 		934C8AD025AB92AB0037906C /* Storage Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 934C8ACF25AB92AB0037906C /* Storage Model.swift */; };
-		934C8AD125AB92AB0037906C /* Storage Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 934C8ACF25AB92AB0037906C /* Storage Model.swift */; };
+		936D84E027B489AB002E9645 /* Fan_with_SwiftUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 936D84DF27B489AB002E9645 /* Fan_with_SwiftUITests.swift */; };
 		936F79D8259FADD500AACA53 /* Timer Sheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 936F79D7259FADD500AACA53 /* Timer Sheet.swift */; };
 		936F79E2259FADFC00AACA53 /* Detail Sheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 936F79E1259FADFC00AACA53 /* Detail Sheet.swift */; };
 		936F79E8259FAE0F00AACA53 /* Name Sheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 936F79E7259FAE0F00AACA53 /* Name Sheet.swift */; };
 		937F7C5025952138009E4754 /* Custom Operators.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937F7C4F25952138009E4754 /* Custom Operators.swift */; };
-		937F7C5125952138009E4754 /* Custom Operators.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937F7C4F25952138009E4754 /* Custom Operators.swift */; };
 		937F7C5725952358009E4754 /* Custom Errors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937F7C5625952358009E4754 /* Custom Errors.swift */; };
-		937F7C5825952358009E4754 /* Custom Errors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937F7C5625952358009E4754 /* Custom Errors.swift */; };
 		937F7C622595239B009E4754 /* Custom UI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937F7C612595239B009E4754 /* Custom UI.swift */; };
-		937F7C632595239B009E4754 /* Custom UI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937F7C612595239B009E4754 /* Custom UI.swift */; };
 		937F7C7125952556009E4754 /* Test Objects.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937F7C7025952556009E4754 /* Test Objects.swift */; };
-		937F7C7225952556009E4754 /* Test Objects.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937F7C7025952556009E4754 /* Test Objects.swift */; };
 		9380A2B227359DBA0000F465 /* No Fan View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9380A2B127359DBA0000F465 /* No Fan View.swift */; };
-		9380A2B327359DBA0000F465 /* No Fan View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9380A2B127359DBA0000F465 /* No Fan View.swift */; };
 		93CF0A092731E44100307298 /* Fatal Fault Sheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93CF0A082731E43E00307298 /* Fatal Fault Sheet.swift */; };
 		93CF9548258984A1004BBD49 /* Fan View Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93CF9547258984A1004BBD49 /* Fan View Model.swift */; };
-		93CF9549258984A1004BBD49 /* Fan View Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93CF9547258984A1004BBD49 /* Fan View Model.swift */; };
 		93D1EEB1273EF88600D7DF77 /* Pulldown Refresh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93D1EEB0273EF88600D7DF77 /* Pulldown Refresh.swift */; };
-		93D1EEB2273EF88600D7DF77 /* Pulldown Refresh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93D1EEB0273EF88600D7DF77 /* Pulldown Refresh.swift */; };
 		93D1EEB427418A0A00D7DF77 /* Segmented Indicator Picker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93D1EEB327418A0900D7DF77 /* Segmented Indicator Picker.swift */; };
-		93D1EEB527418A0A00D7DF77 /* Segmented Indicator Picker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93D1EEB327418A0900D7DF77 /* Segmented Indicator Picker.swift */; };
-		93DAC5CD2798E60F00B778C8 /* Weather Monitor Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93DAC5CC2798E60F00B778C8 /* Weather Monitor Model.swift */; };
 		93EFF7DD27557635000E3308 /* Inertial Rotator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93EFF7DC27557635000E3308 /* Inertial Rotator.swift */; };
-		93EFF7DE27557635000E3308 /* Inertial Rotator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93EFF7DC27557635000E3308 /* Inertial Rotator.swift */; };
 		93F31BD4267002370056DCA1 /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 93F31BD3267002370056DCA1 /* Launch Screen.storyboard */; };
-		93F31BD5267002380056DCA1 /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 93F31BD3267002370056DCA1 /* Launch Screen.storyboard */; };
 		93F31BEF2670130C0056DCA1 /* Fan.png in Resources */ = {isa = PBXBuildFile; fileRef = 93F31BEE2670130C0056DCA1 /* Fan.png */; };
-		93F31BF02670130C0056DCA1 /* Fan.png in Resources */ = {isa = PBXBuildFile; fileRef = 93F31BEE2670130C0056DCA1 /* Fan.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		930CFF3D2581878D00E8E979 /* PBXContainerItemProxy */ = {
+		936D84E127B489AB002E9645 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 930CFF202581878B00E8E979 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 930CFF2B2581878C00E8E979;
-			remoteInfo = "whf001 (iOS)";
-		};
-		930CFF482581878D00E8E979 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 930CFF202581878B00E8E979 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 930CFF332581878C00E8E979;
-			remoteInfo = "whf001 (macOS)";
+			remoteInfo = "Fan with SwiftUI (iOS)";
 		};
 /* End PBXContainerItemProxy section */
 
@@ -90,15 +57,8 @@
 		930CFF272581878C00E8E979 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		930CFF2C2581878C00E8E979 /* Fan with SwiftUI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Fan with SwiftUI.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		930CFF2F2581878C00E8E979 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		930CFF342581878C00E8E979 /* Fan with SwiftUI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Fan with SwiftUI.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		930CFF362581878D00E8E979 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		930CFF372581878D00E8E979 /* macOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = macOS.entitlements; sourceTree = "<group>"; };
-		930CFF3C2581878D00E8E979 /* Tests iOS.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Tests iOS.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		930CFF402581878D00E8E979 /* Tests_iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests_iOS.swift; sourceTree = "<group>"; };
-		930CFF422581878D00E8E979 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		930CFF472581878D00E8E979 /* Tests macOS.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Tests macOS.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		930CFF4B2581878D00E8E979 /* Tests_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests_macOS.swift; sourceTree = "<group>"; };
-		930CFF4D2581878D00E8E979 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		930CFF66258187EE00E8E979 /* Network resources.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Network resources.swift"; sourceTree = "<group>"; };
 		930CFF722581881000E8E979 /* Fan Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Fan Model.swift"; sourceTree = "<group>"; };
 		930CFF8C2581884000E8E979 /* House Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "House Model.swift"; sourceTree = "<group>"; };
@@ -106,12 +66,15 @@
 		930CFFC4258188F400E8E979 /* Fan View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Fan View.swift"; sourceTree = "<group>"; };
 		930CFFCB258188FF00E8E979 /* House View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "House View.swift"; sourceTree = "<group>"; };
 		930CFFD22581890700E8E979 /* Settings View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Settings View.swift"; sourceTree = "<group>"; };
+		9318BB3627B48DBC00B95ED5 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		9339093E275AC008007D528D /* RangeSlider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangeSlider.swift; sourceTree = "<group>"; };
 		933A987D25AAA9240084C535 /* Weather Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Weather Model.swift"; sourceTree = "<group>"; };
 		933A988325AAE47B0084C535 /* Server.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Server.plist; sourceTree = "<group>"; };
 		934C8AB925AB92380037906C /* Location Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Location Model.swift"; sourceTree = "<group>"; };
 		934C8AC825AB926F0037906C /* Alarm Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Alarm Model.swift"; sourceTree = "<group>"; };
 		934C8ACF25AB92AB0037906C /* Storage Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Storage Model.swift"; sourceTree = "<group>"; };
+		936D84DD27B489AA002E9645 /* Fan with SwiftUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Fan with SwiftUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		936D84DF27B489AB002E9645 /* Fan_with_SwiftUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Fan_with_SwiftUITests.swift; sourceTree = "<group>"; };
 		936F79D7259FADD500AACA53 /* Timer Sheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Timer Sheet.swift"; sourceTree = "<group>"; };
 		936F79E1259FADFC00AACA53 /* Detail Sheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Detail Sheet.swift"; sourceTree = "<group>"; };
 		936F79E7259FAE0F00AACA53 /* Name Sheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Name Sheet.swift"; sourceTree = "<group>"; };
@@ -124,7 +87,6 @@
 		93CF9547258984A1004BBD49 /* Fan View Model.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Fan View Model.swift"; sourceTree = "<group>"; };
 		93D1EEB0273EF88600D7DF77 /* Pulldown Refresh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Pulldown Refresh.swift"; sourceTree = "<group>"; };
 		93D1EEB327418A0900D7DF77 /* Segmented Indicator Picker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Segmented Indicator Picker.swift"; sourceTree = "<group>"; };
-		93DAC5CC2798E60F00B778C8 /* Weather Monitor Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Weather Monitor Model.swift"; sourceTree = "<group>"; };
 		93EFF7DC27557635000E3308 /* Inertial Rotator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Inertial Rotator.swift"; sourceTree = "<group>"; };
 		93F31BD3267002370056DCA1 /* Launch Screen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = "Launch Screen.storyboard"; sourceTree = "<group>"; };
 		93F31BEE2670130C0056DCA1 /* Fan.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Fan.png; path = Assets.xcassets/Fan.png; sourceTree = "<group>"; };
@@ -138,21 +100,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		930CFF312581878C00E8E979 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		930CFF392581878D00E8E979 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		930CFF442581878D00E8E979 /* Frameworks */ = {
+		936D84DA27B489AA002E9645 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -168,8 +116,7 @@
 				930CFF242581878B00E8E979 /* Shared */,
 				930CFF2E2581878C00E8E979 /* iOS */,
 				930CFF352581878D00E8E979 /* macOS */,
-				930CFF3F2581878D00E8E979 /* Tests iOS */,
-				930CFF4A2581878D00E8E979 /* Tests macOS */,
+				936D84DE27B489AB002E9645 /* Fan with SwiftUITests */,
 				930CFF2D2581878C00E8E979 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -205,9 +152,7 @@
 			isa = PBXGroup;
 			children = (
 				930CFF2C2581878C00E8E979 /* Fan with SwiftUI.app */,
-				930CFF342581878C00E8E979 /* Fan with SwiftUI.app */,
-				930CFF3C2581878D00E8E979 /* Tests iOS.xctest */,
-				930CFF472581878D00E8E979 /* Tests macOS.xctest */,
+				936D84DD27B489AA002E9645 /* Fan with SwiftUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -228,24 +173,6 @@
 				930CFF372581878D00E8E979 /* macOS.entitlements */,
 			);
 			path = macOS;
-			sourceTree = "<group>";
-		};
-		930CFF3F2581878D00E8E979 /* Tests iOS */ = {
-			isa = PBXGroup;
-			children = (
-				930CFF402581878D00E8E979 /* Tests_iOS.swift */,
-				930CFF422581878D00E8E979 /* Info.plist */,
-			);
-			path = "Tests iOS";
-			sourceTree = "<group>";
-		};
-		930CFF4A2581878D00E8E979 /* Tests macOS */ = {
-			isa = PBXGroup;
-			children = (
-				930CFF4B2581878D00E8E979 /* Tests_macOS.swift */,
-				930CFF4D2581878D00E8E979 /* Info.plist */,
-			);
-			path = "Tests macOS";
 			sourceTree = "<group>";
 		};
 		930CFF872581882E00E8E979 /* Fan */ = {
@@ -287,11 +214,19 @@
 			path = Support;
 			sourceTree = "<group>";
 		};
+		936D84DE27B489AB002E9645 /* Fan with SwiftUITests */ = {
+			isa = PBXGroup;
+			children = (
+				9318BB3627B48DBC00B95ED5 /* Info.plist */,
+				936D84DF27B489AB002E9645 /* Fan_with_SwiftUITests.swift */,
+			);
+			path = "Fan with SwiftUITests";
+			sourceTree = "<group>";
+		};
 		938E65E227A5C1B50011B0B9 /* Weather */ = {
 			isa = PBXGroup;
 			children = (
 				933A987D25AAA9240084C535 /* Weather Model.swift */,
-				93DAC5CC2798E60F00B778C8 /* Weather Monitor Model.swift */,
 			);
 			path = Weather;
 			sourceTree = "<group>";
@@ -327,58 +262,23 @@
 			productReference = 930CFF2C2581878C00E8E979 /* Fan with SwiftUI.app */;
 			productType = "com.apple.product-type.application";
 		};
-		930CFF332581878C00E8E979 /* Fan with SwiftUI (macOS) */ = {
+		936D84DC27B489AA002E9645 /* Fan with SwiftUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 930CFF592581878D00E8E979 /* Build configuration list for PBXNativeTarget "Fan with SwiftUI (macOS)" */;
+			buildConfigurationList = 936D84E327B489AB002E9645 /* Build configuration list for PBXNativeTarget "Fan with SwiftUITests" */;
 			buildPhases = (
-				930CFF302581878C00E8E979 /* Sources */,
-				930CFF312581878C00E8E979 /* Frameworks */,
-				930CFF322581878C00E8E979 /* Resources */,
+				936D84D927B489AA002E9645 /* Sources */,
+				936D84DA27B489AA002E9645 /* Frameworks */,
+				936D84DB27B489AA002E9645 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				936D84E227B489AB002E9645 /* PBXTargetDependency */,
 			);
-			name = "Fan with SwiftUI (macOS)";
-			productName = "whf001 (macOS)";
-			productReference = 930CFF342581878C00E8E979 /* Fan with SwiftUI.app */;
-			productType = "com.apple.product-type.application";
-		};
-		930CFF3B2581878D00E8E979 /* Tests iOS */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 930CFF5C2581878D00E8E979 /* Build configuration list for PBXNativeTarget "Tests iOS" */;
-			buildPhases = (
-				930CFF382581878D00E8E979 /* Sources */,
-				930CFF392581878D00E8E979 /* Frameworks */,
-				930CFF3A2581878D00E8E979 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				930CFF3E2581878D00E8E979 /* PBXTargetDependency */,
-			);
-			name = "Tests iOS";
-			productName = "Tests iOS";
-			productReference = 930CFF3C2581878D00E8E979 /* Tests iOS.xctest */;
-			productType = "com.apple.product-type.bundle.ui-testing";
-		};
-		930CFF462581878D00E8E979 /* Tests macOS */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 930CFF5F2581878D00E8E979 /* Build configuration list for PBXNativeTarget "Tests macOS" */;
-			buildPhases = (
-				930CFF432581878D00E8E979 /* Sources */,
-				930CFF442581878D00E8E979 /* Frameworks */,
-				930CFF452581878D00E8E979 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				930CFF492581878D00E8E979 /* PBXTargetDependency */,
-			);
-			name = "Tests macOS";
-			productName = "Tests macOS";
-			productReference = 930CFF472581878D00E8E979 /* Tests macOS.xctest */;
-			productType = "com.apple.product-type.bundle.ui-testing";
+			name = "Fan with SwiftUITests";
+			productName = "Fan with SwiftUITests";
+			productReference = 936D84DD27B489AA002E9645 /* Fan with SwiftUITests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
@@ -386,22 +286,15 @@
 		930CFF202581878B00E8E979 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastSwiftUpdateCheck = 1220;
-				LastUpgradeCheck = 1300;
+				LastSwiftUpdateCheck = 1320;
+				LastUpgradeCheck = 1320;
 				TargetAttributes = {
 					930CFF2B2581878C00E8E979 = {
 						CreatedOnToolsVersion = 12.2;
 					};
-					930CFF332581878C00E8E979 = {
-						CreatedOnToolsVersion = 12.2;
-					};
-					930CFF3B2581878D00E8E979 = {
-						CreatedOnToolsVersion = 12.2;
+					936D84DC27B489AA002E9645 = {
+						CreatedOnToolsVersion = 13.2.1;
 						TestTargetID = 930CFF2B2581878C00E8E979;
-					};
-					930CFF462581878D00E8E979 = {
-						CreatedOnToolsVersion = 12.2;
-						TestTargetID = 930CFF332581878C00E8E979;
 					};
 				};
 			};
@@ -419,9 +312,7 @@
 			projectRoot = "";
 			targets = (
 				930CFF2B2581878C00E8E979 /* Fan with SwiftUI (iOS) */,
-				930CFF332581878C00E8E979 /* Fan with SwiftUI (macOS) */,
-				930CFF3B2581878D00E8E979 /* Tests iOS */,
-				930CFF462581878D00E8E979 /* Tests macOS */,
+				936D84DC27B489AA002E9645 /* Fan with SwiftUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -438,24 +329,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		930CFF322581878C00E8E979 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				93F31BF02670130C0056DCA1 /* Fan.png in Resources */,
-				93F31BD5267002380056DCA1 /* Launch Screen.storyboard in Resources */,
-				930CFF532581878D00E8E979 /* Assets.xcassets in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		930CFF3A2581878D00E8E979 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		930CFF452581878D00E8E979 /* Resources */ = {
+		936D84DB27B489AA002E9645 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -490,7 +364,6 @@
 				930CFF4E2581878D00E8E979 /* Airspace Fan.swift in Sources */,
 				936F79D8259FADD500AACA53 /* Timer Sheet.swift in Sources */,
 				9380A2B227359DBA0000F465 /* No Fan View.swift in Sources */,
-				93DAC5CD2798E60F00B778C8 /* Weather Monitor Model.swift in Sources */,
 				933A987E25AAA9240084C535 /* Weather Model.swift in Sources */,
 				934C8ABA25AB92380037906C /* Location Model.swift in Sources */,
 				93CF9548258984A1004BBD49 /* Fan View Model.swift in Sources */,
@@ -500,62 +373,21 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		930CFF302581878C00E8E979 /* Sources */ = {
+		936D84D927B489AA002E9645 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				930CFFC6258188F400E8E979 /* Fan View.swift in Sources */,
-				930CFF952581884B00E8E979 /* House View Model.swift in Sources */,
-				934C8ACA25AB926F0037906C /* Alarm Model.swift in Sources */,
-				93D1EEB527418A0A00D7DF77 /* Segmented Indicator Picker.swift in Sources */,
-				93EFF7DE27557635000E3308 /* Inertial Rotator.swift in Sources */,
-				93D1EEB2273EF88600D7DF77 /* Pulldown Refresh.swift in Sources */,
-				9380A2B327359DBA0000F465 /* No Fan View.swift in Sources */,
-				937F7C632595239B009E4754 /* Custom UI.swift in Sources */,
-				937F7C7225952556009E4754 /* Test Objects.swift in Sources */,
-				930CFF8E2581884000E8E979 /* House Model.swift in Sources */,
-				930CFFCD258188FF00E8E979 /* House View.swift in Sources */,
-				937F7C5825952358009E4754 /* Custom Errors.swift in Sources */,
-				930CFF742581881000E8E979 /* Fan Model.swift in Sources */,
-				930CFF512581878D00E8E979 /* ContentView.swift in Sources */,
-				937F7C5125952138009E4754 /* Custom Operators.swift in Sources */,
-				934C8AD125AB92AB0037906C /* Storage Model.swift in Sources */,
-				930CFF4F2581878D00E8E979 /* Airspace Fan.swift in Sources */,
-				93CF9549258984A1004BBD49 /* Fan View Model.swift in Sources */,
-				930CFFD42581890700E8E979 /* Settings View.swift in Sources */,
-				93390940275AC008007D528D /* RangeSlider.swift in Sources */,
-				930CFF68258187EE00E8E979 /* Network resources.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		930CFF382581878D00E8E979 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				930CFF412581878D00E8E979 /* Tests_iOS.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		930CFF432581878D00E8E979 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				930CFF4C2581878D00E8E979 /* Tests_macOS.swift in Sources */,
+				936D84E027B489AB002E9645 /* Fan_with_SwiftUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		930CFF3E2581878D00E8E979 /* PBXTargetDependency */ = {
+		936D84E227B489AB002E9645 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 930CFF2B2581878C00E8E979 /* Fan with SwiftUI (iOS) */;
-			targetProxy = 930CFF3D2581878D00E8E979 /* PBXContainerItemProxy */;
-		};
-		930CFF492581878D00E8E979 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 930CFF332581878C00E8E979 /* Fan with SwiftUI (macOS) */;
-			targetProxy = 930CFF482581878D00E8E979 /* PBXContainerItemProxy */;
+			targetProxy = 936D84E127B489AB002E9645 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -615,6 +447,7 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -669,7 +502,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
-				SWIFT_COMPILATION_MODE = wholemodule;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Release;
@@ -719,142 +552,50 @@
 			};
 			name = Release;
 		};
-		930CFF5A2581878D00E8E979 /* Debug */ = {
+		936D84E427B489AB002E9645 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = macOS/macOS.entitlements;
-				CODE_SIGN_IDENTITY = "-";
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = U5FYS9QYU3;
-				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_PREVIEWS = YES;
-				INFOPLIST_FILE = macOS/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-				);
-				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.porchdog.whf001;
-				PRODUCT_NAME = "Fan with SwiftUI";
-				SDKROOT = macosx;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.porchdog.Fan-with-SwiftUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Fan with SwiftUI.app/Fan with SwiftUI";
 			};
 			name = Debug;
 		};
-		930CFF5B2581878D00E8E979 /* Release */ = {
+		936D84E527B489AB002E9645 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = macOS/macOS.entitlements;
-				CODE_SIGN_IDENTITY = "-";
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = U5FYS9QYU3;
-				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_PREVIEWS = YES;
-				INFOPLIST_FILE = macOS/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-				);
-				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.porchdog.whf001;
-				PRODUCT_NAME = "Fan with SwiftUI";
-				SDKROOT = macosx;
-				SWIFT_VERSION = 5.0;
-			};
-			name = Release;
-		};
-		930CFF5D2581878D00E8E979 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = U5FYS9QYU3;
-				INFOPLIST_FILE = "Tests iOS/Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 14.2;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.porchdog.Tests-iOS";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.porchdog.Fan-with-SwiftUITests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = "whf001 (iOS)";
-			};
-			name = Debug;
-		};
-		930CFF5E2581878D00E8E979 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = U5FYS9QYU3;
-				INFOPLIST_FILE = "Tests iOS/Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 14.2;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.porchdog.Tests-iOS";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = "whf001 (iOS)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Fan with SwiftUI.app/Fan with SwiftUI";
 				VALIDATE_PRODUCT = YES;
-			};
-			name = Release;
-		};
-		930CFF602581878D00E8E979 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
-				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = U5FYS9QYU3;
-				INFOPLIST_FILE = "Tests macOS/Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@loader_path/../Frameworks",
-				);
-				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.porchdog.Tests-macOS";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-				SWIFT_VERSION = 5.0;
-				TEST_TARGET_NAME = "whf001 (macOS)";
-			};
-			name = Debug;
-		};
-		930CFF612581878D00E8E979 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
-				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = U5FYS9QYU3;
-				INFOPLIST_FILE = "Tests macOS/Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@loader_path/../Frameworks",
-				);
-				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.porchdog.Tests-macOS";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-				SWIFT_VERSION = 5.0;
-				TEST_TARGET_NAME = "whf001 (macOS)";
 			};
 			name = Release;
 		};
@@ -879,29 +620,11 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		930CFF592581878D00E8E979 /* Build configuration list for PBXNativeTarget "Fan with SwiftUI (macOS)" */ = {
+		936D84E327B489AB002E9645 /* Build configuration list for PBXNativeTarget "Fan with SwiftUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				930CFF5A2581878D00E8E979 /* Debug */,
-				930CFF5B2581878D00E8E979 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		930CFF5C2581878D00E8E979 /* Build configuration list for PBXNativeTarget "Tests iOS" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				930CFF5D2581878D00E8E979 /* Debug */,
-				930CFF5E2581878D00E8E979 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		930CFF5F2581878D00E8E979 /* Build configuration list for PBXNativeTarget "Tests macOS" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				930CFF602581878D00E8E979 /* Debug */,
-				930CFF612581878D00E8E979 /* Release */,
+				936D84E427B489AB002E9645 /* Debug */,
+				936D84E527B489AB002E9645 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

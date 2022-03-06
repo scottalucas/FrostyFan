@@ -15,25 +15,32 @@ class Location: NSObject, ObservableObject {
 //    @AppStorage(StorageKey.locLat.key) var lat: Double?
 //    @AppStorage(StorageKey.locLon.key) var lon: Double?
     @AppStorage(StorageKey.coordinate.key) var coordinate: Data? //use a CLLocation type
-    @AppStorage(StorageKey.locationAvailable.key) private var locationPermission: LocationPermission = .unknown
+//    @AppStorage(StorageKey.locationAvailable.key) private var locationPermission: LocationPermission = .unknown
     
-    enum LocationPermission: String {
+    enum LocationPermission: String, Codable {
         case deviceProhibited, appProhibited, appAllowed, unknown
+        var data: Data? {
+            let encoder = JSONEncoder()
+            return try? encoder.encode(self)
+        }
     }
     
     override init () {
         mgr = CLLocationManager()
         super.init()
         mgr.delegate = self
-        if locationPermission == .unknown { getLocationPermission() }
+//        if locationPermission == .unknown { getLocationPermission() }
         print("Location services are enabled: \(CLLocationManager.locationServicesEnabled())")
         print("Device location enabled: \(mgr.authorizationStatus.rawValue)")
-        print("Stored \(locationPermission)")
+//        print("Stored \(locationPermission)")
     }
 
     func updateLocation () {
-        mgr.requestWhenInUseAuthorization()
-        mgr.startUpdatingLocation()
+        if mgr.authorizationStatus == .authorizedAlways || mgr.authorizationStatus == .authorizedWhenInUse {
+            mgr.startUpdatingLocation()
+        } else {
+            mgr.requestWhenInUseAuthorization()
+        }
     }
     
     func clearLocation () {
@@ -61,27 +68,31 @@ extension Location: CLLocationManagerDelegate {
     }
     
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        getLocationPermission()
-    }
-    
-    func getLocationPermission() {
-        switch (CLLocationManager.locationServicesEnabled(), mgr.authorizationStatus) {
-        case (false, _):
-//                lat = nil
-//                lon = nil
-                coordinate = nil
-                locationPermission = .deviceProhibited
-        case (_, .authorizedAlways), (_, .authorizedWhenInUse):
-            locationPermission = .appAllowed
-        case (_, .notDetermined):
-            locationPermission = .unknown
-        default:
-//                lat = nil
-//                lon = nil
-                coordinate = nil
-                locationPermission = .appProhibited
+        if manager.authorizationStatus == .authorizedAlways || manager.authorizationStatus == .authorizedAlways {
+            mgr.startUpdatingLocation()
+        } else {
+            coordinate = nil
         }
     }
+    
+//    func getLocationPermission() {
+//        switch (CLLocationManager.locationServicesEnabled(), mgr.authorizationStatus) {
+//        case (false, _):
+////                lat = nil
+////                lon = nil
+//                coordinate = nil
+////                locationPermission = .deviceProhibited
+//        case (_, .authorizedAlways), (_, .authorizedWhenInUse):
+////            locationPermission = .appAllowed
+//        case (_, .notDetermined):
+////            locationPermission = .unknown
+//        default:
+////                lat = nil
+////                lon = nil
+//                coordinate = nil
+////                locationPermission = .appProhibited
+//        }
+//    }
 }
 
 extension Double {

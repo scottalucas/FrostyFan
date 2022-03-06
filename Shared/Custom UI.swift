@@ -112,8 +112,8 @@ struct CustomFormatter {
 
 struct Utilities_Previews: PreviewProvider {
     struct GlobalIndicatorHolder {
-        static var sharedHouseData: SharedHouseData {
-            let retVal = SharedHouseData.shared
+        static var sharedHouseData: HouseMonitor {
+            let retVal = HouseMonitor.shared
             retVal.scanning = true
             return retVal
         }

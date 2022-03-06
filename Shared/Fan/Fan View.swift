@@ -20,7 +20,7 @@ struct FanView: View {
     typealias MACAddr = String
     let id: MACAddr
     @Environment(\.scenePhase) var scenePhase
-    @EnvironmentObject var sharedHouseData: SharedHouseData
+    @EnvironmentObject var sharedHouseData: HouseMonitor
     @StateObject var viewModel: FanViewModel
     @AppStorage var name: String
     @GestureState var viewOffset = CGSize.zero
@@ -125,7 +125,7 @@ struct BaseFanImage: View {
 }
 
 struct FanInfoAreaRender: View {
-    @EnvironmentObject var sharedHouseData: SharedHouseData
+    @EnvironmentObject var sharedHouseData: HouseMonitor
     @EnvironmentObject var weather: WeatherMonitor
     @Binding var activeSheet: OverlaySheet?
     @State private var fanFrame: CGRect = .zero
@@ -162,8 +162,8 @@ struct FanInfoAreaRender: View {
 }
 
 struct FanNameRender: View {
-    @EnvironmentObject var sharedHouseData: SharedHouseData
-    @EnvironmentObject var weather: WeatherMonitor
+    @EnvironmentObject var sharedHouseData: HouseMonitor
+    @EnvironmentObject var weatherMonitor: WeatherMonitor
     @Binding var activeSheet: OverlaySheet?
     @Binding var name: String
     @Binding var showDamperWarning: Bool
@@ -178,7 +178,7 @@ struct FanNameRender: View {
                     }
                 Spacer()
                 HStack {
-                    if weather.tooCold || weather.tooCold {
+                    if weatherMonitor.tooCold || weatherMonitor.tooCold {
                         IdentifiableImage.thermometer.image
                     }
                     if showDamperWarning {
@@ -253,8 +253,8 @@ struct FanView_Previews: PreviewProvider {
         }
     }
     struct InjectedIndicators {
-        static var indicators: SharedHouseData {
-            let retVal = SharedHouseData.shared
+        static var indicators: HouseMonitor {
+            let retVal = HouseMonitor.shared
             retVal.scanning = true
             return retVal
         }
@@ -278,7 +278,7 @@ struct FanView_Previews: PreviewProvider {
 //                Spacer()
 //            }
         }
-        .environmentObject(SharedHouseData.shared)
+        .environmentObject(HouseMonitor.shared)
         .environmentObject(WeatherMonitor.shared)
         .foregroundColor(.main)
     }

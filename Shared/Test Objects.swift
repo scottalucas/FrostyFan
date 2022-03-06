@@ -25,30 +25,43 @@ class TestViewModel: ObservableObject {
         }
     }
 }
-class TestWeatherItems {
-    static var testWeatherresult = Weather.WeatherResult.init(currentTemp: Measurement<UnitTemperature>.init(value: 35, unit: .fahrenheit), forecast: [
-        (Date(timeIntervalSinceNow: 1 * 3600), Measurement<UnitTemperature>.init(value: 40, unit: .fahrenheit)),
-        (Date(timeIntervalSinceNow: 2 * 3600), Measurement<UnitTemperature>.init(value: 45, unit: .fahrenheit)),
-        (Date(timeIntervalSinceNow: 3 * 3600), Measurement<UnitTemperature>.init(value: 50, unit: .fahrenheit)),
-        (Date(timeIntervalSinceNow: 4 * 3600), Measurement<UnitTemperature>.init(value: 55, unit: .fahrenheit)),
-        (Date(timeIntervalSinceNow: 5 * 3600), Measurement<UnitTemperature>.init(value: 60, unit: .fahrenheit)),
-        (Date(timeIntervalSinceNow: 6 * 3600), Measurement<UnitTemperature>.init(value: 65, unit: .fahrenheit)),
-        (Date(timeIntervalSinceNow: 7 * 3600), Measurement<UnitTemperature>.init(value: 70, unit: .fahrenheit)),
-        (Date(timeIntervalSinceNow: 8 * 3600), Measurement<UnitTemperature>.init(value: 75, unit: .fahrenheit)),
-    ])
-    static var testWeatherObj: Data {
-        let current = Weather.WeatherObject.Current.init(temp: 76)
-        let forecast = [
-            Weather.WeatherObject.Hourly.init(dt: Int(Date(timeIntervalSinceNow: 1 * 3600).timeIntervalSince1970), temp: 60),
-            Weather.WeatherObject.Hourly.init(dt: Int(Date(timeIntervalSinceNow: 2 * 3600).timeIntervalSince1970), temp: 65),
-            Weather.WeatherObject.Hourly.init(dt: Int(Date(timeIntervalSinceNow: 3 * 3600).timeIntervalSince1970), temp: 70),
-            Weather.WeatherObject.Hourly.init(dt: Int(Date(timeIntervalSinceNow: 4 * 3600).timeIntervalSince1970), temp: 75),
-            Weather.WeatherObject.Hourly.init(dt: Int(Date(timeIntervalSinceNow: 5 * 3600).timeIntervalSince1970), temp: 80),
-            Weather.WeatherObject.Hourly.init(dt: Int(Date(timeIntervalSinceNow: 6 * 3600).timeIntervalSince1970), temp: 85),
-            Weather.WeatherObject.Hourly.init(dt: Int(Date(timeIntervalSinceNow: 7 * 3600).timeIntervalSince1970), temp: 90),
-            Weather.WeatherObject.Hourly.init(dt: Int(Date(timeIntervalSinceNow: 8 * 3600).timeIntervalSince1970), temp: 100)
-            ]
-        return Weather.WeatherObject.init(current: current, hourly: forecast).data
+class TestWeather {
+//    static var roomTempWeatherData: Data {
+//        let forecast: [(Date, Measurement<UnitTemperature>)] = Range<Int>.init((1...8)).map( { (Date(timeIntervalSinceNow: Double($0) * 3600), Measurement<UnitTemperature>.init(value: 72, unit: .fahrenheit)) } )
+//        let res = Weather.WeatherResult.init(currentTemp: Measurement<UnitTemperature>.init(value: 72, unit: .fahrenheit), forecast: forecast)
+//        return Weather.WeatherObject.init(fromResult: res).data
+//    }
+//
+//    static var coldTempWeatherData: Data {
+//        let forecast: [(Date, Measurement<UnitTemperature>)] = Range<Int>.init((1...8)).map( { (Date(timeIntervalSinceNow: Double($0) * 3600), Measurement<UnitTemperature>.init(value: 10, unit: .fahrenheit)) } )
+//        let res = Weather.WeatherResult.init(currentTemp: Measurement<UnitTemperature>.init(value: 10, unit: .fahrenheit), forecast: forecast)
+//        return Weather.WeatherObject.init(fromResult: res).data
+//    }
+//
+//    static var hotTempWeatherData: Data {
+//        let forecast: [(Date, Measurement<UnitTemperature>)] = Range<Int>.init((1...8)).map( { (Date(timeIntervalSinceNow: Double($0) * 3600), Measurement<UnitTemperature>.init(value: 100, unit: .fahrenheit)) } )
+//        let res = Weather.WeatherResult.init(currentTemp: Measurement<UnitTemperature>.init(value: 100, unit: .fahrenheit), forecast: forecast)
+//        return Weather.WeatherObject.init(fromResult: res).data
+//    }
+    
+    static var testCoordinate: Coordinate {
+        //40.584422, -105.070148
+        Coordinate(lat: 40.584422, lon: -105.070148)
+    }
+    
+    static func weatherResult (currentTemp: Double, start: Date = .now, inRange: Bool = true) -> Weather.WeatherResult {
+        let lowTempLim = Storage.lowTempLimit ?? 55.0
+        let highTempLim = Storage.highTempLimit ?? 75.0
+        let tempArray: [Measurement<UnitTemperature>] = (1...8).map({ _ in
+            let tVal =
+            inRange ? Double.random(in: (lowTempLim...highTempLim)) : Bool.random() ? Double.random(in: (0.0...lowTempLim)) : Double.random(in: (highTempLim...100))
+            return Measurement<UnitTemperature>.init(value: tVal, unit: .fahrenheit)
+        })
+        let dateArray = (1...8).map({ c in
+            start.addingTimeInterval(Double(c) * 3600.0) })
+        let forecast: [(Date, Measurement<UnitTemperature>)] = zip(dateArray, tempArray).map ({ ($0, $1) })
+        return Weather.WeatherResult.init(currentTemp: Measurement<UnitTemperature>.init(value: currentTemp, unit: .fahrenheit), forecast: forecast)
+//        return Weather.WeatherObject.init(fromResult: res).data
     }
 }
 

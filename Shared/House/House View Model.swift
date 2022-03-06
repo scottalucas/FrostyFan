@@ -28,7 +28,7 @@ class HouseViewModel: ObservableObject {
 //        fanSpeedPublishers = spds
         self.dataSource = dataSource
         
-        SharedHouseData.shared.$fanRPMs
+        HouseMonitor.shared.$fanRPMs
             .combineLatest($displayedFanID)
             .compactMap { (speeds, id) in speeds[id] }
 //            .print("ID")
@@ -47,7 +47,7 @@ class HouseViewModel: ObservableObject {
     }
 
     func scan () async throws {
-        guard !SharedHouseData.shared.scanning else { return }
+        guard !HouseMonitor.shared.scanning else { return }
         fanViews.removeAll()
 //        fanSpeedPublishers.removeAll()
         for try await item in dataSource.scan() {

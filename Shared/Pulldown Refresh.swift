@@ -9,7 +9,7 @@ import Foundation
 import SwiftUI
 
 struct RefreshIndicator: View {
-    @EnvironmentObject private var sharedHouseData: SharedHouseData
+    @EnvironmentObject private var sharedHouseData: HouseMonitor
     @State private var start = Date()
     var body: some View {
         if sharedHouseData.scanning {

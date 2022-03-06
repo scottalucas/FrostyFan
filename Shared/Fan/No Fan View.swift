@@ -9,7 +9,7 @@ import SwiftUI
 
 struct NoFanView: View {
     typealias IPAddr = String
-    @EnvironmentObject private var sharedHouseData: SharedHouseData
+    @EnvironmentObject private var sharedHouseData: HouseMonitor
     @Environment(\.scenePhase) var scenePhase
     @Environment(\.colorScheme) var colorScheme
     
@@ -30,8 +30,8 @@ struct NoFanView: View {
 
 struct No_Fan_View_Previews: PreviewProvider {
     struct InjectedIndicators {
-        static var indicators: SharedHouseData {
-            let retVal = SharedHouseData.shared
+        static var indicators: HouseMonitor {
+            let retVal = HouseMonitor.shared
             retVal.scanning = true
             return retVal
         }

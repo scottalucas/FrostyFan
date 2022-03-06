@@ -90,8 +90,10 @@ enum WeatherRetrievalError: Error {
     case noLocation
     case badUrl
     case decodeError
+    case tooManyTries
     case throttle (lastUpdate: String)
     case serverError (Int?)
+    case unknownError (String)
     
     var description: String {
         switch self {
@@ -123,6 +125,10 @@ enum WeatherRetrievalError: Error {
                         }
                 }
                 return "Server error \(errorDesc)."
+            case .tooManyTries:
+                return "Too many attempts to retrieve weather"
+            case .unknownError (let errorDescription):
+                return "Unknown error \(errorDescription)"
         }
     }
 }
