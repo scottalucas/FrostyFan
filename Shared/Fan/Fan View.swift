@@ -153,6 +153,9 @@ struct FanInfoAreaRender: View {
                     if let temp = weather.currentTemp, !sharedHouseData.scanning {
                         Text(CustomFormatter.temperture.string(from: temp))
                             .padding(.top, 20)
+                        if weather.tooHot || weather.tooCold {
+                            Text ("It's \(weather.tooHot ? "hot" : "cold") outside. Turn the fan off?")
+                        }
                     }
                     Spacer()
                 }

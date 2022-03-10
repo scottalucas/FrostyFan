@@ -272,11 +272,7 @@ struct Storage {
         get {
             UserDefaults.standard.data(forKey: StorageKey.coordinate.key)?.decodeCoordinate
         } set {
-            guard let coord = newValue else {
-                UserDefaults.standard.set(nil, forKey: StorageKey.coordinate.key)
-                return
-            }
-            UserDefaults.standard.set(coord.data, forKey: StorageKey.lastForecastUpdate.key)
+            UserDefaults.standard.set(newValue?.data, forKey: StorageKey.coordinate.key)
         }
     }
     
