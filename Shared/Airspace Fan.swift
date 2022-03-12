@@ -40,7 +40,7 @@ struct AirspaceFanApp: App {
                             
                             let nextCheck = WeatherMonitor.shared.weatherServiceNextCheckDate()
                             print("Scheduling background task for \(nextCheck.formatted())")
-                            WeatherBackgroundTaskManager.scheduleBackgroundTempCheckTask( forId: BackgroundTaskIdentifier.tempertureOutOfRange, waitUntil: WeatherMonitor.shared.weatherServiceNextCheckDate() )
+                            WeatherBackgroundTaskManager.scheduleBackgroundTempCheckTask( forId: BackgroundTaskIdentifier.tempertureOutOfRange, waitUntil: nextCheck )
                           weather.suspendMonitor()
                         case .inactive:
                             break

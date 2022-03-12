@@ -28,18 +28,10 @@ struct Weather {
         return components.url
     }
     
-    init ( ) { }
-    
     fileprivate func load (
         test: Bool = false,
         testWeatherServiceResult: Weather.WeatherResult? = nil)
     async throws -> Weather.WeatherResult {
-//        if test {
-//            guard let tw = testWeatherServiceResult else {
-//                throw WeatherRetrievalError.unknownError("Test error")
-//            }
-//            return tw
-//        }
         guard
             abs(Storage.lastForecastUpdate.timeIntervalSinceNow) > 15 * 60 else {
                 throw WeatherRetrievalError.throttle(lastUpdate: Storage.lastForecastUpdate.ISO8601Format())
@@ -127,7 +119,6 @@ struct Weather {
 class WeatherMonitor: ObservableObject {
     typealias TempOutOfRange = Bool
     static var shared = WeatherMonitor()
-    @Environment(\.scenePhase) var scenePhase
     @Published var tooHot: Bool = false
     @Published var tooCold: Bool = false
     @Published var currentTemp: Measurement<UnitTemperature>?
@@ -146,6 +137,7 @@ class WeatherMonitor: ObservableObject {
                     }
                     print("monitor loop @ \(Date.now.formatted()), last update \(Storage.lastForecastUpdate.formatted())")
                     try await updateWeatherConditions()
+                    await issueTempNotification()
                     try await Task.sleep(interval: interval) //run the loop every 5 minutes to respond as conditions change
                 } catch {
                     monitorTask?.cancel()
@@ -240,6 +232,23 @@ class WeatherMonitor: ObservableObject {
         nextCheck = result.date
         return nextCheck
     }
+    
+    fileprivate func issueTempNotification () async {
+        guard Storage.lastNotificationShown.addingTimeInterval(3 * 3600) > .now, ( tooHot || tooCold ), let temperatureString = currentTemp.map ({ CustomFormatter.temperture.string(from: $0) }) else { return }
+        let alertString = tooHot ? "high" : "low"
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
+        //present the alert
+        let content = UNMutableNotificationContent()
+        content.title = "Airscape Fan Temperature Alert"
+        content.subtitle = "Outside temperature is \(alertString) at \(temperatureString). Consider turning the fan off."
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
+        do {
+            try await UNUserNotificationCenter.current().add(request)
+            Storage.lastNotificationShown = .now
+        } catch {
+            print("Failed to add notification, error: \(error.localizedDescription)")
+        }
+    }
 }
 
 class WeatherBackgroundTaskManager {
@@ -250,7 +259,7 @@ class WeatherBackgroundTaskManager {
     async -> () {
         defer { scheduleBackgroundTempCheckTask(forId: BackgroundTaskIdentifier.tempertureOutOfRange, waitUntil: WeatherMonitor.shared.weatherServiceNextCheckDate() )
         }
-        print("Background fetch being handled\t")
+        print("Background fetch being handled")
         let monitor = WeatherMonitor.shared
         let house = HouseMonitor.shared
         task.expirationHandler = {
@@ -284,27 +293,9 @@ class WeatherBackgroundTaskManager {
             }
             return
         }
-        
-        do {
-            print("Successfully got weather")
-            if !monitor.tooHot && !monitor.tooCold {
-                print("Temperature in range, no need for alert")
-            } else {
-                guard let temperatureString = monitor.currentTemp.map ({ CustomFormatter.temperture.string(from: $0) }) else {
-                    throw BackgroundTaskError.noCurrentTemp
-                }
-                let alertString = monitor.tooHot ? "high" : "low"
-                let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
-                //present the alert
-                let content = UNMutableNotificationContent()
-                content.title = "Airscape Fan Temperature Alert"
-                content.subtitle = "Outside temperature is \(alertString) at \(temperatureString). Consider turning the fan off."
-                let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
-                try await UNUserNotificationCenter.current().add(request)
-            }
-        } catch {
-            print("Weather update failure, error \(error.localizedDescription)")
-        }
+        print("Successfully got weather")
+        await monitor.issueTempNotification()
+
         print("Background task complete.")
         task.setTaskCompleted(success: true)
     }

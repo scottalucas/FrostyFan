@@ -62,7 +62,7 @@ class FanViewModel: ObservableObject {
     }
     
     func refreshFan () {
-        model.refresh()
+        Task { try await model.refresh() }
     }
 //
 //    private func updateOffDate(minutesLeft: Int) -> String {

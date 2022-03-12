@@ -172,17 +172,46 @@ import CoreLocation
 //}
 //
 //extension UserDefaults: UserDefaultsProtocol {}
-enum StorageKey: Equatable {
+enum StorageKey: Equatable, RawRepresentable {
+    
+    init?(rawValue: String) {
+        if rawValue.prefix(4) == "name" {
+            let addr = String(rawValue.dropFirst(4))
+            self = .fanName(addr)
+        } else if rawValue == StorageKey.interlockAlarmEnabled.rawValue {
+            self = .interlockAlarmEnabled
+        } else if rawValue == StorageKey.temperatureAlarmEnabled.rawValue {
+            self = .temperatureAlarmEnabled
+        } else if rawValue == StorageKey.lowTempLimit.rawValue {
+            self = .lowTempLimit
+        } else if rawValue == StorageKey.highTempLimit.rawValue {
+            self = .highTempLimit
+        } else if rawValue == StorageKey.forecast.rawValue {
+            self = .forecast
+        } else if rawValue == StorageKey.lastForecastUpdate.rawValue {
+            self = .lastForecastUpdate
+        } else if rawValue == StorageKey.lastNotificationShown.rawValue {
+            self = .lastNotificationShown
+        } else if rawValue == StorageKey.coordinate.rawValue {
+            self = .coordinate
+        } else {
+            return nil
+        }
+    }
+        
+    typealias RawValue = String
+    
     case interlockAlarmEnabled, //bool
          temperatureAlarmEnabled, //bool
          lowTempLimit, //double
          highTempLimit, //double
-         //         locationAvailable,
          forecast, //data, decode to WeatherResult
          lastForecastUpdate, //Date
+         lastNotificationShown, //Date
          coordinate, //data, decode to Coordinate
          fanName (String) //string
-    var key: String {
+    
+    var rawValue: String {
         switch self {
             case .interlockAlarmEnabled:
                 return "interlock"
@@ -192,16 +221,12 @@ enum StorageKey: Equatable {
                 return "lowTempLimit"
             case .highTempLimit:
                 return "highTempLimit"
-                //        case .locationAvailable:
-                //            return "locAvailable"
             case .forecast:
                 return "forecast"
             case .lastForecastUpdate:
                 return "lastForecastUpdate"
-                //        case .locLat:
-                //            return "locLat"
-                //        case .locLon:
-                //            return "locLon"
+            case .lastNotificationShown:
+                return "lastNotificationShown"
             case .coordinate:
                 return "coordinate"
             case .fanName(let macAddr):
@@ -213,76 +238,84 @@ enum StorageKey: Equatable {
 struct Storage {
     static var interlockAlarmEnabled: Bool {
         get {
-            UserDefaults.standard.object(forKey: StorageKey.interlockAlarmEnabled.key) == nil ? false : UserDefaults.standard.bool(forKey: StorageKey.interlockAlarmEnabled.key)
+            UserDefaults.standard.object(forKey: StorageKey.interlockAlarmEnabled.rawValue) == nil ? false : UserDefaults.standard.bool(forKey: StorageKey.interlockAlarmEnabled.rawValue)
         }
         set {
-            UserDefaults.standard.set(newValue, forKey: StorageKey.interlockAlarmEnabled.key)
+            UserDefaults.standard.set(newValue, forKey: StorageKey.interlockAlarmEnabled.rawValue)
         }
     }
     static var temperatureAlarmEnabled: Bool {
         get {
-            UserDefaults.standard.object(forKey: StorageKey.temperatureAlarmEnabled.key) == nil ? false : UserDefaults.standard.bool(forKey: StorageKey.temperatureAlarmEnabled.key)
+            UserDefaults.standard.object(forKey: StorageKey.temperatureAlarmEnabled.rawValue) == nil ? false : UserDefaults.standard.bool(forKey: StorageKey.temperatureAlarmEnabled.rawValue)
         }
         set {
-             UserDefaults.standard.set(newValue, forKey: StorageKey.temperatureAlarmEnabled.key)
+             UserDefaults.standard.set(newValue, forKey: StorageKey.temperatureAlarmEnabled.rawValue)
         }
     }
     
     static var lowTempLimit: Double? {
         get {
-            UserDefaults.standard.object(forKey: StorageKey.lowTempLimit.key) == nil ? nil : UserDefaults.standard.double(forKey: StorageKey.lowTempLimit.key)
+            UserDefaults.standard.object(forKey: StorageKey.lowTempLimit.rawValue) == nil ? nil : UserDefaults.standard.double(forKey: StorageKey.lowTempLimit.rawValue)
         }
         set {
-             UserDefaults.standard.set(newValue, forKey: StorageKey.lowTempLimit.key)
+             UserDefaults.standard.set(newValue, forKey: StorageKey.lowTempLimit.rawValue)
         }
     }
     
     static var highTempLimit: Double? {
         get {
-            UserDefaults.standard.object(forKey: StorageKey.highTempLimit.key) == nil ? nil : UserDefaults.standard.double(forKey: StorageKey.highTempLimit.key)
+            UserDefaults.standard.object(forKey: StorageKey.highTempLimit.rawValue) == nil ? nil : UserDefaults.standard.double(forKey: StorageKey.highTempLimit.rawValue)
         }
         set {
-            UserDefaults.standard.set(newValue, forKey: StorageKey.highTempLimit.key)
+            UserDefaults.standard.set(newValue, forKey: StorageKey.highTempLimit.rawValue)
         }
     }
 
     static var storedWeather: Weather.WeatherResult? {
         get {
-            UserDefaults.standard.object(forKey: StorageKey.forecast.key) == nil ? nil : UserDefaults.standard.data(forKey: StorageKey.forecast.key)?.decodeWeatherResult
+            UserDefaults.standard.object(forKey: StorageKey.forecast.rawValue) == nil ? nil : UserDefaults.standard.data(forKey: StorageKey.forecast.rawValue)?.decodeWeatherResult
         }
         set {
             guard let val = newValue else {
-                UserDefaults.standard.set(nil, forKey: StorageKey.forecast.key)
+                UserDefaults.standard.set(nil, forKey: StorageKey.forecast.rawValue)
                 return
             }
             let obj = Weather.WeatherObject(fromResult: val).data
-            UserDefaults.standard.set(obj, forKey: StorageKey.forecast.key)
+            UserDefaults.standard.set(obj, forKey: StorageKey.forecast.rawValue)
         }
     }
     
     static var lastForecastUpdate: Date {
         get {
-            UserDefaults.standard.data(forKey: StorageKey.lastForecastUpdate.key)?.decodeDate ?? .distantPast
+            UserDefaults.standard.data(forKey: StorageKey.lastForecastUpdate.rawValue)?.decodeDate ?? .distantPast
         } set {
-            UserDefaults.standard.set(newValue.data, forKey: StorageKey.lastForecastUpdate.key)
+            UserDefaults.standard.set(newValue.data, forKey: StorageKey.lastForecastUpdate.rawValue)
+        }
+    }
+    
+    static var lastNotificationShown: Date {
+        get {
+            UserDefaults.standard.data(forKey: StorageKey.lastNotificationShown.rawValue)?.decodeDate ?? .distantPast
+        } set {
+            UserDefaults.standard.set(newValue.data, forKey: StorageKey.lastNotificationShown.rawValue)
         }
     }
     
     static var coordinate: Coordinate? {
         get {
-            UserDefaults.standard.data(forKey: StorageKey.coordinate.key)?.decodeCoordinate
+            UserDefaults.standard.data(forKey: StorageKey.coordinate.rawValue)?.decodeCoordinate
         } set {
-            UserDefaults.standard.set(newValue?.data, forKey: StorageKey.coordinate.key)
+            UserDefaults.standard.set(newValue?.data, forKey: StorageKey.coordinate.rawValue)
         }
     }
     
     static func setName(forAddr addr: String, toName name: String) {
-        let key = StorageKey.fanName(addr).key
+        let key = StorageKey.fanName(addr).rawValue
         UserDefaults.standard.set(name, forKey: key)
     }
     
     static func getName(forAddr addr: String) -> String {
-        let key = StorageKey.fanName(addr).key
+        let key = StorageKey.fanName(addr).rawValue
         return UserDefaults.standard.object(forKey: key) == nil ? "Fan \(addr)" : UserDefaults.standard.string(forKey: key) ?? "Fan \(addr)"
     }
 
@@ -332,7 +365,7 @@ struct Storage {
 //    }
     
     static func clear (_ key: StorageKey) {
-        UserDefaults.standard.set(nil, forKey: key.key)
+        UserDefaults.standard.set(nil, forKey: key.rawValue)
     }
 //
 //    func set(to value: Any) throws {

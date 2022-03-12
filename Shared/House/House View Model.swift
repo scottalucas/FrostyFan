@@ -13,7 +13,7 @@ import Combine
 class HouseViewModel: ObservableObject {
     private var dataSource: House
     @Published var fanViews = Set<FanView>()
-    @Published var indicators = HouseLamps()
+//    @Published var indicators = HouseLamps()
     @Published var displayedFanID: FanView.MACAddr = "not set"
     @Published var displayedRPM: Int = 0
 //    @Published var currentFanViewModel: FanViewModel?

@@ -13,10 +13,10 @@ struct SettingsView: View {
     @EnvironmentObject var location: Location
     @EnvironmentObject var weather: WeatherMonitor
     @Environment(\.scenePhase) var scenePhase
-    @AppStorage(StorageKey.temperatureAlarmEnabled.key) var temperatureAlertsEnabled: Bool = false
-    @AppStorage(StorageKey.interlockAlarmEnabled.key) var interlockAlertsEnabled: Bool = false
+    @AppStorage(StorageKey.temperatureAlarmEnabled.rawValue) var temperatureAlertsEnabled: Bool = false
+    @AppStorage(StorageKey.interlockAlarmEnabled.rawValue) var interlockAlertsEnabled: Bool = false
 //    @AppStorage(StorageKey.locationAvailable.key) var locationPermission: Location.LocationPermission = .unknown
-    @AppStorage(StorageKey.coordinate.key) var coordinateData: Data?
+    @AppStorage(StorageKey.coordinate.rawValue) var coordinateData: Data?
     @State private var initTempAlertsEnabled = false
     @State private var initInterlockAlertsEnabled = false
     @State private var initLocationPermission: Location.LocationPermission = .unknown
@@ -222,8 +222,8 @@ struct SettingsView: View {
 }
 
 struct TemperatureSelector: View {
-    @AppStorage(StorageKey.lowTempLimit.key) var lowTempData: Data?
-    @AppStorage(StorageKey.highTempLimit.key) var highTempData: Data?
+    @AppStorage(StorageKey.lowTempLimit.rawValue) var lowTempData: Data?
+    @AppStorage(StorageKey.highTempLimit.rawValue) var highTempData: Data?
     @State private var lowTemp: Double = 55
     @State private var highTemp: Double = 80
     private let min = 40.0
@@ -322,7 +322,7 @@ extension View {
 
 struct Settings_View_Previews: PreviewProvider {
     static var loc: Location {
-        @AppStorage(StorageKey.coordinate.key) var coordData: Data?
+        @AppStorage(StorageKey.coordinate.rawValue) var coordData: Data?
         coordData = CLLocation(latitude: 38, longitude: -122).data
         return Location()
     }

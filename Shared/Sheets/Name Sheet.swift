@@ -63,7 +63,7 @@ struct NameSheet: View {
     
     init (sheet: Binding<OverlaySheet?>, storageKey: StorageKey) {
         _activeSheet = sheet
-        _name = AppStorage(wrappedValue: "Name", storageKey.key)
+        _name = AppStorage(wrappedValue: "Name", storageKey.rawValue)
     }
 }
 

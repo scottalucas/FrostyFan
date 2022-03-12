@@ -14,7 +14,7 @@ class Location: NSObject, ObservableObject {
     private var mgr: CLLocationManager
 //    @AppStorage(StorageKey.locLat.key) var lat: Double?
 //    @AppStorage(StorageKey.locLon.key) var lon: Double?
-    @AppStorage(StorageKey.coordinate.key) var coordinate: Data? //use a CLLocation type
+    @AppStorage(StorageKey.coordinate.rawValue) var coordinate: Data? //use a CLLocation type
 //    @AppStorage(StorageKey.locationAvailable.key) private var locationPermission: LocationPermission = .unknown
     
     enum LocationPermission: String, Codable {

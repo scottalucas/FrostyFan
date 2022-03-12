@@ -17,6 +17,8 @@ class FanModel: ObservableObject {
     private var timer: TimerDelegate!
     private var updateTimer: Timer?
     private var bag = Set<AnyCancellable>()
+    private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
+
     
     init(usingChars chars: FanCharacteristics) {
         motor = Motor(atAddr: chars.ipAddr)
@@ -28,6 +30,7 @@ class FanModel: ObservableObject {
     func setFan(toSpeed finalTarget: Int) async {
         motorContext = .adjusting
         print("start motor adjust")
+        registerBackgroundTask()
         do {
             for try await char in motor.setSpeedAsync(to: finalTarget) {
                 print( "In loop with speed \(char.speed)" )
@@ -38,6 +41,7 @@ class FanModel: ObservableObject {
             motorContext = .fault
             print("error setting speed \(error)")
         }
+        endBackgroundTask()
     }
     
     func setFan(addHours hours: Int) async {
@@ -45,6 +49,7 @@ class FanModel: ObservableObject {
             timerContext = .fault
             return
         }
+        registerBackgroundTask()
         timerContext = .adjusting
         let current = chars.timer
         let target = min (current + hours * 60, 12 * 60) - 10
@@ -58,16 +63,12 @@ class FanModel: ObservableObject {
             timerContext = .fault
             print("Error setting timer \(error)")
         }
+        endBackgroundTask()
     }
     
-    func refresh() {
-        guard let ipAddr = fanCharacteristics?.ipAddr else { return }
-        do {
-            Task {
-                let newChars = try await FanStatusLoader(addr: ipAddr).loadResultsAsync(action: .refresh)
-                fanCharacteristics = newChars
-            }
-        }
+    func refresh() async throws {
+        guard let ipAddr = fanCharacteristics?.ipAddr else { throw AdjustmentError.missingKeys }
+        fanCharacteristics = try await FanStatusLoader(addr: ipAddr).loadResultsAsync(action: .refresh)
     }
     
     private func startKeepalive () {
@@ -76,12 +77,11 @@ class FanModel: ObservableObject {
         updateTimer = nil
         updateTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
             guard let self = self else { return }
-            Task {
+            Task { [weak self] in
                 do {
-                    guard let addr = self.fanCharacteristics?.ipAddr else { throw AdjustmentError.missingKeys }
-                    self.fanCharacteristics = try await FanStatusLoader(addr: addr).loadResultsAsync(action: .refresh)
+                    try await self?.refresh()
                 } catch {
-                    self.motorContext = .fault
+                    self?.motorContext = .fault
                 }
             }
         }
@@ -92,6 +92,19 @@ class FanModel: ObservableObject {
         guard let t = updateTimer else { return }
         if t.isValid { t.invalidate() }
         self.updateTimer = nil
+    }
+    
+    private func registerBackgroundTask() {
+        backgroundTask = UIApplication.shared.beginBackgroundTask { [weak self] in
+            self?.endBackgroundTask()
+        }
+        assert(backgroundTask != .invalid)
+    }
+    
+    private func endBackgroundTask() {
+        print("Background task ended.")
+        UIApplication.shared.endBackgroundTask(backgroundTask)
+        backgroundTask = .invalid
     }
 }
 

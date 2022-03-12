@@ -60,7 +60,7 @@ struct FanView: View {
     
     init (initialCharacteristics chars: FanCharacteristics) {
         id = chars.macAddr
-        _name = AppStorage(wrappedValue: "\(chars.airspaceFanModel)", StorageKey.fanName(chars.macAddr).key)
+        _name = AppStorage(wrappedValue: "\(chars.airspaceFanModel)", StorageKey.fanName(chars.macAddr).rawValue)
         _viewModel = StateObject.init(wrappedValue: FanViewModel(chars: chars))
         print("init fan view model \(chars.airspaceFanModel) selector segments \(viewModel.selectorSegments)")
         

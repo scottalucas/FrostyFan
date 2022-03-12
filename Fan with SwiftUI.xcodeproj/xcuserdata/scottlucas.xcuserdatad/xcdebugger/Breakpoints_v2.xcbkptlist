@@ -86,22 +86,5 @@
             landmarkType = "14">
          </BreakpointContent>
       </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "DADBB520-3153-4493-8CAB-FB3B736988A3"
-            shouldBeEnabled = "Yes"
-            condition = "test == false"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "Shared/Weather/Weather Model.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "59"
-            endingLineNumber = "59"
-            landmarkName = "Weather"
-            landmarkType = "14">
-         </BreakpointContent>
-      </BreakpointProxy>
    </Breakpoints>
 </Bucket>
