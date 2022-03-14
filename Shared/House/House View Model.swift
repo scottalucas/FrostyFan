@@ -21,9 +21,6 @@ class HouseViewModel: ObservableObject {
     private var bag = Array<AnyCancellable>()
     
     init (dataSource: House = House(), initialFans: Set<FanCharacteristics> = []) {
-//        let views = Set(initialFans.map { FanView(initialCharacteristics: $0) })
-//        let spds = Dictionary.init( uniqueKeysWithValues: views.map { ($0.id, $0.viewModel.$displayFanRpm.eraseToAnyPublisher()) } )
-//
         fanViews = Set( initialFans.map { FanView( initialCharacteristics: $0 ) } )
 //        fanSpeedPublishers = spds
         self.dataSource = dataSource

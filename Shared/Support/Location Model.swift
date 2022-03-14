@@ -12,10 +12,7 @@ import SwiftUI
 
 class Location: NSObject, ObservableObject {
     private var mgr: CLLocationManager
-//    @AppStorage(StorageKey.locLat.key) var lat: Double?
-//    @AppStorage(StorageKey.locLon.key) var lon: Double?
-    @AppStorage(StorageKey.coordinate.rawValue) var coordinate: Data? //use a CLLocation type
-//    @AppStorage(StorageKey.locationAvailable.key) private var locationPermission: LocationPermission = .unknown
+//    @AppStorage(StorageKey.coordinate.rawValue) var coordinate: Data? //use a CLLocation type
     
     enum LocationPermission: String, Codable {
         case deviceProhibited, appProhibited, appAllowed, unknown
@@ -29,10 +26,9 @@ class Location: NSObject, ObservableObject {
         mgr = CLLocationManager()
         super.init()
         mgr.delegate = self
-//        if locationPermission == .unknown { getLocationPermission() }
         print("Location services are enabled: \(CLLocationManager.locationServicesEnabled())")
-        print("Device location enabled: \(mgr.authorizationStatus.rawValue)")
-//        print("Stored \(locationPermission)")
+        print("Device location enabled: \(mgr.authorizationStatus)")
+        print ("Location stored: \(Storage.coordinate == nil ? "false" : "true")")
     }
 
     func updateLocation () {
@@ -44,9 +40,7 @@ class Location: NSObject, ObservableObject {
     }
     
     func clearLocation () {
-//        lat = nil
-//        lon = nil
-        coordinate = nil
+        Storage.coordinate = nil
     }
 }
 
@@ -56,9 +50,9 @@ extension Location: CLLocationManagerDelegate {
 //        lat = locations.last.map { $0.coordinate.latitude }
 //        lon = locations.last.map { $0.coordinate.longitude }
         if let loc = locations.last {
-            coordinate = loc.data
+            Storage.coordinate = Coordinate(lat: loc.coordinate.latitude, lon: loc.coordinate.longitude)
         } else {
-            coordinate = nil
+            Storage.coordinate = nil
         }
         manager.stopUpdatingLocation()
     }
@@ -71,7 +65,7 @@ extension Location: CLLocationManagerDelegate {
         if manager.authorizationStatus == .authorizedAlways || manager.authorizationStatus == .authorizedAlways {
             mgr.startUpdatingLocation()
         } else {
-            coordinate = nil
+            Storage.coordinate = nil
         }
     }
     

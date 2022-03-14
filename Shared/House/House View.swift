@@ -10,7 +10,6 @@ import Combine
 
 struct HouseView: View {
     typealias IPAddr = String
-    @EnvironmentObject private var sharedHouseData: HouseMonitor
     @StateObject var viewModel: HouseViewModel
     @State private var currentTab: Int = 0
     @State private var info: String = ""
@@ -18,18 +17,19 @@ struct HouseView: View {
     
     var body: some View {
         NavigationView {
-            ZStack {
-                IdentifiableImage.fanIcon.image
-                    .resizable()
-                    .scaleEffect(1.75)
-                    .aspectRatio(1.0, contentMode: .fit)
-                    .rotatingView(speed: $viewModel.displayedRPM, symmetry: .degrees(60.0))
-                Color.clear.background(.ultraThinMaterial)
-                FanViewPageContainer (viewModel: viewModel)
-            }
-            .pulldownRefresh {
-                try? await viewModel.scan()
-            }
+            FanViewPageContainer (viewModel: viewModel)
+                .background (
+                    IdentifiableImage.fanIcon.image
+                        .resizable()
+                        .aspectRatio(1.0, contentMode: .fit)
+                        .scaleEffect(1.75)
+                        .rotatingView(speed: $viewModel.displayedRPM, symmetry: .degrees(60.0))
+                        .padding(.bottom, 30)
+                        .blur(radius: 30)
+                )
+                .pulldownRefresh {
+                    try? await viewModel.scan()
+                }
         }
         .onAppear {
             Task {
@@ -74,12 +74,13 @@ struct FanViewPageContainer: View {
 struct HouseViewPreviews: PreviewProvider {
 
     static var previews: some View {
-        let vm = HouseViewModel()
+//        let vm = HouseViewModel()
         let env = HouseMonitor.shared
-
-        return HouseView(viewModel: HouseViewModel(dataSource: HouseViewDataMock()))
+        env.scanning = false
+let vm = HouseViewModel(dataSource: HouseViewDataMock(), initialFans: [FanCharacteristics()])
+        return HouseView(viewModel: vm)
             .preferredColorScheme(.dark)
-            .environmentObject(HouseMonitor.shared)
+            .environmentObject(env)
             .environmentObject(WeatherMonitor.shared)
             .background(Color.background)
             .foregroundColor(.main)
@@ -125,8 +126,8 @@ class HouseViewDataMock: House {
 //                fanC.macAddr = UUID.init().uuidString
 //                continuation.yield(fanC)
 //                checkedHosts += 1
-//                percentHostsChecked = checkedHosts / totalHosts
-//                await Task.sleep(1_000_000_000)
+                percentHostsChecked = checkedHosts / totalHosts
+                await Task.sleep(1_000_000_000)
 //                indicators.updateProgress = nil
                 continuation.finish(throwing: nil)
                 HouseMonitor.shared.scanning = false

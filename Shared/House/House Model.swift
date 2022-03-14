@@ -48,8 +48,8 @@ class House {
             Task {
                 var hosts = NetworkAddress.hosts
                 //FIX: remove after testing
-                hosts = []
-                hosts.append("10.0.0.128:8080")
+//                hosts = []
+//                hosts.append("10.0.0.128:8080")
                 let totalHosts = Double(hosts.count)
                 guard totalHosts > 0 else { continuation.finish(throwing: ConnectionError.serverError("No hosts")) ; return }
                 var checkedHosts = Double.zero
