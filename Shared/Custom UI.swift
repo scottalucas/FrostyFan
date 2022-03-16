@@ -68,9 +68,9 @@ struct BackgroundTaskIdentifier {
 
 struct CustomFormatter {
     static var temperture: MeasurementFormatter {
-            let m = MeasurementFormatter()
-            m.numberFormatter.maximumFractionDigits = 0
-            return m
+        let m = MeasurementFormatter()
+        m.numberFormatter.maximumFractionDigits = UnitTemperature.current == .fahrenheit ? 0 : 1
+        return m
     }
 }
 //extension View {

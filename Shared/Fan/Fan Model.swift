@@ -179,6 +179,18 @@ struct FanCharacteristics: Decodable, Hashable {
     var remoteSwitch: String?
     var setpoint: Int?
     var labelValueDictionary: [String: String] {
+        let iT = insideTemp.map ({
+            Measurement<UnitTemperature>(value: Double($0), unit: .fahrenheit).formatted(Measurement<UnitTemperature>.FormatStyle.truncatedTemp)
+        }) ?? "Not reported"
+        
+        let oT = outsideTemp.map ({
+            Measurement<UnitTemperature>(value: Double($0), unit: .fahrenheit).formatted(Measurement<UnitTemperature>.FormatStyle.truncatedTemp)
+        }) ?? "Not reported"
+        
+        let aT = atticTemp.map ({
+            Measurement<UnitTemperature>(value: Double($0), unit: .fahrenheit).formatted(Measurement<UnitTemperature>.FormatStyle.truncatedTemp)
+        }) ?? "Not reported"
+        
         return [
             "Speed" : String(speed),
             "Timer" : String(timer),
@@ -194,9 +206,9 @@ struct FanCharacteristics: Decodable, Hashable {
             "DIP Switch" : dipSwitch ?? "Not reported",
             "Remote Switch" : remoteSwitch ?? "Not reported",
             "Power" : power.map { String($0) } ?? "Not reported",
-            "Inside Temp" : insideTemp.map { "\($0)˚" } ?? "Not reported",
-            "Attic Temp" : atticTemp.map { "\($0)˚" } ?? "Not reported",
-            "Outside Temp" : outsideTemp.map { "\($0)˚" } ?? "Not reported",
+            "Inside Temp" : iT,
+            "Attic Temp" : aT,
+            "Outside Temp" : oT,
             "Setpoint" : setpoint.map { String($0) } ?? "Not reported"
         ]
     }
@@ -276,9 +288,15 @@ struct FanCharacteristics: Decodable, Hashable {
         speed = intSpeed
         timer = intTimer
         power = powerStr.map { Int($0) } ?? nil
-        insideTemp = insideTempStr.map { Int($0) } ?? nil
-        atticTemp = atticTempStr.map { Int($0) } ?? nil
-        outsideTemp = outsideTempStr.map { Int($0) } ?? nil
+        insideTemp = insideTempStr.map {
+            guard $0 != "-99" else { return nil }
+            return Int($0) } ?? nil
+        atticTemp = atticTempStr.map {
+            guard $0 != "-99" else { return nil }
+            return Int($0) } ?? nil
+        outsideTemp = outsideTempStr.map {
+            guard $0 != "-99" else { return nil }
+            return Int($0) } ?? nil
         setpoint = setpointStr.map { Int($0) } ?? nil
     }
     

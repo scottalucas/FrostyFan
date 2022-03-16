@@ -252,6 +252,13 @@ extension UnitTemperature {
     }
 }
 
+extension Measurement.FormatStyle where UnitType == UnitTemperature {
+    static var truncatedTemp: Measurement.FormatStyle {
+        let nf = FloatingPointFormatStyle<Double>().precision(.fractionLength(UnitTemperature.current == .fahrenheit ? 0 : 1))
+        return Measurement.FormatStyle.measurement(width: .abbreviated, usage: .weather, hidesScaleName: false, numberFormatStyle: nf)
+    }
+}
+
 @propertyWrapper struct ClampedWeatherRetrieval {
     var wrappedValue: Date {
         didSet { wrappedValue = wrappedValue.clamped(to: (Storage.lastForecastUpdate.addingTimeInterval(15 * 60)...(.distantFuture))) }
