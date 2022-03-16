@@ -76,17 +76,8 @@ struct RangeSliderHandle: View {
 struct RangeSlider: View {
     //unit = base value
     @Binding var lowValue: Double
-    {
-    willSet {
-        offsetLow = maxWidth * CGFloat((newValue - minValue) / (maxValue - minValue))
-    }
-    }
     @Binding var highValue: Double
-    {
-    willSet {
-        offsetHigh = maxWidth * CGFloat((newValue - minValue) / (maxValue - minValue))
-    }
-    }
+
     
     private var minValue: Double
     private var maxValue: Double
@@ -148,6 +139,8 @@ struct RangeSlider: View {
                         .onChanged { drag in
                             let positionPercent = Double((offsetLowBookmark + drag.translation.width) / maxWidth).clamped(to: .zero...lowerHandleUpperBound)
                             lowValue = positionPercent * (maxValue - minValue) + minValue
+                            offsetLow = maxWidth * CGFloat((lowValue - minValue) / (maxValue - minValue))
+
                         }
                         .onEnded({ drag in
                             offsetLowBookmark = offsetLow
@@ -159,6 +152,7 @@ struct RangeSlider: View {
                         .onChanged { drag in
                             let positionPercent = Double((offsetHighBookmark + drag.translation.width) / maxWidth).clamped(to: upperHandleLowerBound...1.0)
                             highValue = positionPercent * (maxValue - minValue) + minValue
+                            offsetHigh = maxWidth * CGFloat((highValue - minValue) / (maxValue - minValue))
                         }
                         .onEnded({ drag in
                             offsetHighBookmark = min (maxWidth, offsetHigh)
