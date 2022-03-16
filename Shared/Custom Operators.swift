@@ -234,6 +234,24 @@ extension UNUserNotificationCenter {
     }
 }
 
+extension UnitTemperature {
+    static var current: UnitTemperature {
+        let formatter = MeasurementFormatter()
+        formatter.locale = Locale.autoupdatingCurrent
+        formatter.unitStyle = .medium
+        let formatted = formatter.string(from: .init(value: 0, unit: UnitTemperature.celsius))
+        let symbol = String(formatted.suffix(2))
+        switch (symbol) {
+            case UnitTemperature.celsius.symbol:
+                return .celsius
+            case UnitTemperature.fahrenheit.symbol:
+                return .fahrenheit
+            default:
+                return .kelvin
+        }
+    }
+}
+
 @propertyWrapper struct ClampedWeatherRetrieval {
     var wrappedValue: Date {
         didSet { wrappedValue = wrappedValue.clamped(to: (Storage.lastForecastUpdate.addingTimeInterval(15 * 60)...(.distantFuture))) }

@@ -110,7 +110,7 @@ struct SettingsView: View {
                     }
                     if (coordinateData != nil && temperatureAlertsEnabled) {
                         Section(header: Text("temperature alert range").settingsAppearance(.header)) {
-                            TemperatureSelector()
+                            TemperatureSelector(tempAlertsEnabled: $temperatureAlertsEnabled)
                                 .padding(.top, 25)
                                 .padding(.bottom, 10)
                         }
@@ -184,8 +184,8 @@ struct SettingsView: View {
             initTempAlertsEnabled = temperatureAlertsEnabled
             initInterlockAlertsEnabled = interlockAlertsEnabled
             initCoord = coordinateData
-            initLowTempLimit = Storage.highTempLimit
-            initHighTempLimit = Storage.lowTempLimit
+            initLowTempLimit = Storage.lowTempLimit
+            initHighTempLimit = Storage.highTempLimit
         })
         .onChange(of: interlockAlertsEnabled, perform: { enabled in
             UNUserNotificationCenter.current().getNotificationSettings(completionHandler: { settings in
@@ -217,17 +217,35 @@ struct SettingsView: View {
 struct TemperatureSelector: View {
     @AppStorage(StorageKey.lowTempLimit.rawValue) var lowTempLimit: Double?
     @AppStorage(StorageKey.highTempLimit.rawValue) var highTempLimit: Double?
+    @Binding var tempAlertsEnabled: Bool
     @State private var lowTemp: Double = 55
     @State private var highTemp: Double = 80
-    private let min = 40.0
-    private let max = 85.0
+    private var minTempScale: Double {
+        return UnitTemperature.current == UnitTemperature.fahrenheit ? 40.0 : Measurement(value: 5.0, unit: UnitTemperature.celsius).converted(to: .fahrenheit).value
+    }
+    private var maxTempScale: Double {
+        return UnitTemperature.current == UnitTemperature.fahrenheit ? 85.0 : Measurement(value: 30.0, unit: UnitTemperature.celsius).converted(to: .fahrenheit).value
+    }
+    
+    private func initHiLowTemps () {
+        let cLow = Measurement(value: 13.0, unit: UnitTemperature.celsius).converted(to: .fahrenheit).value
+        let cHigh = Measurement(value: 27.0, unit: UnitTemperature.celsius).converted(to: .fahrenheit).value
+        let lowDef = UnitTemperature.current == .fahrenheit ? 55.0 : cLow
+        let highDef = UnitTemperature.current == .fahrenheit ? 80.0 : cHigh
+        let candidateLowTemp = lowTempLimit ?? lowDef
+        let candidateHighTemp = highTempLimit ?? highDef
+        lowTemp = candidateLowTemp.clamped(to: (minTempScale...Swift.min(candidateHighTemp, highDef)))
+        highTemp = candidateHighTemp.clamped(to: (Swift.max(lowDef, candidateLowTemp)...maxTempScale))
+        lowTempLimit = lowTemp
+        highTempLimit = highTemp
+    }
     
     var body: some View {
         RangeSlider(
             selectedLow: $lowTemp,
             selectedHigh: $highTemp,
-            minimum: min,
-            maximum: max,
+            minimum: minTempScale,
+            maximum: maxTempScale,
             barFormatter: { style in
                 style.barInsideFill = .main
                 style.barOutsideStrokeColor = .white
@@ -243,7 +261,7 @@ struct TemperatureSelector: View {
                 labelStyle.formatter = { val in
                     let formatter = MeasurementFormatter()
                     let nFormatter = NumberFormatter()
-                    nFormatter.maximumFractionDigits = 0
+                    nFormatter.maximumFractionDigits = UnitTemperature.current == .fahrenheit ? 0 : 1
                     formatter.unitOptions = .temperatureWithoutUnit
                     formatter.numberFormatter = nFormatter
                     let val = Measurement(value: val, unit: UnitTemperature.fahrenheit)
@@ -261,7 +279,7 @@ struct TemperatureSelector: View {
                 labelStyle.formatter = { val in
                     let formatter = MeasurementFormatter()
                     let nFormatter = NumberFormatter()
-                    nFormatter.maximumFractionDigits = 0
+                    nFormatter.maximumFractionDigits = UnitTemperature.current == .fahrenheit ? 0 : 1
                     formatter.unitOptions = .temperatureWithoutUnit
                     formatter.numberFormatter = nFormatter
                     let val = Measurement(value: val, unit: UnitTemperature.fahrenheit)
@@ -271,14 +289,18 @@ struct TemperatureSelector: View {
                 style.labelStyle = labelStyle
             })
             .onChange(of: lowTemp) { newLowTemp in
-                lowTempLimit = Measurement(value: newLowTemp, unit: UnitTemperature.fahrenheit).value
+                let nlt = (newLowTemp * 10).rounded() / 10
+                lowTempLimit = Measurement(value: nlt, unit: UnitTemperature.fahrenheit).value
             }
             .onChange(of: highTemp) { newHighTemp in
-                highTempLimit = Measurement(value: newHighTemp, unit: UnitTemperature.fahrenheit).value
+                let nht = (newHighTemp * 10).rounded() / 10
+                highTempLimit = Measurement(value: nht, unit: UnitTemperature.fahrenheit).value
+            }
+            .onChange(of: tempAlertsEnabled) { enabled in
+                if enabled { initHiLowTemps() }
             }
             .onAppear(perform: {
-                lowTempLimit = lowTemp
-                highTempLimit = highTemp
+                initHiLowTemps()
             })
     }
 }
