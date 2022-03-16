@@ -27,7 +27,7 @@ class Location: NSObject, ObservableObject {
         super.init()
         mgr.delegate = self
         print("Location services are enabled: \(CLLocationManager.locationServicesEnabled())")
-        print("Device location enabled: \(mgr.authorizationStatus)")
+        print("Device location enabled: \(mgr.authorizationStatus.description)")
         print ("Location stored: \(Storage.coordinate == nil ? "false" : "true")")
     }
 
@@ -47,25 +47,23 @@ class Location: NSObject, ObservableObject {
 extension Location: CLLocationManagerDelegate {
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-//        lat = locations.last.map { $0.coordinate.latitude }
-//        lon = locations.last.map { $0.coordinate.longitude }
         if let loc = locations.last {
-            Storage.coordinate = Coordinate(lat: loc.coordinate.latitude, lon: loc.coordinate.longitude)
-        } else {
-            Storage.coordinate = nil
+            let newCoord = Coordinate(coord: loc)
+            if newCoord != Storage.coordinate {
+                Storage.coordinate = newCoord
+                print("Saved new coordinates \(Storage.coordinate.map { "\($0.lat.latitudeStr), \($0.lon.longitudeStr)" } ?? "failed")")
+            }
         }
         manager.stopUpdatingLocation()
     }
-    
+        
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print("location manager failed with error \(error.localizedDescription)")
     }
     
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        if manager.authorizationStatus == .authorizedAlways || manager.authorizationStatus == .authorizedAlways {
+        if manager.authorizationStatus == .authorizedAlways || manager.authorizationStatus == .authorizedWhenInUse {
             mgr.startUpdatingLocation()
-        } else {
-            Storage.coordinate = nil
         }
     }
     

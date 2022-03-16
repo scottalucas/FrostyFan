@@ -142,7 +142,8 @@ class WeatherMonitor: ObservableObject {
                 } catch {
                     monitorTask?.cancel()
                     monitorTask = nil
-                    print("exited monitor loop @ \(Date.now.formatted()), error: \(error.localizedDescription)")
+                    let e = error as? BackgroundTaskError ?? error
+                    print("exited monitor loop @ \(Date.now.formatted()), error: \(e.localizedDescription)")
                     break
                 }
             }
@@ -179,16 +180,14 @@ class WeatherMonitor: ObservableObject {
         
         //go through forecast array to find entry closest to current time
         currentTemp = forecast.reduce(weatherResult.currentTemp) { abs($1.date.timeIntervalSinceNow) < ( 30 * 60 ) ? $1.temp : $0 }
-        
-            print("Updated current temp to \(currentTemp?.formatted() ?? "nil")")
-        
-            guard let ltl = Storage.lowTempLimit, let htl = Storage.highTempLimit else {
-                tooHot = false
-                tooCold = false
-                return
-            }
-        tooCold = currentTemp?.value ?? 72 < ltl
-        tooHot = currentTemp?.value ?? 72 > htl
+        guard let t = currentTemp, let ltl = Storage.lowTempLimit, let htl = Storage.highTempLimit else {
+            tooHot = false
+            tooCold = false
+            return
+        }
+        tooCold = t.value < ltl
+        tooHot = t.value > htl
+        print("Updated current temp to \(currentTemp?.formatted() ?? "nil")")
     }
     
     func suspendMonitor () {

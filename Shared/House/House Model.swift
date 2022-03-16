@@ -70,7 +70,7 @@ class House {
                 
                 await withTaskGroup(of: (IPAddr, Data?).self) { group in
                     for ip in hosts {
-                        print("Scanning \(ip)")
+//                        print("Scanning \(ip)")
                         guard let url = URL(string: "http://\(ip)/fanspd.cgi?dir=\(FanModel.Action.refresh.rawValue)") else { continue }
                         group.addTask {
                             let d = try? await session.data(from: url).0

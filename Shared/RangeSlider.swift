@@ -115,7 +115,8 @@ struct RangeSlider: View {
                     .padding([.leading, .trailing], 5)
                     .modifier(WidthReader())
                     .onPreferenceChange(WidthPreferenceKey.self) { width in
-                        maxWidth = width - (leftHandle.style.size.width + rightHandle.style.size.width) * 0.5
+//                        maxWidth = width - (leftHandle.style.size.width + rightHandle.style.size.width) * 0.5
+                        maxWidth = width
                         offsetHigh = CGFloat( ( highValue - minValue) / (maxValue - minValue) ) * (maxWidth)
                         offsetLow = CGFloat( ( lowValue - minValue) / (maxValue - minValue) ) * (maxWidth)
                         offsetHighBookmark = offsetHigh
@@ -139,25 +140,35 @@ struct RangeSlider: View {
                         .onChanged { drag in
                             let positionPercent = Double((offsetLowBookmark + drag.translation.width) / maxWidth).clamped(to: .zero...lowerHandleUpperBound)
                             lowValue = positionPercent * (maxValue - minValue) + minValue
-                            offsetLow = maxWidth * CGFloat((lowValue - minValue) / (maxValue - minValue))
-
+                            offsetLow = positionPercent * maxWidth
+//                            offsetLow = maxWidth * CGFloat((lowValue - minValue) / (maxValue - minValue))
                         }
                         .onEnded({ drag in
                             offsetLowBookmark = offsetLow
                         }))
-                .offset(x: offsetLow, y: 0)
+                .alignmentGuide(.trailing, computeValue: { dim in
+                    dim.width / 2
+                })
+                .fixedSize()
+                .frame(width: offsetLow, alignment: .trailing)
+//                .offset(x: offsetLow, y: 0)
             rightHandle
                 .gesture (
                     DragGesture (minimumDistance: 0.0, coordinateSpace: .global)
                         .onChanged { drag in
                             let positionPercent = Double((offsetHighBookmark + drag.translation.width) / maxWidth).clamped(to: upperHandleLowerBound...1.0)
                             highValue = positionPercent * (maxValue - minValue) + minValue
-                            offsetHigh = maxWidth * CGFloat((highValue - minValue) / (maxValue - minValue))
-                        }
+//                            offsetHigh = maxWidth * CGFloat((highValue - minValue) / (maxValue - minValue))
+                            offsetHigh = positionPercent * maxWidth
+                      }
                         .onEnded({ drag in
                             offsetHighBookmark = min (maxWidth, offsetHigh)
                         }))
-                .offset(x: offsetHigh, y: 0)
+                .alignmentGuide(.trailing, computeValue: { dim in
+                    dim.width / 2
+                })
+                .fixedSize()
+                .frame(width: offsetHigh, alignment: .trailing)
         }
     }
     
@@ -239,5 +250,36 @@ extension RangeSlider {
         var labelWeight: Font.Weight = .regular
         var isItalic: Bool = false
         var isBold: Bool = false
+    }
+}
+
+struct Range_Slider_Previews: PreviewProvider {
+
+    static var previews: some View {
+        RangeSlider(
+            selectedLow: .constant(-1000),
+            selectedHigh: .constant(80),
+            minimum: -1000,
+            maximum: 80,
+            barFormatter: { s in
+                s = RangeSlider.BarStyle()
+            },
+            rightHandleFormatter: { s in
+            s = RangeSlider.HandleStyle()
+            var l = RangeSlider.LabelStyle()
+            l.formatter = { val in
+                Measurement(value: val, unit: UnitTemperature.fahrenheit).formatted()
+            }
+            s.labelStyle = l
+        },
+            leftHandleFormatter: { s in
+                s = RangeSlider.HandleStyle()
+                var l = RangeSlider.LabelStyle()
+                l.formatter = { val in
+                    Measurement(value: val, unit: UnitTemperature.fahrenheit).formatted()
+                }
+                s.labelStyle = l
+            })
+            .padding([.leading, .trailing], 40)
     }
 }

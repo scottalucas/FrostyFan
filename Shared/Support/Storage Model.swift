@@ -172,28 +172,17 @@ import CoreLocation
 //}
 //
 //extension UserDefaults: UserDefaultsProtocol {}
-enum StorageKey: Equatable, RawRepresentable {
+enum StorageKey: Equatable, RawRepresentable, CaseIterable {
+    static var allCases: [StorageKey] {
+        return [.interlockAlarmEnabled, .temperatureAlarmEnabled, .lowTempLimit, .highTempLimit, .forecast, .lastForecastUpdate, .lastNotificationShown, .coordinate, .fanName("")]
+    }
     
     init?(rawValue: String) {
         if rawValue.prefix(4) == "name" {
             let addr = String(rawValue.dropFirst(4))
             self = .fanName(addr)
-        } else if rawValue == StorageKey.interlockAlarmEnabled.rawValue {
-            self = .interlockAlarmEnabled
-        } else if rawValue == StorageKey.temperatureAlarmEnabled.rawValue {
-            self = .temperatureAlarmEnabled
-        } else if rawValue == StorageKey.lowTempLimit.rawValue {
-            self = .lowTempLimit
-        } else if rawValue == StorageKey.highTempLimit.rawValue {
-            self = .highTempLimit
-        } else if rawValue == StorageKey.forecast.rawValue {
-            self = .forecast
-        } else if rawValue == StorageKey.lastForecastUpdate.rawValue {
-            self = .lastForecastUpdate
-        } else if rawValue == StorageKey.lastNotificationShown.rawValue {
-            self = .lastNotificationShown
-        } else if rawValue == StorageKey.coordinate.rawValue {
-            self = .coordinate
+        } else if let val = StorageKey.init(rawValue: rawValue) {
+            self = val
         } else {
             return nil
         }
@@ -364,8 +353,43 @@ struct Storage {
 //        UserDefaults.standard.data(forKey: StorageKey.coordinate.key)?.decodeCoordinate
 //    }
     
-    static func clear (_ key: StorageKey) {
-        UserDefaults.standard.set(nil, forKey: key.rawValue)
+    static func clear (_ key: StorageKey? = nil) {
+        if let k = key?.rawValue {
+            UserDefaults.standard.set(nil, forKey: k)
+        } else {
+            StorageKey.allCases.forEach({
+                UserDefaults.standard.set(nil, forKey: $0.rawValue)
+            })
+        }
+    }
+    
+    static func printAll(forAddr macAddr: String? = nil) {
+        StorageKey.allCases.forEach ({ key in
+            if key == .fanName("") {
+                print ("Key: fanName for addr \(macAddr ?? "nil"), Value: \(getName(forAddr: macAddr ?? ""))")
+            } else {
+                switch key {
+                    case .temperatureAlarmEnabled:
+                        print (key.rawValue, UserDefaults.standard.object(forKey: StorageKey.temperatureAlarmEnabled.rawValue) == nil ? "not set" : temperatureAlarmEnabled)
+                    case .interlockAlarmEnabled:
+                        print (key.rawValue, UserDefaults.standard.object(forKey: StorageKey.interlockAlarmEnabled.rawValue) == nil ? "not set" : interlockAlarmEnabled)
+                    case .coordinate:
+                        print (key.rawValue, coordinate == nil ? "not set": coordinate!)
+                    case .lastForecastUpdate:
+                        print (key.rawValue, UserDefaults.standard.object(forKey: StorageKey.lastForecastUpdate.rawValue) == nil ? "not set" : lastForecastUpdate == .distantPast ? "distant past" : lastForecastUpdate.formatted())
+                    case .lastNotificationShown:
+                        print (key.rawValue, UserDefaults.standard.object(forKey: StorageKey.lastNotificationShown.rawValue) == nil ? "not set" : lastNotificationShown == .distantPast ? "distant past" : lastNotificationShown.formatted())
+                    case .forecast:
+                        print (key.rawValue, storedWeather ?? "not set")
+                    case .highTempLimit:
+                        print (key.rawValue, highTempLimit?.debugDescription ?? "not set")
+                    case .lowTempLimit:
+                        print (key.rawValue, lowTempLimit?.debugDescription ?? "not set")
+                    default:
+                        break
+                }
+            }
+        })
     }
 //
 //    func set(to value: Any) throws {

@@ -17,16 +17,16 @@ struct SettingsView: View {
     @AppStorage(StorageKey.interlockAlarmEnabled.rawValue) var interlockAlertsEnabled: Bool = false
 //    @AppStorage(StorageKey.locationAvailable.key) var locationPermission: Location.LocationPermission = .unknown
     @AppStorage(StorageKey.coordinate.rawValue) var coordinateData: Data?
+//    @AppStorage (StorageKey.lowTempLimit.rawValue) var lowTempLimit: Double?
+//    @AppStorage (StorageKey.highTempLimit.rawValue) var highTempLimit: Double?
+
     @State private var initTempAlertsEnabled = false
     @State private var initInterlockAlertsEnabled = false
-    @State private var initLocationPermission: Location.LocationPermission = .unknown
     @State private var initCoord: Data?
+    @State private var initLowTempLimit: Double?
+    @State private var initHighTempLimit: Double?
     @State private var weatherError: Error?
     @Binding var activeSheet: OverlaySheet?
-    
-    private var coordinatesAvailable: Bool {
-        coordinateData != nil
-    }
     
     var body: some View {
         ZStack {
@@ -35,15 +35,13 @@ struct SettingsView: View {
             VStack {
                 List {
                     Section(header: Text("Location").foregroundColor(.background)) {
-                        if coordinatesAvailable {
+                        if coordinateData != nil {
                             HStack {
                                 VStack {
                                     Text("Location saved")
                                         .settingsAppearance(.lineLabel)
-                                    if let lat = coordinateData?.decodeCoordinate?.lat, let lon = coordinateData?.decodeCoordinate?.lon {
-                                        Text("\(lat.latitudeStr)   \(lon.longitudeStr)")
+                                    Text("\(Storage.coordinate?.lat.latitudeStr ?? "")   \(Storage.coordinate?.lon.longitudeStr ?? "")")
                                             .font(.caption2.italic())
-                                    }
                                 }
                                 Spacer()
                                 Button(action: {
@@ -97,7 +95,7 @@ struct SettingsView: View {
 //                        }
                     }
                     Section(header: Text("Alerts").settingsAppearance(.header)) {
-                        if coordinatesAvailable {
+                            if coordinateData != nil {
                             VStack {
                                 Toggle("Interlock", isOn: $interlockAlertsEnabled)
                                 Toggle("Temperature", isOn: $temperatureAlertsEnabled)
@@ -110,14 +108,14 @@ struct SettingsView: View {
                                 .settingsAppearance(.lineLabel)
                         }
                     }
-                    if (coordinatesAvailable && temperatureAlertsEnabled) {
+                    if (coordinateData != nil && temperatureAlertsEnabled) {
                         Section(header: Text("temperature alert range").settingsAppearance(.header)) {
                             TemperatureSelector()
                                 .padding(.top, 25)
                                 .padding(.bottom, 10)
                         }
                     }
-                    if weatherError != nil, coordinatesAvailable, temperatureAlertsEnabled {
+                    if weatherError != nil, coordinateData != nil, temperatureAlertsEnabled {
                         Section(header: Text("Weather Error").settingsAppearance(.header)) {
                             VStack (alignment: .leading)
                             {
@@ -161,12 +159,14 @@ struct SettingsView: View {
                                     temperatureAlertsEnabled = initTempAlertsEnabled
                                     interlockAlertsEnabled = initInterlockAlertsEnabled
                                     coordinateData = initCoord
+                                    Storage.highTempLimit = initHighTempLimit
+                                    Storage.lowTempLimit = initLowTempLimit
                                     activeSheet = nil
                                 }
                                 Spacer()
                                 Text("Settings").font(.largeTitle)
                                 Spacer()
-                                Button("Commit") {
+                                Button("Update") {
                                     activeSheet = nil
                                 }
                             }
@@ -180,20 +180,13 @@ struct SettingsView: View {
                 }
         }
         .navigationBarBackButtonHidden(true)
-//        .onAppear(perform: {
-////            initTempAlertsEnabled = temperatureAlertsEnabled
-////            initInterlockAlertsEnabled = interlockAlertsEnabled
-////            initLocationPermission = locationPermission
-////            initCoord = coordinateData
-////            Task {
-////                do {
-//////                    let _ = try await weather.simpleCheck()
-////                    weatherError = nil
-////                } catch {
-////                    weatherError = error
-////                }
-////            }
-//        })
+        .onAppear(perform: {
+            initTempAlertsEnabled = temperatureAlertsEnabled
+            initInterlockAlertsEnabled = interlockAlertsEnabled
+            initCoord = coordinateData
+            initLowTempLimit = Storage.highTempLimit
+            initHighTempLimit = Storage.lowTempLimit
+        })
         .onChange(of: interlockAlertsEnabled, perform: { enabled in
             UNUserNotificationCenter.current().getNotificationSettings(completionHandler: { settings in
                 if settings.authorizationStatus != .authorized {
@@ -222,8 +215,8 @@ struct SettingsView: View {
 }
 
 struct TemperatureSelector: View {
-    @AppStorage(StorageKey.lowTempLimit.rawValue) var lowTempData: Data?
-    @AppStorage(StorageKey.highTempLimit.rawValue) var highTempData: Data?
+    @AppStorage(StorageKey.lowTempLimit.rawValue) var lowTempLimit: Double?
+    @AppStorage(StorageKey.highTempLimit.rawValue) var highTempLimit: Double?
     @State private var lowTemp: Double = 55
     @State private var highTemp: Double = 80
     private let min = 40.0
@@ -246,28 +239,46 @@ struct TemperatureSelector: View {
                 style.strokeColor = .red
                 style.strokeWeight = 2.0
                 style.labelOffset = CGSize(width: 0, height: -30)
-                style.labelStyle = RangeSlider.LabelStyle()
-                style.labelStyle?.formatter = { inputValue in Measurement(value: inputValue, unit: UnitTemperature.fahrenheit).formatted() }
-                style.labelStyle?.color = .main
+                var labelStyle = RangeSlider.LabelStyle()
+                labelStyle.formatter = { val in
+                    let formatter = MeasurementFormatter()
+                    let nFormatter = NumberFormatter()
+                    nFormatter.maximumFractionDigits = 0
+                    formatter.unitOptions = .temperatureWithoutUnit
+                    formatter.numberFormatter = nFormatter
+                    let val = Measurement(value: val, unit: UnitTemperature.fahrenheit)
+                    return formatter.string(from: val)
+                }
+                labelStyle.color = .main
+                style.labelStyle = labelStyle
             },
             leftHandleFormatter: { style in
                 style.size = CGSize(width: 30, height: 30)
                 style.strokeColor = .blue
                 style.strokeWeight = 2.0
                 style.labelOffset = CGSize(width: 0, height: -30)
-                style.labelStyle = RangeSlider.LabelStyle()
-                style.labelStyle?.formatter = { inputValue in Measurement(value: inputValue, unit: UnitTemperature.fahrenheit).formatted() }
-                style.labelStyle?.color = .main
+                var labelStyle = RangeSlider.LabelStyle()
+                labelStyle.formatter = { val in
+                    let formatter = MeasurementFormatter()
+                    let nFormatter = NumberFormatter()
+                    nFormatter.maximumFractionDigits = 0
+                    formatter.unitOptions = .temperatureWithoutUnit
+                    formatter.numberFormatter = nFormatter
+                    let val = Measurement(value: val, unit: UnitTemperature.fahrenheit)
+                    return formatter.string(from: val)
+                }
+                labelStyle.color = .main
+                style.labelStyle = labelStyle
             })
             .onChange(of: lowTemp) { newLowTemp in
-                lowTempData = Measurement(value: newLowTemp, unit: UnitTemperature.fahrenheit).data
+                lowTempLimit = Measurement(value: newLowTemp, unit: UnitTemperature.fahrenheit).value
             }
             .onChange(of: highTemp) { newHighTemp in
-                highTempData = Measurement(value: newHighTemp, unit: UnitTemperature.fahrenheit).data
+                highTempLimit = Measurement(value: newHighTemp, unit: UnitTemperature.fahrenheit).value
             }
             .onAppear(perform: {
-                lowTemp = lowTempData?.decodeTemperature?.value ?? 55.0
-                highTemp = highTempData?.decodeTemperature?.value ?? 80.0
+                lowTempLimit = lowTemp
+                highTempLimit = highTemp
             })
     }
 }

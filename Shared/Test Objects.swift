@@ -65,6 +65,24 @@ class TestWeather {
     }
 }
 
+extension CLAuthorizationStatus {
+    var description: String {
+        switch self.rawValue {
+            case 0:
+                return "notDetermined"
+            case 1:
+                return "restricted"
+            case 2:
+                return  "denied"
+            case 3:
+                return "authorizedAlways"
+            case 4:
+                return "authorizedWhenInUse"
+            default:
+                return "INVALID"
+        }
+    }
+}
 //class MockUserDefaults: UserDefaultsProtocol {
 //    let encoder = JSONEncoder()
 //    let decoder = JSONDecoder()

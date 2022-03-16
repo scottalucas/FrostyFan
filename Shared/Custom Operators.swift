@@ -175,7 +175,18 @@ struct Coordinate: Codable {
         let encoder = JSONEncoder()
         return try? encoder.encode(self)
     }
+    init (lat: Double, lon: Double) {
+        self.lat = lat
+        self.lon = lon
+    }
+    
+    init (coord: CLLocation) {
+        lat = coord.coordinate.latitude
+        lon = coord.coordinate.longitude
+    }
 }
+
+extension Coordinate: Equatable { }
 
 extension CLLocation {
     var data: Data? {

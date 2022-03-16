@@ -24,7 +24,7 @@ struct HouseView: View {
                         .aspectRatio(1.0, contentMode: .fit)
                         .scaleEffect(1.75)
                         .rotatingView(speed: $viewModel.displayedRPM, symmetry: .degrees(60.0))
-                        .padding(.bottom, 30)
+                        .padding(.bottom, viewModel.fanViews.count > 1 ? 30 : 0)
                         .blur(radius: 30)
                 )
                 .pulldownRefresh {
