@@ -233,7 +233,7 @@ class WeatherMonitor: ObservableObject {
     }
     
     fileprivate func issueTempNotification () async {
-        guard Storage.lastNotificationShown.addingTimeInterval(3 * 3600) > .now, ( tooHot || tooCold ), let temperatureString = currentTemp.map ({ CustomFormatter.temperture.string(from: $0) }) else { return }
+        guard Storage.lastNotificationShown.addingTimeInterval(3 * 3600) > .now, ( tooHot || tooCold ), let temperatureString = currentTemp.map ({ $0.formatted(Measurement<UnitTemperature>.FormatStyle.truncatedTemp) }) else { return }
         let alertString = tooHot ? "high" : "low"
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
         //present the alert
