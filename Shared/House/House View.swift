@@ -26,7 +26,8 @@ struct HouseView: View {
                         .rotatingView(speed: $viewModel.displayedRPM, symmetry: .degrees(60.0))
                         .padding(.bottom, viewModel.fanViews.count > 1 ? 30 : 0)
                         .blur(radius: 30)
-//                        .foregroundColor(HouseMonitor.shared.)
+                        .foregroundColor(WeatherMonitor.shared.tooCold || WeatherMonitor.shared.tooHot ? .alarm : .main)
+                        .saturation(WeatherMonitor.shared.tooHot || WeatherMonitor.shared.tooCold ? 0.7 : 1.0)
                 )
                 .pulldownRefresh {
                     try? await viewModel.scan()
@@ -72,18 +73,22 @@ struct FanViewPageContainer: View {
 }
 
 struct HouseViewPreviews: PreviewProvider {
-
+    
     static var previews: some View {
-//        let vm = HouseViewModel()
+        //        let vm = HouseViewModel()
         let env = HouseMonitor.shared
         env.scanning = false
-let vm = HouseViewModel(dataSource: HouseViewDataMock(), initialFans: [FanCharacteristics()])
+        let vm = HouseViewModel(dataSource: HouseViewDataMock(), initialFans: [FanCharacteristics()])
         return HouseView(viewModel: vm)
             .preferredColorScheme(.dark)
             .environmentObject(env)
             .environmentObject(WeatherMonitor.shared)
             .background(Color.background)
             .foregroundColor(.main)
+            .onAppear {
+                WeatherMonitor.shared.tooHot = true
+                WeatherMonitor.shared.tooCold = false
+            }
     }
 }
 

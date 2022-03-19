@@ -14,7 +14,8 @@ import BackgroundTasks
 struct Weather {
     typealias Forecast = Array<(Date, Measurement<UnitTemperature>)>
     typealias TempMeasurement = Measurement<UnitTemperature>
-    private func url(atCoord coord: Coordinate) -> URL? {
+    typealias WeatherLoader = (Coordinate) async -> WeatherResult?
+    private static func url(atCoord coord: Coordinate) -> URL? {
         var accumElements:[URLQueryItem] = []
         accumElements.append(URLQueryItem(name: "lat", value: String(format: "%f", coord.lat)))
         accumElements.append(URLQueryItem(name: "lon", value: String(format: "%f", coord.lon)))
@@ -28,58 +29,42 @@ struct Weather {
         return components.url
     }
     
-    fileprivate func load (
-        test: Bool = false,
-        testWeatherServiceResult: Weather.WeatherResult? = nil)
-    async throws -> Weather.WeatherResult {
+    static var load: WeatherLoader = { coord in
         guard
             abs(Storage.lastForecastUpdate.timeIntervalSinceNow) > 15 * 60 else {
-                throw WeatherRetrievalError.throttle(lastUpdate: Storage.lastForecastUpdate.ISO8601Format())
-            }
+            print ("Weather retrive throttle")
+            return Storage.storedWeather
+        }
 
-        guard
-            let coord = Storage.coordinate else {
-                throw WeatherRetrievalError.noLocation
-            }
-        
         guard let url = url(atCoord: coord) else {
-            throw WeatherRetrievalError.badUrl
+            return Storage.storedWeather
         }
-        
-        let urlSession = URLSession.shared
-        
-        if test {
-            guard let wr = testWeatherServiceResult else {
-                throw WeatherRetrievalError.unknownError("Test error")
-            }
-            Storage.lastForecastUpdate = Date.now
-            return wr
-        }
-        
-        assert(!test)
         
         print ("Weather service hit")
         
-        let (weatherData, response) = try await Task.retrying(operation: {
-            try await urlSession.data(from: url)
-        }).value
+        guard let (weatherData, response) = try? await Task.retrying(operation: {
+            try await URLSession.shared.data(from: url)
+        }).value else { return Storage.storedWeather }
         
         Storage.lastForecastUpdate = Date.now
         
         guard let response = response as? HTTPURLResponse else {
-            throw WeatherRetrievalError.serverError(-1)
+            print ("Weather retrieval error, bad response")
+            return Storage.storedWeather
         }
         
         guard (200..<300) ~= response.statusCode else {
-            throw WeatherRetrievalError.serverError(response.statusCode)
+            print ("Weather retrieval error, code \(response.statusCode)")
+            return Storage.storedWeather
         }
         
         guard let result = weatherData.decodeWeatherResult else {
-            throw WeatherRetrievalError.decodeError
+            print ("Weather retrieval error, could not decode")
+            return Storage.storedWeather
         }
-        
+        Storage.storedWeather = result
         return result
-    }
+        }
     
     struct WeatherObject: Codable {
         var current: Current?
@@ -135,8 +120,9 @@ class WeatherMonitor: ObservableObject {
                     guard let cancelled = monitorTask?.isCancelled, !cancelled else {
                         throw BackgroundTaskError.taskCancelled
                     }
+                    guard let loc = Storage.coordinate else { throw WeatherRetrievalError.noLocation }
                     print("monitor loop @ \(Date.now.formatted()), last update \(Storage.lastForecastUpdate.formatted())")
-                    try await updateWeatherConditions()
+                    try await updateWeatherConditions(location: loc, loader: Weather.load)
                     await issueTempNotification()
                     try await Task.sleep(interval: interval) //run the loop every 5 minutes to respond as conditions change
                 } catch {
@@ -155,40 +141,30 @@ class WeatherMonitor: ObservableObject {
     }
     
     func updateWeatherConditions (
-        test: Bool = false,
-        testRetrievedWeatherResult: Weather.WeatherResult? = nil,
-        testLocationData: Coordinate? = nil
+        location: Coordinate,
+        loader: Weather.WeatherLoader
     ) async throws {
-        var weatherResult: Weather.WeatherResult
-        do {
-            weatherResult = try await Weather().load(
-                test: test,
-                testWeatherServiceResult: testRetrievedWeatherResult)
-            Storage.storedWeather = weatherResult // update stored with new result
-        } catch { // failed to load new weather
-            print(error)
-            guard
-                let storedWeather = Storage.storedWeather,
-                let lastDate = storedWeather.forecast.last?.date,
-                lastDate.timeIntervalSinceNow > -3600 else { //also failed to find stored weather
-                    currentTemp = nil
-                    tooHot = false
-                    tooCold = false
-                    throw error
-            }
-            weatherResult = storedWeather
+
+        guard let weatherResult = await loader(location) else {
+            currentTemp = nil
+            tooHot = false
+            tooCold = false
+            throw WeatherRetrievalError.unknownError("Weather result not available")
         }
+        
         var forecast = weatherResult.forecast
         let currentConditions = (forecast[0].date.addingTimeInterval(-3600), weatherResult.currentTemp)
         forecast.insert(currentConditions, at: 0)
         
         //go through forecast array to find entry closest to current time
         currentTemp = forecast.reduce(weatherResult.currentTemp) { abs($1.date.timeIntervalSinceNow) < ( 30 * 60 ) ? $1.temp : $0 }
+        
         guard let t = currentTemp, let ltl = Storage.lowTempLimit, let htl = Storage.highTempLimit else {
             tooHot = false
             tooCold = false
             return
         }
+        
         tooCold = t.value < ltl
         tooHot = t.value > htl
         print("Updated current temp to \(currentTemp?.formatted() ?? "nil")")
@@ -238,7 +214,7 @@ class WeatherMonitor: ObservableObject {
     
     fileprivate func issueTempNotification () async {
         guard
-            Storage.lastNotificationShown.addingTimeInterval(3 * 3600) > .now,
+            Storage.lastNotificationShown.addingTimeInterval(3 * 3600) < .now,
             tooHot || tooCold,
             let temperatureString = currentTemp.map ({ $0.formatted(Measurement<UnitTemperature>.FormatStyle.truncatedTemp) })
         else { return }
@@ -261,8 +237,9 @@ class WeatherMonitor: ObservableObject {
 class WeatherBackgroundTaskManager {
     static func handleTempCheckTask (
         task: BGRefreshTask,
-        test: Bool = false,
-        retrievedWeatherResult: Weather.WeatherResult? = nil )
+        location: Coordinate,
+        loader: Weather.WeatherLoader
+    )
     async -> () {
         defer { scheduleBackgroundTempCheckTask(forId: BackgroundTaskIdentifier.tempertureOutOfRange, waitUntil: WeatherMonitor.shared.weatherServiceNextCheckDate() )
         }
@@ -280,10 +257,7 @@ class WeatherBackgroundTaskManager {
             
             guard Storage.temperatureAlarmEnabled else { throw BackgroundTaskError.tempAlarmNotSet }
             
-            try await monitor.updateWeatherConditions (
-                test: test,
-                testRetrievedWeatherResult: retrievedWeatherResult,
-                testLocationData: nil )
+            try await monitor.updateWeatherConditions(location: location, loader: loader)
             
             guard monitor.currentTemp != nil else { throw BackgroundTaskError.noCurrentTemp }
             

@@ -125,7 +125,8 @@ struct SettingsView: View {
                                     Button(action: {
                                         Task {
                                             do {
-                                               try await WeatherMonitor.shared.updateWeatherConditions()
+                                                guard let loc = Storage.coordinate else { throw WeatherRetrievalError.noLocation }
+                                                try await WeatherMonitor.shared.updateWeatherConditions ( location: loc, loader: Weather.load )
                                                 self.weatherError = nil
                                             } catch {
                                                 self.weatherError = error

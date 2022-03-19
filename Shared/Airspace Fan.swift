@@ -16,9 +16,6 @@ struct AirspaceFanApp: App {
     
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @Environment(\.scenePhase) var scenePhase
-//    @AppStorage(StorageKey.lastForecastUpdate.key) var lastUpdateData: Date? //decodes to Date
-//    @AppStorage(StorageKey.forecast.key) var forecastData: Data? //encodes as a WeatherObject, use decodeWeatherResult method to get a WeatherResult
-
     
     let location = Location()
     let weather = WeatherMonitor.shared
@@ -56,13 +53,6 @@ struct AirspaceFanApp: App {
         UITableView.appearance().separatorColor = .main
         UIPageControl.appearance().currentPageIndicatorTintColor = .main
         UIPageControl.appearance().pageIndicatorTintColor = .main.withAlphaComponent(0.25)
-//
-//        UserDefaults.standard.register(defaults: [
-//            StorageKey.lowTempLimit.key: 55,
-//            StorageKey.highTempLimit.key: 75,
-//            StorageKey.temperatureAlarmEnabled.key: false
-//        ])
-        
     }
 }
 
@@ -80,8 +70,12 @@ class AppDelegate: NSObject, UIApplicationDelegate {
                 
                 if self.scheduler.register(forTaskWithIdentifier: BackgroundTaskIdentifier.tempertureOutOfRange, using: nil, launchHandler: { task in
                     print("Background task called")
+                    guard let task = task as? BGRefreshTask else { return }
+                    guard let loc = Storage.coordinate else {
+                        task.setTaskCompleted(success: false)
+                        return }
                     Task {
-                        await WeatherBackgroundTaskManager.handleTempCheckTask(task: task as! BGRefreshTask)
+                        await WeatherBackgroundTaskManager.handleTempCheckTask(task: task, location: loc, loader: Weather.load)
                     }
                 }) {
                     print("Task registration succeeded")

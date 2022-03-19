@@ -55,9 +55,6 @@ class HouseMonitor: ObservableObject {
     static var shared = HouseMonitor()
     var scanDuration: Double = 5.0
     @Published var scanning = false
-//    @Published var fault = FaultLevel.none
-//    @Published var alarmLevel = FaultLevel.none
-//    @Published var useAlarmColor = false
     @Published var fanRPMs = Dictionary<String, Int>()
     var fansOperating: Bool {
         return fanRPMs.values.reduce(false, { (last, next) in

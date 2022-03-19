@@ -118,5 +118,69 @@
             landmarkType = "24">
          </BreakpointContent>
       </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "A8224303-4D17-4984-A9B2-7AB20C39DA21"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Shared/Weather/Weather Model.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "216"
+            endingLineNumber = "216"
+            landmarkName = "issueTempNotification()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "8BC994E3-6253-4A3A-9668-A3BA9A2CA6B9"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Shared/Weather/Weather Model.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "276"
+            endingLineNumber = "276"
+            landmarkName = "WeatherBackgroundTaskManager"
+            landmarkType = "3">
+            <Locations>
+               <Location
+                  uuid = "8BC994E3-6253-4A3A-9668-A3BA9A2CA6B9 - 55df26854e9f05f2"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(2) await resume partial function for static Fan_with_SwiftUI.WeatherBackgroundTaskManager.handleTempCheckTask(task: Fan_with_SwiftUI.BGRefreshTask, location: Fan_with_SwiftUI.Coordinate, loader: (Fan_with_SwiftUI.Coordinate) async -&gt; Swift.Optional&lt;Fan_with_SwiftUI.Weather.WeatherResult&gt;) async -&gt; ()"
+                  moduleName = "Fan with SwiftUI"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/scottlucas/Dropbox/Personal%20files/Mad%20Scientist/Swift%20Development/Fan/Airscape%20Fan%20SwiftUI/whf001/Shared/Weather/Weather%20Model.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "276"
+                  endingLineNumber = "276"
+                  offsetFromSymbolStart = "604">
+               </Location>
+               <Location
+                  uuid = "8BC994E3-6253-4A3A-9668-A3BA9A2CA6B9 - 61b6cd5cca0ba7f3"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(3) await resume partial function for static Fan_with_SwiftUI.WeatherBackgroundTaskManager.handleTempCheckTask(task: Fan_with_SwiftUI.BGRefreshTask, location: Fan_with_SwiftUI.Coordinate, loader: (Fan_with_SwiftUI.Coordinate) async -&gt; Swift.Optional&lt;Fan_with_SwiftUI.Weather.WeatherResult&gt;) async -&gt; ()"
+                  moduleName = "Fan with SwiftUI"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/scottlucas/Dropbox/Personal%20files/Mad%20Scientist/Swift%20Development/Fan/Airscape%20Fan%20SwiftUI/whf001/Shared/Weather/Weather%20Model.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "276"
+                  endingLineNumber = "276"
+                  offsetFromSymbolStart = "104">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
    </Breakpoints>
 </Bucket>
