@@ -11,6 +11,7 @@ import SwiftUI
 struct SegmentedSpeedPicker: View {
     @Binding var segments: Int
     @Binding var highlightedSegment: Int?
+    @Binding var highlightedSegmentAlarm: Bool
     @Binding var indicatedSegment: Int?
     @Binding var indicatorBlink: IndicatorOpacity.IndicatorBlink?
     @State private var indicatorOn: Bool = false
@@ -142,9 +143,17 @@ struct SegmentedSpeedPicker: View {
                         } else {
                             RoundedRectangle(cornerRadius: cornerRadius)
                                 .inset(by: 3.0)
+                                .strokeBorder(lineWidth: 1.0)
+                                .foregroundColor(
+                                    highlightedSegmentAlarm ? Color(.alarm) : Color(.clear)
+                                )
+                                .background(RoundedRectangle(cornerRadius: cornerRadius)
+                                    .inset(by: 3.0)
+                                    .fill()
+                                    .foregroundColor(Color(.systemBackground))
+                                    .shadow(color: highlightedSegmentAlarm ? Color(.alarm) : Color(.black), radius: 0.75, x: 0.5, y: 0.5)
+                                )
                                 .frame(width: cellWidth)
-                                .foregroundColor( Color(UIColor.systemBackground) )
-                                .shadow(color: .black, radius: 0.75, x: 0.5, y: 0.5)
                                 .offset(x: highlightOffset, y: 0)
                         }
                     }
@@ -209,12 +218,14 @@ struct SegmentedSpeedPicker: View {
     init (
         segments: Binding<Int>,
         highlightedSegment: Binding<Int?>,
+        highlightedAlarm: Binding<Bool> = .constant(false),
         indicatedSegment: Binding<Int?>,
         indicatorBlink: Binding<IndicatorOpacity.IndicatorBlink?>,
         minMaxLabels: PickerLabel.Appearance = .useStrings(["Min", "Max"]),
         middleLabels: PickerLabel.Appearance = .fillIntegerSequence) {
             self._segments = segments
             self._highlightedSegment = highlightedSegment
+            self._highlightedSegmentAlarm = highlightedAlarm
             self._indicatedSegment = indicatedSegment
             self._indicatorBlink = indicatorBlink
             self.minMaxLabels = minMaxLabels
@@ -296,6 +307,11 @@ struct VerticalLine: Shape {
 
 struct Segmented_Indicator_Picker_Previews: PreviewProvider {
     static var previews: some View {
-        SegmentedSpeedPicker(segments: .constant(5), highlightedSegment: .mock(1), indicatedSegment: .mock(3), indicatorBlink: .mock(nil))
+        SegmentedSpeedPicker(
+            segments: .constant(5),
+            highlightedSegment: .mock(1),
+            highlightedAlarm: .constant(false),
+            indicatedSegment: .mock(3),
+            indicatorBlink: .mock(nil))
     }
 }

@@ -149,6 +149,10 @@ class WeatherMonitor: ObservableObject {
             }
         }
     }
+
+    func suspendMonitor () {
+        monitorTask?.cancel()
+    }
     
     func updateWeatherConditions (
         test: Bool = false,
@@ -190,9 +194,6 @@ class WeatherMonitor: ObservableObject {
         print("Updated current temp to \(currentTemp?.formatted() ?? "nil")")
     }
     
-    func suspendMonitor () {
-        monitorTask?.cancel()
-    }
     
     func weatherServiceNextCheckDate () -> Date { // min 15 minutes, max 12 hours
         @ClampedWeatherRetrieval var nextCheck: Date
@@ -202,38 +203,45 @@ class WeatherMonitor: ObservableObject {
             return nextCheck
         }
         
-        guard HouseMonitor.shared.fansOperating, Storage.temperatureAlarmEnabled, let highTempLimit = Storage.highTempLimit, let lowTempLimit = Storage.lowTempLimit else {
+        guard
+            HouseMonitor.shared.fansOperating,
+            Storage.temperatureAlarmEnabled,
+            let highTempLimit = Storage.highTempLimit,
+            let lowTempLimit = Storage.lowTempLimit
+        else {
             print("Fan operating: \(HouseMonitor.shared.fansOperating)\rHigh temp limit: \(Storage.highTempLimit)\rLow temp limit: \(Storage.lowTempLimit)\rAlarm enabled: \(Storage.temperatureAlarmEnabled)")
             print ("Next check 12 hours after last update.")
             nextCheck = Storage.lastForecastUpdate.addingTimeInterval(12 * 3600)
             return nextCheck
         }
         
-        guard let weather = Storage.storedWeather, !weather.forecast.isEmpty else {
+        guard
+            let weather = Storage.storedWeather,
+            !weather.forecast.isEmpty
+        else {
             nextCheck = .now
             print("Next check 15 minutes after last update.")
             return nextCheck
         }
         
-
         var forecast = weather.forecast
         forecast.append((date: .now, temp: weather.currentTemp))
         forecast.sort(by: { $0.date > $1.date })
-//        forecast.forEach({ print("Before eval date: \($0.date.formatted(date: .abbreviated, time: .standard)) temp: \($0.temp.value)") })
         let result = forecast.reduce(forecast.first!) { current, next in
             let currentInRange = (lowTempLimit ... highTempLimit).contains(current.temp.value)
             let nextInRange = (lowTempLimit ... highTempLimit).contains(next.temp.value)
-            let res = currentInRange == nextInRange ? current : next
-//            print ("Current candidate date: \(res.date.formatted(date: .abbreviated, time: .standard)) temp: \(res.temp.value)")
-            return res
+            return currentInRange == nextInRange ? current : next
         }
-//        print ("Result: \(result.date.formatted()) temp: \(result.temp.value)")
         nextCheck = result.date
         return nextCheck
     }
     
     fileprivate func issueTempNotification () async {
-        guard Storage.lastNotificationShown.addingTimeInterval(3 * 3600) > .now, ( tooHot || tooCold ), let temperatureString = currentTemp.map ({ $0.formatted(Measurement<UnitTemperature>.FormatStyle.truncatedTemp) }) else { return }
+        guard
+            Storage.lastNotificationShown.addingTimeInterval(3 * 3600) > .now,
+            tooHot || tooCold,
+            let temperatureString = currentTemp.map ({ $0.formatted(Measurement<UnitTemperature>.FormatStyle.truncatedTemp) })
+        else { return }
         let alertString = tooHot ? "high" : "low"
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
         //present the alert
@@ -270,14 +278,12 @@ class WeatherBackgroundTaskManager {
             
             guard house.fansOperating else { throw BackgroundTaskError.fanNotOperating }
             
-            guard Storage.temperatureAlarmEnabled else {
-                throw BackgroundTaskError.tempAlarmNotSet
-            }
+            guard Storage.temperatureAlarmEnabled else { throw BackgroundTaskError.tempAlarmNotSet }
             
-            try await monitor.updateWeatherConditions(
+            try await monitor.updateWeatherConditions (
                 test: test,
                 testRetrievedWeatherResult: retrievedWeatherResult,
-                testLocationData: nil)
+                testLocationData: nil )
             
             guard monitor.currentTemp != nil else { throw BackgroundTaskError.noCurrentTemp }
             

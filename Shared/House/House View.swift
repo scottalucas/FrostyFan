@@ -26,6 +26,7 @@ struct HouseView: View {
                         .rotatingView(speed: $viewModel.displayedRPM, symmetry: .degrees(60.0))
                         .padding(.bottom, viewModel.fanViews.count > 1 ? 30 : 0)
                         .blur(radius: 30)
+//                        .foregroundColor(HouseMonitor.shared.)
                 )
                 .pulldownRefresh {
                     try? await viewModel.scan()
@@ -47,7 +48,6 @@ struct FanViewPageContainer: View {
     typealias IPAddr = String
     @StateObject var viewModel: HouseViewModel
     @State private var revealControlOffset = CGFloat.zero
-    @State private var selectedFan: FanView.MACAddr = "not set"
     
     var body: some View {
         VStack {
@@ -127,7 +127,7 @@ class HouseViewDataMock: House {
 //                continuation.yield(fanC)
 //                checkedHosts += 1
                 percentHostsChecked = checkedHosts / totalHosts
-                await Task.sleep(1_000_000_000)
+                try await Task.sleep(nanoseconds: 1_000_000_000)
 //                indicators.updateProgress = nil
                 continuation.finish(throwing: nil)
                 HouseMonitor.shared.scanning = false

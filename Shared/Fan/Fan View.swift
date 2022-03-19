@@ -38,13 +38,17 @@ struct FanView: View {
                 NavigationLink(tag: OverlaySheet.fatalFault, selection: $activeSheet, destination: { FatalFaultSheet() }, label: {})
                 NavigationLink(tag: OverlaySheet.settings, selection: $activeSheet, destination: { SettingsView(activeSheet: $activeSheet) }, label: {})
                 
-                FanInfoAreaRender(activeSheet: $activeSheet, viewModel: viewModel)
+                FanInfoAreaRender(viewModel: viewModel, activeSheet: $activeSheet)
 //                    .ignoresSafeArea()
                 ControllerRender(viewModel: viewModel, activeSheet: $activeSheet)
 //                    .padding(.bottom, 45)
                 .toolbar(content: {
                     ToolbarItem(placement: .principal) {
-                        FanNameRender(activeSheet: $activeSheet, name: $name, showDamperWarning: $viewModel.showDamperWarning, showInterlockWarning: $viewModel.showInterlockWarning)
+                        FanNameRender(
+                            viewModel: viewModel,
+                            activeSheet: $activeSheet,
+                            name: $name
+                            )
                             .padding(.bottom, 35)
                     }
                 })
@@ -74,6 +78,7 @@ struct SpeedController: View {
         SegmentedSpeedPicker (
             segments: $viewModel.selectorSegments,
             highlightedSegment: $viewModel.currentMotorSpeed,
+            highlightedAlarm: $viewModel.showInterlockWarning,
             indicatedSegment: $requestedSpeed,
             indicatorBlink: $viewModel.indicatedAlarm,
             minMaxLabels: .useStrings(["Off", "Max"]))
@@ -127,14 +132,9 @@ struct BaseFanImage: View {
 struct FanInfoAreaRender: View {
     @EnvironmentObject var sharedHouseData: HouseMonitor
     @EnvironmentObject var weather: WeatherMonitor
+    @ObservedObject var viewModel: FanViewModel
     @Binding var activeSheet: OverlaySheet?
     @State private var fanFrame: CGRect = .zero
-    @ObservedObject var viewModel: FanViewModel
-//    private var tempFormatter: MeasurementFormatter {
-//        let m = MeasurementFormatter()
-//        m.numberFormatter.maximumFractionDigits = 0
-//        return m
-//    }
     
     var body: some View {
                 VStack (alignment: .center, spacing: 5)
@@ -147,6 +147,7 @@ struct FanInfoAreaRender: View {
                             .resizable()
                             .frame(width: 35, height: 35)
                             .aspectRatio(1.0, contentMode: .fill)
+                            .foregroundColor(viewModel.showDamperWarning || viewModel.showInterlockWarning ? .alarm : .main)
                     })
                     RefreshIndicator()
                         .padding(.top, 40)
@@ -167,10 +168,11 @@ struct FanInfoAreaRender: View {
 struct FanNameRender: View {
     @EnvironmentObject var sharedHouseData: HouseMonitor
     @EnvironmentObject var weatherMonitor: WeatherMonitor
+    @ObservedObject var viewModel: FanViewModel
     @Binding var activeSheet: OverlaySheet?
     @Binding var name: String
-    @Binding var showDamperWarning: Bool
-    @Binding var showInterlockWarning: Bool
+//    @Binding var showDamperWarning: Bool
+//    @Binding var showInterlockWarning: Bool
     
     var body: some View {
         VStack (alignment: /*@START_MENU_TOKEN@*/.center/*@END_MENU_TOKEN@*/, spacing: 0) {
@@ -181,15 +183,18 @@ struct FanNameRender: View {
                     }
                 Spacer()
                 HStack {
-                    if weatherMonitor.tooCold || weatherMonitor.tooCold {
-                        IdentifiableImage.thermometer.image
+                    Group {
+                        if weatherMonitor.tooCold || weatherMonitor.tooCold {
+                            IdentifiableImage.thermometer.image
+                        }
+                        if viewModel.showDamperWarning {
+                            IdentifiableImage.damper.image
+                        }
+                        if viewModel.showInterlockWarning {
+                            IdentifiableImage.interlock.image
+                        }
                     }
-                    if showDamperWarning {
-                        IdentifiableImage.damper.image
-                    }
-                    if showInterlockWarning {
-                        IdentifiableImage.interlock.image
-                    }
+                    .foregroundColor(.alarm)
                     Button(action: { activeSheet = .settings }, label: { Image(systemName: "bell") })
                 }
             }
@@ -203,35 +208,6 @@ struct FanNameRender: View {
         }
     }
 }
-
-//struct FanImageOffsetKey: PreferenceKey {
-//    static var defaultValue: CGRect = .zero
-//
-//    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
-//        value = nextValue()
-//    }
-//}
-
-//struct FanImageOffsetReader: ViewModifier {
-//    private var offsetView: some View {
-//        GeometryReader { geometry in
-//            let inset = geometry.safeAreaInsets.top
-//            Color.clear
-//                .preference(key: FanImageOffsetKey.self, value: geometry.frame(in: .global))
-//        }
-//    }
-//
-//    func body(content: Content) -> some View {
-//        content.background(offsetView)
-//    }
-//}
-//
-//extension View {
-//    func readFanOffset () -> some View {
-//        modifier(FanImageOffsetReader())
-//    }
-//}
-
 
 extension FanView: Hashable {
     static func ==(lhs: FanView, rhs: FanView) -> Bool {
@@ -252,6 +228,8 @@ struct FanView_Previews: PreviewProvider {
             var a = FanCharacteristics()
             a.airspaceFanModel = "4300"
             a.speed = 1
+            a.damper = .notOperating
+            a.interlock1 = true
             chars = a
         }
     }
@@ -274,7 +252,7 @@ struct FanView_Previews: PreviewProvider {
 //                .foregroundColor(.main)
 //                .tint(.main)
 //                .accentColor(.main)
-            FanNameRender(activeSheet: .constant(nil), name: .constant("Test"), showDamperWarning: .constant(true), showInterlockWarning: .constant(true))
+            FanNameRender(viewModel: FanViewModel(chars: FanMock().chars), activeSheet: .constant(nil), name: .constant("Test"))
 //            FanImageRender(activeSheet: .constant(nil), viewModel: vm)
 //            VStack {
 //                BaseFanImage()

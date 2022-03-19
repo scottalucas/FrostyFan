@@ -15,16 +15,18 @@ class FanModel: ObservableObject {
     @Published var timerContext: FanTimer.Context = .standby
     private var motor: MotorDelegate!
     private var timer: TimerDelegate!
-    private var updateTimer: Timer?
-    private var bag = Set<AnyCancellable>()
     private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
-
+    private var monitorTask: Task<(), Never>?
     
     init(usingChars chars: FanCharacteristics) {
         motor = Motor(atAddr: chars.ipAddr)
         timer = FanTimer(atAddr: chars.ipAddr)
-        startKeepalive()
+        fanMonitor()
         print("init fan model \(chars.ipAddr)")
+    }
+    
+    deinit {
+        monitorTask?.cancel()
     }
     
     func setFan(toSpeed finalTarget: Int) async {
@@ -68,30 +70,35 @@ class FanModel: ObservableObject {
     
     func refresh() async throws {
         guard let ipAddr = fanCharacteristics?.ipAddr else { throw AdjustmentError.missingKeys }
+        registerBackgroundTask()
         fanCharacteristics = try await FanStatusLoader(addr: ipAddr).loadResultsAsync(action: .refresh)
+        endBackgroundTask()
     }
     
-    private func startKeepalive () {
-        if case let .some (t) = updateTimer, t.isValid { return }
-        updateTimer?.invalidate()
-        updateTimer = nil
-        updateTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
-            guard let self = self else { return }
-            Task { [weak self] in
+    private func fanMonitor () {
+        let interval = TimeInterval( 5 * 60 ) //5 minute loop interval
+        monitorTask = Task {
+            while true {
                 do {
-                    try await self?.refresh()
+                    guard let cancelled = monitorTask?.isCancelled, !cancelled else {
+                        throw BackgroundTaskError.taskCancelled
+                    }
+                    print("monitor loop @ \(Date.now.formatted()), last update \(Storage.lastForecastUpdate.formatted())")
+                    try await refresh()
+                    try await Task.sleep(interval: interval) //run the loop every 5 minutes to respond as conditions change
                 } catch {
-                    self?.motorContext = .fault
+                    monitorTask?.cancel()
+                    monitorTask = nil
+                    let e = error as? BackgroundTaskError ?? error
+                    print("exited monitor loop @ \(Date.now.formatted()), error: \(e.localizedDescription)")
+                    break
                 }
             }
         }
     }
     
-    private func stopKeepalive () {
-        print ("Stop keepalive, nil: \(updateTimer == nil), valid: \(updateTimer.map { $0.isValid } ?? false)")
-        guard let t = updateTimer else { return }
-        if t.isValid { t.invalidate() }
-        self.updateTimer = nil
+    private func suspendFanMonitor () {
+        monitorTask?.cancel()
     }
     
     private func registerBackgroundTask() {
