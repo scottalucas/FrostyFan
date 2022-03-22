@@ -17,7 +17,7 @@ struct NoFanView: View {
         Rectangle ()
             .foregroundColor(Color(.clear))
             .overlay (alignment: .center) {
-                if sharedHouseData.scanning {
+                if sharedHouseData.scanning ?? false {
                     RefreshIndicator()
                         .tint(.main)
                 } else {

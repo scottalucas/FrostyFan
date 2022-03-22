@@ -26,17 +26,16 @@ struct HouseView: View {
                         .rotatingView(speed: $viewModel.displayedRPM, symmetry: .degrees(60.0))
                         .padding(.bottom, viewModel.fanViews.count > 1 ? 30 : 0)
                         .blur(radius: 30)
-                        .foregroundColor(WeatherMonitor.shared.tooCold || WeatherMonitor.shared.tooHot ? .alarm : .main)
-                        .saturation(WeatherMonitor.shared.tooHot || WeatherMonitor.shared.tooCold ? 0.7 : 1.0)
+                        .foregroundColor(viewModel.useAlarmColor ? .alarm : .main)
+                )
+                .overlay (
+                Text("overlay")
                 )
                 .pulldownRefresh {
-                    try? await viewModel.scan()
+                    Task {
+                        try? await viewModel.scan()
+                    }
                 }
-        }
-        .onAppear {
-            Task {
-                try? await viewModel.scan()
-            }
         }
     }
     
@@ -102,7 +101,7 @@ class HouseViewDataMock: House {
 
     var percentHostsChecked: Double?
     
-    override func scan () -> AsyncThrowingStream<FanCharacteristics, Error> {
+    override func lowLevelScan () -> AsyncThrowingStream<FanCharacteristics, Error> {
         HouseMonitor.shared.scanning = true
         return AsyncThrowingStream <FanCharacteristics, Error> { continuation in
             Task {

@@ -33,8 +33,8 @@ struct FanView: View {
 //        NavigationView {
             ZStack {
                 NavigationLink(tag: OverlaySheet.fanName, selection: $activeSheet, destination: { NameSheet(sheet: $activeSheet, storageKey: StorageKey.fanName(id)) }, label: {})
-                NavigationLink(tag: OverlaySheet.timer, selection: $activeSheet, destination: { TimerSheet(activeSheet: $activeSheet, timeOnTimer: viewModel.chars.timer, fanViewModel: viewModel) }, label: {})
-                NavigationLink(tag: OverlaySheet.detail, selection: $activeSheet, destination: { DetailSheet(chars: viewModel.chars, activeSheet: $activeSheet) }, label: {})
+                NavigationLink(tag: OverlaySheet.timer, selection: $activeSheet, destination: { TimerSheet(activeSheet: $activeSheet, timeOnTimer: viewModel.model.fanCharacteristics.timer, fanViewModel: viewModel) }, label: {})
+                NavigationLink(tag: OverlaySheet.detail, selection: $activeSheet, destination: { DetailSheet(chars: viewModel.model.fanCharacteristics, activeSheet: $activeSheet) }, label: {})
                 NavigationLink(tag: OverlaySheet.fatalFault, selection: $activeSheet, destination: { FatalFaultSheet() }, label: {})
                 NavigationLink(tag: OverlaySheet.settings, selection: $activeSheet, destination: { SettingsView(activeSheet: $activeSheet) }, label: {})
                 
@@ -53,10 +53,10 @@ struct FanView: View {
                     }
                 })
             }
-        .onChange(of: viewModel.fatalFault) { fault in
-            guard fault else { return }
-            activeSheet = .fatalFault
-        }
+//        .onChange(of: viewModel.fatalFault) { fault in
+//            guard fault else { return }
+//            activeSheet = .fatalFault
+//        }
         .onAppear {
             viewModel.refreshFan()
         }
@@ -151,17 +151,19 @@ struct FanInfoAreaRender: View {
                     })
                     RefreshIndicator()
                         .padding(.top, 40)
-                    if let temp = weather.currentTemp, !sharedHouseData.scanning {
+                    if let temp = weather.currentTemp, !(sharedHouseData.scanning ?? true) {
                         Text(temp.formatted(Measurement<UnitTemperature>.FormatStyle.truncatedTemp))
                             .padding(.top, 20)
-                        if ( weather.tooHot || weather.tooCold ) && viewModel.currentMotorSpeed.map ({ $0 > 0 }) ?? false {
-                            Text ("It's \(weather.tooHot ? "hot" : "cold") outside. Turn the fan off?")
+                        if ( viewModel.showTemperatureWarning ) {
+                            Text ("It's \(weather.tooHot ? "hot" : "cold") outside.\rTurn the fan off?")
                         }
                     }
                     Spacer()
                 }
                 .fixedSize(horizontal: false, vertical: true)
                 .buttonStyle(BorderlessButtonStyle())
+                .padding()
+                .background(.ultraThinMaterial)
     }
 }
 
@@ -184,7 +186,7 @@ struct FanNameRender: View {
                 Spacer()
                 HStack {
                     Group {
-                        if weatherMonitor.tooCold || weatherMonitor.tooCold {
+                        if ( viewModel.showTemperatureWarning ) {
                             IdentifiableImage.thermometer.image
                         }
                         if viewModel.showDamperWarning {

@@ -8,16 +8,22 @@
 import SwiftUI
 
 struct ContentView: View {
+    let houseView: HouseView
 
     var body: some View {
-        HouseView()
+        houseView
             .background(Color.background)
             .foregroundColor(.main)
-
+            .onAppear {
+                Task {
+                    try? await houseView.viewModel.scan()
+                }
+            }
     }
     
     init () {
         UISegmentedControl.appearance().selectedSegmentTintColor = .main
+        houseView = HouseView()
     }
 }
 

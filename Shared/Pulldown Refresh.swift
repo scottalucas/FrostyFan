@@ -10,37 +10,40 @@ import SwiftUI
 
 struct RefreshIndicator: View {
     @EnvironmentObject private var sharedHouseData: HouseMonitor
-    @State private var start = Date()
+    @State private var start = Date.now
     var body: some View {
-        if sharedHouseData.scanning {
-            Color.clear
-                .overlay (
-                    GeometryReader { geo in
-                        HStack {
-                            Spacer()
-                            VStack {
-                                TimelineView( .periodic( from: .now, by: 0.1 ) ) { context in
-                                    ProgressView(value: (context.date.timeIntervalSinceReferenceDate - start.timeIntervalSinceReferenceDate) / sharedHouseData.scanDuration)
-                                }
+        Group {
+            if ( (sharedHouseData.scanning ?? false) ) {
+                Color.clear
+                    .overlay (
+                        GeometryReader { geo in
+                            HStack {
+                                Spacer()
+                                VStack {
+                                    TimelineView( .periodic( from: .now, by: 0.1 ) ) { context in
+                                        ProgressView(value: (context.date.timeIntervalSinceReferenceDate - start.timeIntervalSinceReferenceDate) / sharedHouseData.scanDuration)
+                                    }
                                     Text("Scanning...")
-                                    
+                                }
+                                .frame(
+                                    maxWidth: min(200, geo.size.width * 0.8),
+                                    maxHeight: geo.size.height)
+                                Spacer()
                             }
-                            .frame(
-                                maxWidth: min(200, geo.size.width * 0.8),
-                                maxHeight: geo.size.height)
-                            Spacer()
+                            .accentColor(.main)
                         }
-                        .accentColor(.main)
-                    }
-                )
-                .onChange(of: sharedHouseData.scanning) { scanning in
-                    print("Scanning: \(scanning)")
-                    if scanning { start = Date() }
-                }
-        } else {
-            EmptyView()
+                    )
+            } else {
+                EmptyView()
+            }
         }
-        
+        .onAppear {
+            start = .now
+        }
+        .onChange(of: HouseMonitor.shared.scanning) { scanning in
+            print("Scanning: \(scanning.map ({ $0.description }) ?? "nil")")
+            start = .now
+        }
     }
 }
 

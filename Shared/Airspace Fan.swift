@@ -34,11 +34,8 @@ struct AirspaceFanApp: App {
                             weather.monitor()
                         case .background:
                             print("background")
-                            
-                            let nextCheck = WeatherMonitor.shared.weatherServiceNextCheckDate()
-                            print("Scheduling background task for \(nextCheck.formatted())")
-                            WeatherBackgroundTaskManager.scheduleBackgroundTempCheckTask( forId: BackgroundTaskIdentifier.tempertureOutOfRange, waitUntil: nextCheck )
-                          weather.suspendMonitor()
+                            WeatherBackgroundTaskManager.scheduleBackgroundTempCheckTask (forId: BackgroundTaskIdentifier.tempertureOutOfRange, waitUntil: WeatherMonitor.shared.weatherServiceNextCheckDate())
+                            weather.suspendMonitor()
                         case .inactive:
                             break
                         @unknown default:
@@ -58,9 +55,9 @@ struct AirspaceFanApp: App {
 
 class AppDelegate: NSObject, UIApplicationDelegate {
     
-    var scheduler: BGTaskSched = BGTaskScheduler.shared
-    
-    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
+//    var scheduler: BGTaskScheduler = BGTaskScheduler.shared
+        
+    func application(_ application: UIApplication, willFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         let center = UNUserNotificationCenter.current()
         center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
             
@@ -68,14 +65,11 @@ class AppDelegate: NSObject, UIApplicationDelegate {
                 print("Error requesting notification authorization, \(error?.localizedDescription ?? "not permitted by user.")")
             } else {
                 
-                if self.scheduler.register(forTaskWithIdentifier: BackgroundTaskIdentifier.tempertureOutOfRange, using: nil, launchHandler: { task in
+                if BGTaskScheduler.shared.register(forTaskWithIdentifier: BackgroundTaskIdentifier.tempertureOutOfRange, using: nil, launchHandler: { task in
                     print("Background task called")
                     guard let task = task as? BGRefreshTask else { return }
-                    guard let loc = Storage.coordinate else {
-                        task.setTaskCompleted(success: false)
-                        return }
                     Task {
-                        await WeatherBackgroundTaskManager.handleTempCheckTask(task: task, location: loc, loader: Weather.load)
+                        await WeatherBackgroundTaskManager.handleTempCheckTask(task: task, loader: Weather.load)
                     }
                 }) {
                     print("Task registration succeeded")

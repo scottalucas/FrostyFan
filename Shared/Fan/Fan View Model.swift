@@ -12,30 +12,31 @@ import Combine
 class FanViewModel: ObservableObject {
 //    private var sharedHouseData: SharedHouseData
     @ObservedObject var model: FanModel
-    @Published var chars: FanCharacteristics
     @Published var selectorSegments: Int = 2
-    @Published var targetedSpeed: Int?
-    @Published var indicatedAlarm: IndicatorOpacity.IndicatorBlink?
-//    @Published var fanStatusText: String?
-//    @Published var fanStatusIcons = Array<Image>()
-    @Published var fanRotationDuration: Double = 0.0
     @Published var currentMotorSpeed: Int?
-    @Published var useAlarmColor = false
+    @Published var indicatedAlarm: IndicatorOpacity.IndicatorBlink?
     @Published var showTimerIcon = true
-    @Published var fatalFault = false
     @Published var timerWheelPosition: Int = .zero
     @Published var offDateText: String?
     @Published var showDamperWarning = false
     @Published var showInterlockWarning = false
-    @Published var displayFanRpm = Int.zero
-    private var displayedMotorSpeed: Int?
-    private var displayMotor = PassthroughSubject<AnyPublisher<Double, Never>, Never>()
+    @Published var showTemperatureWarning = false
+//    @Published var chars: FanCharacteristics
+//    @Published var targetedSpeed: Int?
+//    @Published var fanStatusText: String?
+//    @Published var fanStatusIcons = Array<Image>()
+//    @Published var fanRotationDuration: Double = 0.0
+//    @Published var useAlarmColor = false
+//    @Published var fatalFault = false
+//    @Published var displayFanRpm = Int.zero
+//    private var displayedMotorSpeed: Int?
+//    private var displayMotor = PassthroughSubject<AnyPublisher<Double, Never>, Never>()
     
     private var bag = Set<AnyCancellable>()
     
     init (chars: FanCharacteristics) {
         self.model = FanModel(usingChars: chars)
-        self.chars = chars
+//        self.chars = chars
         startSubscribers(initialChars: chars)
     }
 
@@ -126,10 +127,10 @@ class FanViewModel: ObservableObject {
 //            .combineLatest(self.sharedHouseData.$useAlarmColor)
 //            .map { $0 || $1 }
 //            .assign(to: &$useAlarmColor)
-        
-        model.$fanCharacteristics
-            .map { $0 == nil }
-            .assign(to: &$fatalFault)
+//
+//        model.$fanCharacteristics
+//            .map { $0 == nil }
+//            .assign(to: &$fatalFault)
 
         model.$motorContext
             .prepend(.standby)
@@ -165,30 +166,31 @@ class FanViewModel: ObservableObject {
 //            
 //            .store(in: &longTermBag)
         
-        model.$fanCharacteristics
-            .compactMap { $0 }
-            .assign(to: &$chars)
+//        model.$fanCharacteristics
+//            .compactMap { $0 }
+//            .assign(to: &$chars)
         
         model.$fanCharacteristics
             .prepend(chars)
-            .compactMap { optChars -> (addr: String, spd: Int)? in
-                guard let chars = optChars else { return nil }
-                return (chars.macAddr, chars.speed)
+            .compactMap { optChars -> (String, Int)? in
+                guard
+                    let chars = optChars,
+                    let levels = FanViewModel.speedTable[String(chars.airspaceFanModel.prefix(4))]
+                else {
+                    print("Model: \(optChars?.airspaceFanModel ?? "Not found"), speed: \(optChars.map ({ FanViewModel.speedTable[$0.airspaceFanModel].debugDescription }) ?? "Not found")")
+                    return nil
+                }
+                return (addr: chars.macAddr, rpm: Int ( Double ( chars.speed ) * 50.0 / Double ( levels ) ))
             }
-            .combineLatest ( $selectorSegments )
-            .map { (speedId, levels) -> (addr: String, rpm: Int) in
-                let rpm = Int ( Double ( speedId.spd ) * 50.0 / Double ( levels ) )
-                return (speedId.addr, rpm)
-            }
-            .sink(receiveValue: { idRpm in
-                HouseMonitor.shared.updateOperationalStatus(forMacAddr: idRpm.addr, to: idRpm.rpm)
+            .sink(receiveValue: { (addr, rpm) in
+                HouseMonitor.shared.updateOperationalStatus(forMacAddr: addr, to: rpm)
             })
             .store(in: &bag)
-//
-//        $displayFanRpm
-//            .handleEvents(receiveOutput: { rpm in
-//                print("rpm \(rpm) in \(self.mark)")
-//            })
+        //
+        //        $displayFanRpm
+        //            .handleEvents(receiveOutput: { rpm in
+        //                print("rpm \(rpm) in \(self.mark)")
+        //            })
 //            .sink(receiveCompletion: { _ in }, receiveValue: { _ in })
 //            .store(in: &bag)
         
@@ -199,6 +201,20 @@ class FanViewModel: ObservableObject {
             .prepend(chars)
             .compactMap { $0?.speed }
             .assign(to: &$currentMotorSpeed)
+        
+        Publishers
+            .CombineLatest3 (
+                model.$fanCharacteristics
+                    .prepend(chars)
+                    .compactMap { $0?.speed }
+                    .map { $0 > 0 },
+                WeatherMonitor.shared.$tooCold
+                    .prepend (false),
+                WeatherMonitor.shared.$tooHot
+                    .prepend (false)
+            )
+            .map { $0 && ( $1 || $2) }
+            .assign(to: &$showTemperatureWarning)
 
         model.$fanCharacteristics
             .prepend (chars)

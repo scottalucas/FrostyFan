@@ -125,8 +125,7 @@ struct SettingsView: View {
                                     Button(action: {
                                         Task {
                                             do {
-                                                guard let loc = Storage.coordinate else { throw WeatherRetrievalError.noLocation }
-                                                try await WeatherMonitor.shared.updateWeatherConditions ( location: loc, loader: Weather.load )
+                                                try await WeatherMonitor.shared.updateWeatherConditions ()
                                                 self.weatherError = nil
                                             } catch {
                                                 self.weatherError = error
@@ -168,6 +167,9 @@ struct SettingsView: View {
                                 Text("Settings").font(.largeTitle)
                                 Spacer()
                                 Button("Update") {
+                                    Task {
+                                        try? await WeatherMonitor.shared.updateWeatherConditions()
+                                    }
                                     activeSheet = nil
                                 }
                             }

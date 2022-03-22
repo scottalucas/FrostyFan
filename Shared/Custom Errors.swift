@@ -81,7 +81,7 @@ enum ConnectionError: Error {
             case .decodeError (let reason):
                 return "Decode error \(reason)"
             case .upstream (let err):
-                return "Upstream \(err.localizedDescription)"
+                return "Upstream type: \(err.self) description: \(err.localizedDescription)"
         }
     }
 }
