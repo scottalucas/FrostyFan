@@ -20,53 +20,51 @@ struct FanView: View {
     typealias MACAddr = String
     let id: MACAddr
     @Environment(\.scenePhase) var scenePhase
-    @EnvironmentObject var sharedHouseData: HouseMonitor
+//    @EnvironmentObject var sharedHouseData: HouseMonitor
     @StateObject var viewModel: FanViewModel
+    @ObservedObject var houseViewModel: HouseViewModel
+//    @Binding var houseAlarm: Bool
+//    @Binding var houseInfoText: Text?
+//    @Binding var scanUntil: Date?
     @AppStorage var name: String
-    @GestureState var viewOffset = CGSize.zero
-    
-    @State var pullDownOffset = CGFloat.zero
-    @State private var angle = Angle.zero
     @State private var activeSheet: OverlaySheet?
     
     var body: some View {
-//        NavigationView {
-            ZStack {
-                NavigationLink(tag: OverlaySheet.fanName, selection: $activeSheet, destination: { NameSheet(sheet: $activeSheet, storageKey: StorageKey.fanName(id)) }, label: {})
-                NavigationLink(tag: OverlaySheet.timer, selection: $activeSheet, destination: { TimerSheet(activeSheet: $activeSheet, timeOnTimer: viewModel.model.fanCharacteristics.timer, fanViewModel: viewModel) }, label: {})
-                NavigationLink(tag: OverlaySheet.detail, selection: $activeSheet, destination: { DetailSheet(chars: viewModel.model.fanCharacteristics, activeSheet: $activeSheet) }, label: {})
-                NavigationLink(tag: OverlaySheet.fatalFault, selection: $activeSheet, destination: { FatalFaultSheet() }, label: {})
-                NavigationLink(tag: OverlaySheet.settings, selection: $activeSheet, destination: { SettingsView(activeSheet: $activeSheet) }, label: {})
+        ZStack {
+            NavigationLink(tag: OverlaySheet.fanName, selection: $activeSheet, destination: { NameSheet(sheet: $activeSheet, storageKey: StorageKey.fanName(id)) }, label: {})
+            NavigationLink(tag: OverlaySheet.timer, selection: $activeSheet, destination: { TimerSheet(activeSheet: $activeSheet, timeOnTimer: viewModel.fanCharacteristics.timer, fanViewModel: viewModel) }, label: {})
+            NavigationLink(tag: OverlaySheet.detail, selection: $activeSheet, destination: { DetailSheet(chars: viewModel.fanCharacteristics, activeSheet: $activeSheet) }, label: {})
+            NavigationLink(tag: OverlaySheet.fatalFault, selection: $activeSheet, destination: { FatalFaultSheet() }, label: {})
+            NavigationLink(tag: OverlaySheet.settings, selection: $activeSheet, destination: { SettingsView(activeSheet: $activeSheet) }, label: {})
                 
-                FanInfoAreaRender(viewModel: viewModel, activeSheet: $activeSheet)
-//                    .ignoresSafeArea()
+                FanInfoAreaRender(viewModel: viewModel, houseViewModel: houseViewModel, activeSheet: $activeSheet)
+                //                    .ignoresSafeArea()
                 ControllerRender(viewModel: viewModel, activeSheet: $activeSheet)
-//                    .padding(.bottom, 45)
-                .toolbar(content: {
-                    ToolbarItem(placement: .principal) {
-                        FanNameRender(
-                            viewModel: viewModel,
-                            activeSheet: $activeSheet,
-                            name: $name
-                            )
-                            .padding(.bottom, 35)
-                    }
-                })
+                //                    .padding(.bottom, 45)
+        }
+        .toolbar(content: {
+            ToolbarItem(placement: .principal) {
+                FanNameRender(
+                    viewModel: viewModel,
+                    activeSheet: $activeSheet,
+                    name: $name
+                )
+                .padding(Edge.Set.bottom, 35)
             }
-//        .onChange(of: viewModel.fatalFault) { fault in
-//            guard fault else { return }
-//            activeSheet = .fatalFault
-//        }
-        .onAppear {
-            viewModel.refreshFan()
+        })
+        .onChange(of: houseViewModel.displayedFanID) { newId in
+            if newId == id {
+                viewModel.refreshFan()
+            }
         }
     }
     
-    init (initialCharacteristics chars: FanCharacteristics) {
+    init (initialCharacteristics chars: FanCharacteristics, houseVM: HouseViewModel ) {
         id = chars.macAddr
         _name = AppStorage(wrappedValue: "\(chars.airspaceFanModel)", StorageKey.fanName(chars.macAddr).rawValue)
         _viewModel = StateObject.init(wrappedValue: FanViewModel(chars: chars))
-        print("init fan view model \(chars.airspaceFanModel) selector segments \(viewModel.selectorSegments)")
+        houseViewModel = houseVM
+//        print("init fan view model \(chars.airspaceFanModel) selector segments \(viewModel.selectorSegments)")
         
     }
 }
@@ -130,10 +128,12 @@ struct BaseFanImage: View {
 }
 
 struct FanInfoAreaRender: View {
-    @EnvironmentObject var sharedHouseData: HouseMonitor
+//    @EnvironmentObject var sharedHouseData: HouseMonitor
     @EnvironmentObject var weather: WeatherMonitor
     @ObservedObject var viewModel: FanViewModel
+    @ObservedObject var houseViewModel: HouseViewModel
     @Binding var activeSheet: OverlaySheet?
+//    @Binding var scanUntil: Date?
     @State private var fanFrame: CGRect = .zero
     
     var body: some View {
@@ -149,9 +149,11 @@ struct FanInfoAreaRender: View {
                             .aspectRatio(1.0, contentMode: .fill)
                             .foregroundColor(viewModel.showDamperWarning || viewModel.showInterlockWarning ? .alarm : .main)
                     })
-                    RefreshIndicator()
+                if (houseViewModel.scanUntil > .now) {
+                    RefreshIndicator(houseViewModel: houseViewModel)
                         .padding(.top, 40)
-                    if let temp = weather.currentTemp, !(sharedHouseData.scanning ?? true) {
+                }
+                if let temp = weather.currentTemp, houseViewModel.scanUntil <= .now {
                         Text(temp.formatted(Measurement<UnitTemperature>.FormatStyle.truncatedTemp))
                             .padding(.top, 20)
                         if ( viewModel.showTemperatureWarning ) {
@@ -168,7 +170,7 @@ struct FanInfoAreaRender: View {
 }
 
 struct FanNameRender: View {
-    @EnvironmentObject var sharedHouseData: HouseMonitor
+//    @EnvironmentObject var sharedHouseData: HouseMonitor
     @EnvironmentObject var weatherMonitor: WeatherMonitor
     @ObservedObject var viewModel: FanViewModel
     @Binding var activeSheet: OverlaySheet?
@@ -222,8 +224,7 @@ extension FanView: Hashable {
 
 extension FanView: Identifiable {}
 
-
-struct FanView_Previews: PreviewProvider {
+struct FanViewPreviewContainer: View {
     struct FanMock {
         var chars: FanCharacteristics
         init () {
@@ -235,33 +236,45 @@ struct FanView_Previews: PreviewProvider {
             chars = a
         }
     }
-    struct InjectedIndicators {
-        static var indicators: HouseMonitor {
-            let retVal = HouseMonitor.shared
-            retVal.scanning = true
-            return retVal
-        }
+    var houseMock = HouseViewModel()
+    @State private var scanUntil: Date? = .now.addingTimeInterval(3.0)
+    
+    var body: some View {
+        
+        FanView(initialCharacteristics: FanMock().chars, houseVM: houseMock)
+        //                .environmentObject(SharedHouseData.shared)
+        //                .environmentObject(Weather())
+            .preferredColorScheme(.light)
+        //                .foregroundColor(.main)
+        //                .tint(.main)
+        //                .accentColor(.main)
+        
     }
-    static var chars = FanMock().chars
+    
+    
+    
+}
+
+struct FanView_Previews: PreviewProvider {
+//    struct InjectedIndicators {
+//        static var indicators: HouseMonitor {
+//            let retVal = HouseMonitor.shared
+//            retVal.scanning = true
+//            return retVal
+//        }
+//    }
     static var previews: some View {
-        let fan = FanMock().chars
 //        let vm = FanViewModel(chars: fan)
         return Group {
-            FanView(initialCharacteristics: fan)
-            //                .environmentObject(SharedHouseData.shared)
-            //                .environmentObject(Weather())
-                .preferredColorScheme(.light)
-//                .foregroundColor(.main)
-//                .tint(.main)
-//                .accentColor(.main)
-            FanNameRender(viewModel: FanViewModel(chars: FanMock().chars), activeSheet: .constant(nil), name: .constant("Test"))
+            FanViewPreviewContainer()
+            FanNameRender(viewModel: FanViewModel(chars: FanViewPreviewContainer.FanMock().chars), activeSheet: .constant(nil), name: .constant("Test"))
 //            FanImageRender(activeSheet: .constant(nil), viewModel: vm)
 //            VStack {
 //                BaseFanImage()
 //                Spacer()
 //            }
         }
-        .environmentObject(HouseMonitor.shared)
+//        .environmentObject(HouseMonitor.shared)
         .environmentObject(WeatherMonitor.shared)
         .foregroundColor(.main)
     }

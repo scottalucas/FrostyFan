@@ -104,13 +104,13 @@ struct BackgroundTaskIdentifier {
 
 
 struct Utilities_Previews: PreviewProvider {
-    struct GlobalIndicatorHolder {
-        static var sharedHouseData: HouseMonitor {
-            let retVal = HouseMonitor.shared
-            retVal.scanning = true
-            return retVal
-        }
-    }
+//    struct GlobalIndicatorHolder {
+//        static var sharedHouseData: HouseMonitor {
+//            let retVal = HouseMonitor.shared
+//            retVal.scanning = true
+//            return retVal
+//        }
+//    }
     
     struct BindingTestHolder: View {
         @State var segments: Int = 8
@@ -145,7 +145,7 @@ struct Utilities_Previews: PreviewProvider {
                 Text("test")
             }
             .pulldownRefresh { }
-            .environmentObject(GlobalIndicatorHolder.sharedHouseData)
+//            .environmentObject(GlobalIndicatorHolder.sharedHouseData)
     }
 }
 

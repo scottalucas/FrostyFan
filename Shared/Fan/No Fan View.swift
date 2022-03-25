@@ -9,16 +9,16 @@ import SwiftUI
 
 struct NoFanView: View {
     typealias IPAddr = String
-    @EnvironmentObject private var sharedHouseData: HouseMonitor
+    @ObservedObject var houseViewModel: HouseViewModel
     @Environment(\.scenePhase) var scenePhase
-    @Environment(\.colorScheme) var colorScheme
+//    @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         Rectangle ()
             .foregroundColor(Color(.clear))
             .overlay (alignment: .center) {
-                if sharedHouseData.scanning ?? false {
-                    RefreshIndicator()
+                if houseViewModel.scanUntil > .now {
+                    RefreshIndicator(houseViewModel: houseViewModel)
                         .tint(.main)
                 } else {
                     Text("No fans found")
@@ -29,17 +29,10 @@ struct NoFanView: View {
 }
 
 struct No_Fan_View_Previews: PreviewProvider {
-    struct InjectedIndicators {
-        static var indicators: HouseMonitor {
-            let retVal = HouseMonitor.shared
-            retVal.scanning = true
-            return retVal
-        }
-    }
+
     static var previews: some View {
-        NoFanView()
+        NoFanView(houseViewModel: HouseViewModel())
             .preferredColorScheme(.dark)
-            .environmentObject(InjectedIndicators.indicators)
         
     }
 }

@@ -19,14 +19,15 @@ struct AirspaceFanApp: App {
     
     let location = Location()
     let weather = WeatherMonitor.shared
-    let sharedHouseData = HouseMonitor.shared
+    let houseView = HouseView()
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environmentObject(sharedHouseData)
+            houseView
                 .environmentObject(weather)
                 .environmentObject(location)
+                .background(Color.background)
+                .foregroundColor(.main)
                 .onChange(of: scenePhase, perform: { newPhase in
                     switch newPhase {
                         case .active:
@@ -42,40 +43,56 @@ struct AirspaceFanApp: App {
                             break
                     }
                 })
+                .task {
+                    print("Content view appear")
+                }
         }
     }
     
     init () {
-        UITableView.appearance().backgroundColor = .main
+        UITableView.appearance().backgroundColor = .clear
         UITableView.appearance().separatorColor = .main
         UIPageControl.appearance().currentPageIndicatorTintColor = .main
         UIPageControl.appearance().pageIndicatorTintColor = .main.withAlphaComponent(0.25)
+        UISegmentedControl.appearance().selectedSegmentTintColor = .main
     }
 }
 
 class AppDelegate: NSObject, UIApplicationDelegate {
     
+//    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
+//        print("launch complete")
+//        Task {
+//            houseView.scanUntil = .now.addingTimeInterval(House.scanDuration)
+//            await houseView.viewModel.scan(timeout: House.scanDuration)
+//            houseView.scanUntil = nil
+//            
+//        }
+//        return true
+//    }
+
 //    var scheduler: BGTaskScheduler = BGTaskScheduler.shared
         
     func application(_ application: UIApplication, willFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         let center = UNUserNotificationCenter.current()
+        if BGTaskScheduler.shared.register(forTaskWithIdentifier: BackgroundTaskIdentifier.tempertureOutOfRange, using: nil, launchHandler: { task in
+            print("Background task called")
+            guard let task = task as? BGRefreshTask else { return }
+            Task {
+                await WeatherBackgroundTaskManager.handleTempCheckTask(task: task, loader: Weather.load)
+            }
+        }) {
+            print("Task registration succeeded")
+        } else {
+            print("Task registration failed")
+        }
+        
         center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
             
             if error != nil || !granted {
                 print("Error requesting notification authorization, \(error?.localizedDescription ?? "not permitted by user.")")
-            } else {
-                
-                if BGTaskScheduler.shared.register(forTaskWithIdentifier: BackgroundTaskIdentifier.tempertureOutOfRange, using: nil, launchHandler: { task in
-                    print("Background task called")
-                    guard let task = task as? BGRefreshTask else { return }
-                    Task {
-                        await WeatherBackgroundTaskManager.handleTempCheckTask(task: task, loader: Weather.load)
-                    }
-                }) {
-                    print("Task registration succeeded")
-                } else {
-                    print("Task registration failed")
-                }
+                BGTaskScheduler.shared.cancelAllTaskRequests()
+                print("Background tasks cancelled.")
             }
         }
         

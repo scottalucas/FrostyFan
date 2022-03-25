@@ -122,16 +122,16 @@ class WeatherMonitor: ObservableObject {
                     }
                     print("Weather monitor loop @ \(Date.now.formatted()), last update \(Storage.lastForecastUpdate.formatted())")
                     try await updateWeatherConditions()
-                    await issueTempNotification()
+                    issueTempNotification()
                     try await Task.sleep(interval: interval) //run the loop every 5 minutes to respond as conditions change
                 } catch {
-                    monitorTask?.cancel()
-                    monitorTask = nil
                     let e = error as? BackgroundTaskError ?? error
                     print("exited weather monitor loop @ \(Date.now.formatted()), error: \(e.localizedDescription)")
                     break
                 }
             }
+            monitorTask?.cancel()
+            monitorTask = nil
         }
     }
 
@@ -181,12 +181,12 @@ class WeatherMonitor: ObservableObject {
         }
         
         guard
-            HouseMonitor.shared.fansRunning,
+//            HouseMonitor.shared.fansRunning,
             Storage.temperatureAlarmEnabled,
             let highTempLimit = Storage.highTempLimit,
             let lowTempLimit = Storage.lowTempLimit
         else {
-            print("Fan operating: \(HouseMonitor.shared.fansRunning)\rHigh temp limit: \(Storage.highTempLimit)\rLow temp limit: \(Storage.lowTempLimit)\rAlarm enabled: \(Storage.temperatureAlarmEnabled)")
+//            print("Fan operating: \(HouseMonitor.shared.fansRunning)\rHigh temp limit: \(Storage.highTempLimit)\rLow temp limit: \(Storage.lowTempLimit)\rAlarm enabled: \(Storage.temperatureAlarmEnabled)")
             print ("Next check 12 hours after last update.")
             nextCheck = Storage.lastForecastUpdate.addingTimeInterval(12 * 3600)
             return nextCheck
@@ -257,7 +257,7 @@ class WeatherBackgroundTaskManager {
         do {
             guard await UNUserNotificationCenter.current().getStatus() == .authorized else { throw BackgroundTaskError.notAuthorized }
             
-            guard HouseMonitor.shared.fansRunning else { throw BackgroundTaskError.fanNotOperating }
+//            guard HouseMonitor.shared.fansRunning else { throw BackgroundTaskError.fanNotOperating }
             
             guard Storage.temperatureAlarmEnabled else { throw BackgroundTaskError.tempAlarmNotSet }
             

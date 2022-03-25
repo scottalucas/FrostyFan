@@ -9,117 +9,100 @@ import Foundation
 import Combine
 import SwiftUI
 
-class FanModel: ObservableObject {
-    @Published var fanCharacteristics: FanCharacteristics!
-    @Published var motorContext: Motor.Context = .standby
-    @Published var timerContext: FanTimer.Context = .standby
+struct FanModel {
+    var fanCharacteristics: CurrentValueSubject<FanCharacteristics, Never>
+    var motorContext = CurrentValueSubject<Motor.Context, Never>(.standby)
+    var timerContext = CurrentValueSubject<FanTimer.Context, Never>(.standby)
     private var motor: MotorDelegate!
     private var timer: TimerDelegate!
     private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
-    private var monitorTask: Task<(), Never>?
+    private var ipAddr: String
+//    private var monitorTask: Task<(), Never>?
     
     init(usingChars chars: FanCharacteristics) {
         motor = Motor(atAddr: chars.ipAddr)
         timer = FanTimer(atAddr: chars.ipAddr)
-        fanCharacteristics = chars
-        fanMonitor()
-        print("init fan model \(chars.ipAddr)")
+        ipAddr = chars.ipAddr
+        fanCharacteristics = CurrentValueSubject<FanCharacteristics, Never>.init(chars)
+//        print("init fan model \(chars.ipAddr)")
     }
     
-    deinit {
-        monitorTask?.cancel()
-    }
-    
-    func setFan(toSpeed finalTarget: Int) async {
-        motorContext = .adjusting
+    mutating func setFan(toSpeed finalTarget: Int) async {
+        motorContext.send(.adjusting)
         print("start motor adjust")
-        registerBackgroundTask()
         do {
             for try await char in motor.setSpeedAsync(to: finalTarget) {
                 print( "In loop with speed \(char.speed)" )
-                fanCharacteristics = char
+                fanCharacteristics.send(char)
             }
-            motorContext = .standby
+            motorContext.send(.standby)
         } catch {
-            motorContext = .fault
+            motorContext.send(.fault)
             print("error setting speed \(error)")
         }
-        endBackgroundTask()
     }
     
-    func setFan(addHours hours: Int) async {
-        guard let chars = fanCharacteristics, hours > 0 else {
-            timerContext = .fault
+    mutating func setFan(addHours hours: Int) async {
+        guard hours > 0 else {
+            timerContext.send(.fault)
             return
         }
-        registerBackgroundTask()
-        timerContext = .adjusting
-        let current = chars.timer
+        timerContext.send(.adjusting)
+        let current = fanCharacteristics.value.timer
         let target = min (current + hours * 60, 12 * 60) - 10
         print("timer target \(target)")
         do {
             for try await char in timer.setTimerAsync(to: target) {
-                fanCharacteristics = char
+                fanCharacteristics.send(char)
             }
-            timerContext = .standby
+            timerContext.send(.standby)
         } catch {
-            timerContext = .fault
+            timerContext.send(.fault)
             print("Error setting timer \(error)")
         }
-        endBackgroundTask()
     }
     
-    func refresh() async throws {
-        guard let ipAddr = fanCharacteristics?.ipAddr else { throw AdjustmentError.missingKeys }
-        registerBackgroundTask()
-        fanCharacteristics = try await FanStatusLoader(addr: ipAddr).loadResultsAsync(action: .refresh)
-        endBackgroundTask()
+    mutating func refresh() async throws {
+        let newChars = try await motor.refresh()
+        fanCharacteristics.send(newChars)
     }
     
-    private func fanMonitor () {
-        let interval = TimeInterval( 5 * 60 ) //5 minute loop interval
-        monitorTask = Task {
-            while true {
-                do {
-                    guard let cancelled = monitorTask?.isCancelled, !cancelled else {
-                        throw BackgroundTaskError.taskCancelled
-                    }
-                    print("Fan monitor loop @ \(Date.now.formatted()), last update \(Storage.lastForecastUpdate.formatted())")
-                    try await Task.sleep(interval: interval) //run the loop every 5 minutes to respond as conditions change
-                    try await refresh()
-                } catch {
-                    monitorTask?.cancel()
-                    monitorTask = nil
-                    let e = error as? BackgroundTaskError ?? error
-                    print("exited fan monitor loop @ \(Date.now.formatted()), error: \(e.localizedDescription)")
-                    break
-                }
-            }
-        }
-    }
-    
-    private func suspendFanMonitor () {
-        monitorTask?.cancel()
-    }
-    
-    private func registerBackgroundTask() {
-//        print("BG task started")
-        backgroundTask = UIApplication.shared.beginBackgroundTask { [weak self] in
-//            print("BG task expired")
-            self?.endBackgroundTask()
-        }
-        assert(backgroundTask != .invalid)
-    }
-    
-    private func endBackgroundTask() {
-//        print("Background task ended.")
-        UIApplication.shared.endBackgroundTask(backgroundTask)
-        backgroundTask = .invalid
-    }
+//    private func fanMonitor () async {
+//        let interval = TimeInterval( 5 * 60 ) //5 minute loop interval
+//        while true {
+//            do {
+//                guard let cancelled = monitorTask?.isCancelled, !cancelled else {
+//                    throw BackgroundTaskError.taskCancelled
+//                }
+//                print("Fan monitor loop @ \(Date.now.formatted()), last update \(Storage.lastForecastUpdate.formatted())")
+//                try await Task.sleep(interval: interval) //run the loop every 5 minutes to respond as conditions change
+//                try await refresh()
+//            } catch {
+//                let e = error as? BackgroundTaskError ?? error
+//                print("exited fan monitor loop @ \(Date.now.formatted()), error: \(e.localizedDescription)")
+//                break
+//            }
+//        }
+//    }
+//
+//    mutating private func registerBackgroundTask() {
+//        //        print("BG task started")
+//        backgroundTask = UIApplication.shared.beginBackgroundTask {
+//            //            print("BG task expired")
+//            endBackgroundTask()
+//        }
+//        assert(backgroundTask != .invalid)
+//    }
+//
+//    mutating private func endBackgroundTask() {
+//        //        print("Background task ended.")
+//        UIApplication.shared.endBackgroundTask(backgroundTask)
+//        backgroundTask = .invalid
+//    }
 }
 
 extension FanModel {
-    convenience init () {
+    init () {
         print("Test fan model init")
         self.init(usingChars: FanCharacteristics())
     }
@@ -127,18 +110,17 @@ extension FanModel {
 
 extension FanModel: Hashable {
     func hash(into hasher: inout Hasher) {
-        hasher.combine(fanCharacteristics?.macAddr)
+        hasher.combine(fanCharacteristics.value.macAddr)
     }
     
     static func ==(lhs: FanModel, rhs: FanModel) -> Bool {
-        guard let leftMac = lhs.fanCharacteristics?.macAddr, let rightMac = rhs.fanCharacteristics?.macAddr else { return false }
-        return leftMac == rightMac
+        return lhs.fanCharacteristics.value.macAddr == rhs.fanCharacteristics.value.macAddr
     }
 }
 
 extension FanModel: Identifiable {
     var id: String {
-        fanCharacteristics?.macAddr ?? "invalid"
+        fanCharacteristics.value.macAddr
     }
 }
 
@@ -334,14 +316,18 @@ struct FanCharacteristics: Decodable, Hashable {
     }
 }
 
+extension FanCharacteristics: Identifiable {
+    var id: String { macAddr }
+}
+
 struct FanStatusLoader {
     typealias OutputPublisher = AnyPublisher<FanCharacteristics, ConnectionError>
     private var ip: String
-
+    
     init (addr ip: String) {
         self.ip = ip
     }
-
+    
     func loadResultsAsync (action: FanModel.Action) async throws -> FanCharacteristics {
         guard let url = URL(string: "http://\(ip)/fanspd.cgi?dir=\(action.rawValue)") else {
             throw ConnectionError.badUrl
@@ -359,7 +345,7 @@ struct FanStatusLoader {
         }
         
         return try decoder.decode(FanCharacteristics.self, from:
-            (String(data: data, encoding: .ascii) ?? "")
+                                    (String(data: data, encoding: .ascii) ?? "")
             .trimmingCharacters(in: .whitespaces)
             .split(separator: "<")
             .filter({ !$0.contains("/") && $0.contains(">") })
@@ -368,97 +354,99 @@ struct FanStatusLoader {
                 let newTuple = (String(arr[0]), arr.count == 2 ? String(arr[1]) : nil)
                 return newTuple
             })
-            .jsonData
+                .jsonData
         )
     }
     
-//    func loadResultsPublished (action: FanModel.Action) throws -> AnyPublisher<FanCharacteristics, ConnectionError> {
-//        guard let url = URL(string: "http://\(ip)/fanspd.cgi?dir=\(action.rawValue)") else {
-//            throw ConnectionError.badUrl
-//        }
-//        let decoder = JSONDecoder()
-//        let config = URLSession.shared.configuration
-//        config.timeoutIntervalForRequest = 10
-//        let session = URLSession.init(configuration: config)
-//        return session
-//            .dataTaskPublisher(for: url)
-//            .tryMap { (data, response) -> FanCharacteristics in
-//                guard let r = (response as? HTTPURLResponse) else {
-//                    throw ConnectionError.serverError("Server error: could not interpret server response.")
-//                }
-//                guard (200..<300).contains(r.statusCode) else {
-//                    throw ConnectionError.serverError("Server error, code \(r.statusCode)")
-//                }
-//                return try decoder.decode(FanCharacteristics.self, from:
-//                                            (String(data: data, encoding: .ascii) ?? "")
-//                                            .trimmingCharacters(in: .whitespaces)
-//                                            .split(separator: "<")
-//                                            .filter({ !$0.contains("/") && $0.contains(">") })
-//                                            .map ({ $0.split(separator: ">", maxSplits: 1) })
-//                                            .map ({ arr -> (String, String?) in
-//                    let newTuple = (String(arr[0]), arr.count == 2 ? String(arr[1]) : nil)
-//                    return newTuple
-//                }).jsonData )
-//            }
-//            .mapError {
-//                ($0 as? ConnectionError) ?? ConnectionError.cast($0)
-//            }
-//            .eraseToAnyPublisher()
-//    }
+    //    func loadResultsPublished (action: FanModel.Action) throws -> AnyPublisher<FanCharacteristics, ConnectionError> {
+    //        guard let url = URL(string: "http://\(ip)/fanspd.cgi?dir=\(action.rawValue)") else {
+    //            throw ConnectionError.badUrl
+    //        }
+    //        let decoder = JSONDecoder()
+    //        let config = URLSession.shared.configuration
+    //        config.timeoutIntervalForRequest = 10
+    //        let session = URLSession.init(configuration: config)
+    //        return session
+    //            .dataTaskPublisher(for: url)
+    //            .tryMap { (data, response) -> FanCharacteristics in
+    //                guard let r = (response as? HTTPURLResponse) else {
+    //                    throw ConnectionError.serverError("Server error: could not interpret server response.")
+    //                }
+    //                guard (200..<300).contains(r.statusCode) else {
+    //                    throw ConnectionError.serverError("Server error, code \(r.statusCode)")
+    //                }
+    //                return try decoder.decode(FanCharacteristics.self, from:
+    //                                            (String(data: data, encoding: .ascii) ?? "")
+    //                                            .trimmingCharacters(in: .whitespaces)
+    //                                            .split(separator: "<")
+    //                                            .filter({ !$0.contains("/") && $0.contains(">") })
+    //                                            .map ({ $0.split(separator: ">", maxSplits: 1) })
+    //                                            .map ({ arr -> (String, String?) in
+    //                    let newTuple = (String(arr[0]), arr.count == 2 ? String(arr[1]) : nil)
+    //                    return newTuple
+    //                }).jsonData )
+    //            }
+    //            .mapError {
+    //                ($0 as? ConnectionError) ?? ConnectionError.cast($0)
+    //            }
+    //            .eraseToAnyPublisher()
+    //    }
 }
 
-final class Motor: MotorDelegate {
-                        
+struct Motor: MotorDelegate {
+    
     enum Context { case adjusting, standby, fault }
     private var ipAddr: String
     private var context: Context = .standby
     
-    required init (atAddr addr: String) {
+    init (atAddr addr: String) {
         ipAddr = addr
     }
-
-    func setSpeedAsync(to target: Int) -> AsyncThrowingStream<FanCharacteristics, Error> {
-        context = .adjusting
+    
+    func refresh () async throws -> FanCharacteristics {
         let getter = FanStatusLoader(addr: ipAddr)
+        return try await getter.loadResultsAsync(action: .refresh)
+    }
+    
+    func setSpeedAsync(to target: Int) -> AsyncThrowingStream<FanCharacteristics, Error> {
         return AsyncThrowingStream<FanCharacteristics, Error> { continuation in
             Task {
+                let getter = FanStatusLoader(addr: ipAddr)
                 var chars: FanCharacteristics
                 chars = try await getter.loadResultsAsync(action: .refresh) //get chars to start
-                continuation.yield(chars) //send chars back to fan model
-                guard chars.speed != target else { continuation.finish(); return } // preliminary check to see if we're already at target
+                continuation.yield( chars )//send chars back to fan model
+                guard chars.speed != target else { continuation.finish() ; return } // preliminary check to see if we're already at target
                 for _ in (0..<12) { //try 12 times to reach target
-                    defer { context = .standby }
                     var preAdjustSpeed = chars.speed // take note of speed before adjustment
                     chars = try await getter.loadResultsAsync(action: target == 0 ? .off : target > chars.speed ? .faster : .slower) //make a speed adjustment
                     continuation.yield(chars) //send new chars to fan model
-                    guard chars.speed != target else { continuation.finish(); return } //finish if we hit the target speed
+                    guard chars.speed != target else { continuation.finish() ; return } //finish if we hit the target speed
                     for _ in (0..<3) { //loop to wait when fan is unresponsive. Will send .refresh at 4 second intervals and see if the fan speed changes. If it does, break out of the loop. If not, try again for up to 3 times.
                         guard preAdjustSpeed == chars.speed else { break } //check if fan is responsive. If so, break out of the unresponsive wait look
                         try await Task.sleep(nanoseconds: UInt64(4.0 * 1_000_000_000)) //wait for 4 seconds
                         preAdjustSpeed = chars.speed // take note of the speed before getting a refresh. Note we should have a pending adjustment at this point.
                         chars = try await getter.loadResultsAsync(action: .refresh) //check the chars
-                        continuation.yield(chars) // send new chars to model
+                        continuation.yield (chars) // send new chars to model
                     } //end unresponsive loop
                     try await Task.sleep(nanoseconds: UInt64(1.0 * 1_000_000_000)) //wait between adjustment attempts to avoid swamping the fan.
                 } //end of adjust loop
-                continuation.finish(throwing: AdjustmentError.fanNotResponsive) //if successful, function will exit out of the function. If not, we will hit this statement after 12 tries.
+                continuation.finish(throwing: AdjustmentError.fanNotResponsive )//if successful, function will exit out of the function. If not, we will hit this statement after 12 tries.
             }
         }
     }
     
 }
 
-final class FanTimer: TimerDelegate {
+struct FanTimer: TimerDelegate {
     enum Context { case adjusting, standby, fault }
     private var ipAddr: String
     private var context: Context = .standby
-
-    required init (atAddr addr: String) {
-        ipAddr = addr
+    
+    init (atAddr: String) {
+        ipAddr = atAddr
     }
     
     func setTimerAsync (to target: Int) -> AsyncThrowingStream<FanCharacteristics, Error> {
-        context = .adjusting
         let getter = FanStatusLoader(addr: ipAddr)
         return AsyncThrowingStream<FanCharacteristics, Error> { continuation in
             Task {
@@ -467,7 +455,6 @@ final class FanTimer: TimerDelegate {
                 continuation.yield(chars)
                 guard chars.timer < target else { continuation.finish(); return }
                 for _ in (0..<17) {
-                    defer { context = .standby }
                     var preAdjustTimer = chars.timer
                     chars = try await getter.loadResultsAsync(action: .timer)
                     continuation.yield(chars)
@@ -488,7 +475,8 @@ final class FanTimer: TimerDelegate {
 }
 
 protocol MotorDelegate {
-    func setSpeedAsync (to: Int) -> AsyncThrowingStream<FanCharacteristics, Error>
+    func refresh () async throws -> FanCharacteristics
+    mutating func setSpeedAsync (to: Int) -> AsyncThrowingStream<FanCharacteristics, Error>
     init(atAddr: String)
 }
 

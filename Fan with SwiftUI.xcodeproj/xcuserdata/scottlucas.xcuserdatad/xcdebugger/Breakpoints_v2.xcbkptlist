@@ -80,22 +80,6 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "67475518-BAD8-416C-AAA6-4E492347CAEE"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "Shared/Sheets/Detail Sheet.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "36"
-            endingLineNumber = "36"
-            landmarkName = "body"
-            landmarkType = "24">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
             uuid = "41F0AD2F-C873-4558-B572-CEA1BBD28A1E"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
@@ -103,8 +87,8 @@
             filePath = "Shared/Fan/Fan View Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "40"
-            endingLineNumber = "40"
+            startingLineNumber = "43"
+            endingLineNumber = "43"
             landmarkName = "init(chars:)"
             landmarkType = "7">
             <Actions>
@@ -121,33 +105,8 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "CE9AC33F-B150-464D-B70F-54CAC74A332C"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "Yes"
-            filePath = "Shared/Airspace Fan.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "72"
-            endingLineNumber = "72"
-            landmarkName = "application(_:willFinishLaunchingWithOptions:)"
-            landmarkType = "7">
-            <Actions>
-               <BreakpointActionProxy
-                  ActionExtensionID = "Xcode.BreakpointAction.Log">
-                  <ActionContent
-                     message = "Temp check task in app launch"
-                     conveyanceType = "0">
-                  </ActionContent>
-               </BreakpointActionProxy>
-            </Actions>
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
             uuid = "44127702-C005-41B7-A855-7DFC6665795C"
-            shouldBeEnabled = "Yes"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Shared/Weather/Weather Model.swift"
@@ -179,14 +138,14 @@
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
             uuid = "C7E08882-624B-4DC9-BA38-24B4C47AC551"
-            shouldBeEnabled = "Yes"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Shared/Airspace Fan.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "38"
-            endingLineNumber = "38"
+            startingLineNumber = "39"
+            endingLineNumber = "39"
             landmarkName = "body"
             landmarkType = "24">
          </BreakpointContent>
@@ -240,7 +199,7 @@
             <Locations>
                <Location
                   uuid = "BB02E6A8-311B-4318-9C2B-D849981F5976 - 21c08dbd6b176cfd"
-                  shouldBeEnabled = "Yes"
+                  shouldBeEnabled = "No"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
                   symbolName = "(1) await resume partial function for static Fan_with_SwiftUI.WeatherBackgroundTaskManager.handleTempCheckTask(task: Fan_with_SwiftUI.BGRefreshTask, loader: () async -&gt; Swift.Optional&lt;Fan_with_SwiftUI.Weather.WeatherResult&gt;) async -&gt; ()"
@@ -255,7 +214,7 @@
                </Location>
                <Location
                   uuid = "BB02E6A8-311B-4318-9C2B-D849981F5976 - 843b64a04663fafc"
-                  shouldBeEnabled = "Yes"
+                  shouldBeEnabled = "No"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
                   symbolName = "(2) await resume partial function for static Fan_with_SwiftUI.WeatherBackgroundTaskManager.handleTempCheckTask(task: Fan_with_SwiftUI.BGRefreshTask, loader: () async -&gt; Swift.Optional&lt;Fan_with_SwiftUI.Weather.WeatherResult&gt;) async -&gt; ()"
@@ -291,7 +250,7 @@
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
             uuid = "7A79C6AB-F00E-46D7-872C-51FB3CC76A08"
-            shouldBeEnabled = "Yes"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Shared/Weather/Weather Model.swift"
@@ -304,7 +263,7 @@
             <Locations>
                <Location
                   uuid = "7A79C6AB-F00E-46D7-872C-51FB3CC76A08 - c8333d88dd979d9c"
-                  shouldBeEnabled = "Yes"
+                  shouldBeEnabled = "No"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
                   symbolName = "(1) await resume partial function for static Fan_with_SwiftUI.WeatherBackgroundTaskManager.handleTempCheckTask(task: Fan_with_SwiftUI.BGRefreshTask, loader: () async -&gt; ()) async -&gt; ()"
@@ -315,11 +274,11 @@
                   endingColumnNumber = "9223372036854775807"
                   startingLineNumber = "269"
                   endingLineNumber = "269"
-                  offsetFromSymbolStart = "1012">
+                  offsetFromSymbolStart = "772">
                </Location>
                <Location
                   uuid = "7A79C6AB-F00E-46D7-872C-51FB3CC76A08 - e7e18c7b7382fb9f"
-                  shouldBeEnabled = "Yes"
+                  shouldBeEnabled = "No"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
                   symbolName = "(2) await resume partial function for static Fan_with_SwiftUI.WeatherBackgroundTaskManager.handleTempCheckTask(task: Fan_with_SwiftUI.BGRefreshTask, loader: () async -&gt; ()) async -&gt; ()"
@@ -371,7 +330,7 @@
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
             uuid = "D45661A5-9E62-4134-B353-44969FA95D47"
-            shouldBeEnabled = "Yes"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Shared/Weather/Weather Model.swift"
@@ -386,22 +345,22 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "0D913D0E-8BD5-46E2-9F62-B978A5DB1190"
+            uuid = "AEFEF2F7-9027-41B7-AD1A-F923868B6845"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "Yes"
-            filePath = "Shared/House/House Model.swift"
+            filePath = "Shared/House/House View Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "46"
-            endingLineNumber = "46"
-            landmarkName = "lowLevelScan()"
-            landmarkType = "7">
+            startingLineNumber = "99"
+            endingLineNumber = "99"
+            landmarkName = "HouseViewModel"
+            landmarkType = "3">
             <Actions>
                <BreakpointActionProxy
                   ActionExtensionID = "Xcode.BreakpointAction.Log">
                   <ActionContent
-                     message = "Found fan @ipAddr@"
+                     message = "Updated fan views with IP @item.ipAddr@, count now @fanChars.count@"
                      conveyanceType = "0">
                   </ActionContent>
                </BreakpointActionProxy>
@@ -411,26 +370,81 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "AEFEF2F7-9027-41B7-AD1A-F923868B6845"
-            shouldBeEnabled = "Yes"
+            uuid = "BE1A5C89-D3EE-403A-A7DA-BBC8B0B86E6A"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
-            continueAfterRunningActions = "Yes"
-            filePath = "Shared/House/House View Model.swift"
+            continueAfterRunningActions = "No"
+            filePath = "Shared/House/House View.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "46"
-            endingLineNumber = "46"
-            landmarkName = "scan()"
+            startingLineNumber = "100"
+            endingLineNumber = "100"
+            landmarkName = "unknown"
+            landmarkType = "0">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "5CD57943-1C43-4410-BAFD-46D398CFBF5A"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Shared/Fan/Fan Model.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "332"
+            endingLineNumber = "332"
+            landmarkName = "loadResultsAsync(action:)"
             landmarkType = "7">
-            <Actions>
-               <BreakpointActionProxy
-                  ActionExtensionID = "Xcode.BreakpointAction.Log">
-                  <ActionContent
-                     message = "Updated fan views with IP @item.ipAddr@, count now @fanViews.count@"
-                     conveyanceType = "0">
-                  </ActionContent>
-               </BreakpointActionProxy>
-            </Actions>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "66F729BC-AB30-447C-9283-BF189AC07524"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Shared/Fan/Fan Model.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "335"
+            endingLineNumber = "335"
+            landmarkName = "loadResultsAsync(action:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "4563C2CE-C3AF-462A-82B0-AD695E188747"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Shared/Fan/Fan Model.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "339"
+            endingLineNumber = "339"
+            landmarkName = "loadResultsAsync(action:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "D719E631-B9D9-482F-B596-51AF2272823B"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Shared/Fan/Fan Model.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "340"
+            endingLineNumber = "340"
+            landmarkName = "loadResultsAsync(action:)"
+            landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

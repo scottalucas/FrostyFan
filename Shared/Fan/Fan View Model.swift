@@ -11,7 +11,8 @@ import Combine
 
 class FanViewModel: ObservableObject {
 //    private var sharedHouseData: SharedHouseData
-    @ObservedObject var model: FanModel
+    var model: FanModel
+    @Published var fanCharacteristics: FanCharacteristics
     @Published var selectorSegments: Int = 2
     @Published var currentMotorSpeed: Int?
     @Published var indicatedAlarm: IndicatorOpacity.IndicatorBlink?
@@ -21,6 +22,8 @@ class FanViewModel: ObservableObject {
     @Published var showDamperWarning = false
     @Published var showInterlockWarning = false
     @Published var showTemperatureWarning = false
+    private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
+
 //    @Published var chars: FanCharacteristics
 //    @Published var targetedSpeed: Int?
 //    @Published var fanStatusText: String?
@@ -32,12 +35,17 @@ class FanViewModel: ObservableObject {
 //    private var displayedMotorSpeed: Int?
 //    private var displayMotor = PassthroughSubject<AnyPublisher<Double, Never>, Never>()
     
-    private var bag = Set<AnyCancellable>()
+//    private var bag = Set<AnyCancellable>()
     
     init (chars: FanCharacteristics) {
         self.model = FanModel(usingChars: chars)
-//        self.chars = chars
+        self.fanCharacteristics = chars
         startSubscribers(initialChars: chars)
+        fanMonitor()
+    }
+    
+    deinit {
+        print("Deinit fan view model \(fanCharacteristics.macAddr)")
     }
 
     convenience init () {
@@ -47,23 +55,55 @@ class FanViewModel: ObservableObject {
     
     func setTimer (addHours hours: Int) {
         Task {
+            registerBackgroundTask()
             await model.setFan(addHours: hours)
+            endBackgroundTask()
         }
     }
     
     func setSpeed (to spd: Int?) {
         guard let spd = spd else { return }
         Task {
+            registerBackgroundTask()
             await model.setFan(toSpeed: spd)
+            endBackgroundTask()
+        }
+    }
+
+    func refreshFan () {
+        Task { try? await model.refresh() }
+    }
+    
+    private func fanMonitor () {
+        let interval = TimeInterval( 5 * 60 ) //5 minute loop interval
+        Task {
+            while true {
+                do {
+                    print("Fan monitor loop @ \(Date.now.formatted()), last update \(Storage.lastForecastUpdate.formatted())")
+                    try await Task.sleep(interval: interval) //run the loop every 5 minutes to respond as conditions change
+                    refreshFan()
+                } catch {
+                    let e = error as? BackgroundTaskError ?? error
+                    print("exited fan monitor loop @ \(Date.now.formatted()), error: \(e.localizedDescription)")
+                    break
+                }
+            }
         }
     }
     
-    func setTimerWheel (to position: Int) async {
-        timerWheelPosition = position
+    private func registerBackgroundTask() {
+        //        print("BG task started")
+        backgroundTask = UIApplication.shared.beginBackgroundTask { [weak self] in
+            //            print("BG task expired")
+            self?.endBackgroundTask()
+        }
+        assert(backgroundTask != .invalid)
     }
     
-    func refreshFan () {
-        Task { try await model.refresh() }
+    private func endBackgroundTask() {
+        //        print("Background task ended.")
+        UIApplication.shared.endBackgroundTask(backgroundTask)
+        backgroundTask = .invalid
     }
 //
 //    private func updateOffDate(minutesLeft: Int) -> String {
@@ -105,7 +145,10 @@ class FanViewModel: ObservableObject {
     
     private func startSubscribers(initialChars chars: FanCharacteristics) {
         
-        model.$fanCharacteristics
+        model.fanCharacteristics
+            .assign(to: &$fanCharacteristics)
+        
+        $fanCharacteristics
             .prepend(chars)
             .compactMap { $0 }
             .map {
@@ -113,7 +156,7 @@ class FanViewModel: ObservableObject {
             }
             .assign(to: &$showDamperWarning)
         
-        model.$fanCharacteristics
+        $fanCharacteristics
             .prepend(chars)
             .compactMap { $0 }
             .map {
@@ -132,13 +175,13 @@ class FanViewModel: ObservableObject {
 //            .map { $0 == nil }
 //            .assign(to: &$fatalFault)
 
-        model.$motorContext
+        model.motorContext
             .prepend(.standby)
             .map {
                 $0 != .adjusting
             }
             .combineLatest(
-                model.$timerContext
+                model.timerContext
                     .prepend(.standby)
                     .map {
                         $0 != .adjusting
@@ -170,22 +213,22 @@ class FanViewModel: ObservableObject {
 //            .compactMap { $0 }
 //            .assign(to: &$chars)
         
-        model.$fanCharacteristics
-            .prepend(chars)
-            .compactMap { optChars -> (String, Int)? in
-                guard
-                    let chars = optChars,
-                    let levels = FanViewModel.speedTable[String(chars.airspaceFanModel.prefix(4))]
-                else {
-                    print("Model: \(optChars?.airspaceFanModel ?? "Not found"), speed: \(optChars.map ({ FanViewModel.speedTable[$0.airspaceFanModel].debugDescription }) ?? "Not found")")
-                    return nil
-                }
-                return (addr: chars.macAddr, rpm: Int ( Double ( chars.speed ) * 50.0 / Double ( levels ) ))
-            }
-            .sink(receiveValue: { (addr, rpm) in
-                HouseMonitor.shared.updateOperationalStatus(forMacAddr: addr, to: rpm)
-            })
-            .store(in: &bag)
+//        model.$fanCharacteristics
+//            .prepend(chars)
+//            .compactMap { optChars -> (String, Int)? in
+//                guard
+//                    let chars = optChars,
+//                    let levels = FanViewModel.speedTable[String(chars.airspaceFanModel.prefix(4))]
+//                else {
+//                    print("Model: \(optChars?.airspaceFanModel ?? "Not found"), speed: \(optChars.map ({ FanViewModel.speedTable[$0.airspaceFanModel].debugDescription }) ?? "Not found")")
+//                    return nil
+//                }
+//                return (addr: chars.macAddr, rpm: Int ( Double ( chars.speed ) * 50.0 / Double ( levels ) ))
+//            }
+//            .sink(receiveValue: { (addr, rpm) in
+//                HouseMonitor.shared.updateOperationalStatus(forMacAddr: addr, to: rpm)
+//            })
+//            .store(in: &bag)
         //
         //        $displayFanRpm
         //            .handleEvents(receiveOutput: { rpm in
@@ -197,16 +240,16 @@ class FanViewModel: ObservableObject {
 //            .compactMap { $0?.speed }
 //            .assign(to: &$displayFanRpm)
         
-        model.$fanCharacteristics
+        $fanCharacteristics
             .prepend(chars)
-            .compactMap { $0?.speed }
+            .map { $0.speed }
             .assign(to: &$currentMotorSpeed)
         
         Publishers
             .CombineLatest3 (
-                model.$fanCharacteristics
+                $fanCharacteristics
                     .prepend(chars)
-                    .compactMap { $0?.speed }
+                    .map { $0.speed }
                     .map { $0 > 0 },
                 WeatherMonitor.shared.$tooCold
                     .prepend (false),
@@ -216,9 +259,9 @@ class FanViewModel: ObservableObject {
             .map { $0 && ( $1 || $2) }
             .assign(to: &$showTemperatureWarning)
 
-        model.$fanCharacteristics
+        $fanCharacteristics
             .prepend (chars)
-            .compactMap { $0?.timer }
+            .map { $0.timer }
             .map { timeTillOff -> Date? in
                 guard timeTillOff > 0 else { return nil }
                 return Date(timeIntervalSinceNow: Double(timeTillOff) * 60.0)
@@ -231,9 +274,9 @@ class FanViewModel: ObservableObject {
             }
             .assign(to: &$offDateText)
         
-        model.$fanCharacteristics
+        $fanCharacteristics
             .prepend(chars)
-            .compactMap { $0?.airspaceFanModel }
+            .map { $0.airspaceFanModel }
             .map { String($0.prefix(4)) }
             .map { FanViewModel.speedTable[$0] ?? 1 }
             .map { $0 + 1 }
