@@ -9,7 +9,6 @@ import SwiftUI
 import Combine
 
 struct HouseView: View {
-    typealias IPAddr = String
     @StateObject var viewModel: HouseViewModel
     @State private var currentTab: Int = 0
     @State private var info: String = ""
@@ -17,42 +16,41 @@ struct HouseView: View {
 //    @State var scanUntil: Date?
     
     var body: some View {
-        NavigationView {
-            VStack {
-                switch viewModel.fanSet.count {
-                    case 0:
-                        NoFanView(houseViewModel: viewModel)
-                    case 1:
-                        FanView(initialCharacteristics: viewModel.fanSet.first!, houseVM: viewModel)
-                    default:
-                        TabView (selection: $viewModel.displayedFanID) {
-                            ForEach (Array(viewModel.fanSet)) { chars in
-                                FanView(initialCharacteristics: chars, houseVM: viewModel)
-                                    .tag(chars.id)
-                                    .padding(.bottom, 50)
-                            }
-                        }
-                        .tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))
-                        .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .automatic))
-                }
-            }
-                .background (
-                    IdentifiableImage.fanIcon.image
-                        .resizable()
-                        .aspectRatio(1.0, contentMode: .fit)
-                        .scaleEffect(1.75)
-                        .rotatingView(speed: $viewModel.displayedRPM, symmetry: .degrees(60.0))
-                        .padding(.bottom, viewModel.fanSet.count > 1 ? 30 : 0)
-                        .blur(radius: 30)
-                        .foregroundColor(viewModel.useAlarmColor ? .alarm : .main)
-                )
-                .pulldownRefresh {
-                    Task {
-                        await viewModel.scan()
+        Group {
+            if viewModel.fanSet.count == 0 {
+                FanView(initialCharacteristics: nil, houseVM: viewModel)
+            } else {
+                TabView (selection: $viewModel.displayedFanID) {
+                    ForEach (Array(viewModel.fanSet), id: \.id) { chars in
+                        FanView(initialCharacteristics: chars, houseVM: viewModel)
+                            .tag(chars.id)
+                            .padding(.bottom, 50)
                     }
                 }
-
-    }
+                .tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))
+                .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .automatic))
+            }
+//            switch viewModel.fanSet.count {
+//                case 0:
+//                    NoFanView(houseViewModel: viewModel)
+//                case 1:
+//                    FanView(initialCharacteristics: viewModel.fanSet.first!, houseVM: viewModel)
+//                default:
+//            }
+        }
+        .background (
+            IdentifiableImage.fanIcon.image
+                .resizable()
+                .aspectRatio(1.0, contentMode: .fit)
+                .scaleEffect(1.75)
+                .rotatingView(speed: $viewModel.displayedRPM, symmetry: .degrees(60.0))
+                .padding(.bottom, viewModel.fanSet.count > 1 ? 30 : 0)
+                .blur(radius: 30)
+                .foregroundColor(viewModel.houseAlarm ? .alarm : .main)
+        )
+        .pulldownRefresh {
+            await viewModel.scan()
+        }
     }
     
     init(viewModel: HouseViewModel? = nil) {

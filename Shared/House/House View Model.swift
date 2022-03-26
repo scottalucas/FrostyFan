@@ -15,12 +15,12 @@ class HouseViewModel: ObservableObject {
     @Published var fanSet = Set<FanCharacteristics>()
     @Published var displayedFanID: FanView.MACAddr = "not set"
     @Published var displayedRPM: Int = 0
-    @Published var useAlarmColor: Bool = false
+    @Published var houseAlarm: Bool = false
+    @Published var houseMessage: String?
+    @Published var temperature: String?
     @Published var fansRunning = false
     @Published var scanUntil: Date = .distantPast
 //    static var scanDuration: TimeInterval = 15.0
-    private var bag = Array<AnyCancellable>()
-    
     
     init () {
         //        fanViews = Set( initialFans.map { FanView( initialCharacteristics: $0 ) } )
@@ -40,11 +40,56 @@ class HouseViewModel: ObservableObject {
             .map { $0.map({ $0.speed }).reduce(0, +) > 0 }
             .assign(to: &$fansRunning)
         
+        Publishers
+            .CombineLatest3 (
+                WeatherMonitor.shared
+                    .$tooHot
+                    .prepend(false),
+                WeatherMonitor.shared
+                    .$tooCold
+                    .prepend(false),
+            $fansRunning
+                    .prepend(false)
+            )
+            .map { (tooHot, tooCold, running) in
+                if !(tooHot || tooCold) { return false }
+                else if running { return true }
+                else { return false }
+            }
+            .assign(to: &$houseAlarm)
+        
         $fansRunning
             .map {
                 $0 && (WeatherMonitor.shared.tooHot || WeatherMonitor.shared.tooCold)
             }
-            .assign(to: &$useAlarmColor)
+            .assign(to: &$houseAlarm)
+        
+        WeatherMonitor.shared.$currentTemp
+            .compactMap {
+                $0?.formatted(Measurement.FormatStyle.truncatedTemp)
+            }
+            .assign(to: &$temperature)
+        
+        Publishers
+            .CombineLatest3 (
+                WeatherMonitor.shared.$tooHot
+                    .prepend(false),
+                WeatherMonitor.shared.$tooCold
+                    .prepend(false),
+                WeatherMonitor.shared.$currentTemp
+                    .prepend(nil)
+            )
+            .map { (tooHot, tooCold, temp) in
+                guard let temp = temp else { return nil }
+                if tooHot {
+                    return "It's hot outside (\(temp.formatted(Measurement.FormatStyle.truncatedTemp))).\rTurn off fan?"
+                } else if tooCold {
+                    return "It's cold outside (\(temp.formatted(Measurement.FormatStyle.truncatedTemp))).\rTurn off fan?"
+                } else {
+                    return nil
+                }
+            }
+            .assign(to: &$houseMessage)
     }
     
     func scan (timeout: TimeInterval = House.scanDuration) async {
@@ -75,14 +120,21 @@ class HouseViewModel: ObservableObject {
                     }
                     
                     for try await (ipAddr, optData) in group {
-                        if let newData = optData, var chars = FanCharacteristics(data: newData) {
+                        do {
+                            var chars = try FanCharacteristics(data: optData)
                             guard !group.isCancelled else { print("group cancelled"); return }
                             chars.ipAddr = ipAddr
                             fanSet.update(with: chars)
+                        } catch {
+                            if let err = error as? ConnectionError, case .timeout = err {
+                                throw err
+                            }
                         }
                     }
                 }
-            } catch { }
+            } catch {
+                print("Exited scan with error \((error as? ConnectionError)?.description ?? error.localizedDescription)")
+            }
         scanUntil = .distantPast
         print("scan finished")
     }

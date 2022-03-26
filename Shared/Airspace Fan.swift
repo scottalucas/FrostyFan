@@ -23,29 +23,31 @@ struct AirspaceFanApp: App {
     
     var body: some Scene {
         WindowGroup {
-            houseView
-                .environmentObject(weather)
-                .environmentObject(location)
-                .background(Color.background)
-                .foregroundColor(.main)
-                .onChange(of: scenePhase, perform: { newPhase in
-                    switch newPhase {
-                        case .active:
-                            BGTaskScheduler.shared.cancelAllTaskRequests()
-                            weather.monitor()
-                        case .background:
-                            print("background")
-                            WeatherBackgroundTaskManager.scheduleBackgroundTempCheckTask (forId: BackgroundTaskIdentifier.tempertureOutOfRange, waitUntil: WeatherMonitor.shared.weatherServiceNextCheckDate())
-                            weather.suspendMonitor()
-                        case .inactive:
-                            break
-                        @unknown default:
-                            break
+            NavigationView {
+                houseView
+                    .environmentObject(weather)
+                    .environmentObject(location)
+                    .background(Color.background)
+                    .foregroundColor(.main)
+                    .onChange(of: scenePhase, perform: { newPhase in
+                        switch newPhase {
+                            case .active:
+                                BGTaskScheduler.shared.cancelAllTaskRequests()
+                                weather.monitor()
+                            case .background:
+                                print("background")
+                                WeatherBackgroundTaskManager.scheduleBackgroundTempCheckTask (forId: BackgroundTaskIdentifier.tempertureOutOfRange, waitUntil: WeatherMonitor.shared.weatherServiceNextCheckDate())
+                                weather.suspendMonitor()
+                            case .inactive:
+                                break
+                            @unknown default:
+                                break
+                        }
+                    })
+                    .task {
+                        print("Content view appear")
                     }
-                })
-                .task {
-                    print("Content view appear")
-                }
+            }
         }
     }
     

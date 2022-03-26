@@ -255,10 +255,10 @@ struct FanCharacteristics: Decodable, Hashable {
         let damperStr = try container.decode(String.self, forKey: .doorinprocess)
         let i1Str = try container.decode(String.self, forKey: .interlock1)
         let i2Str = try container.decode(String.self, forKey: .interlock2)
-        macAddr = try container.decode(String.self, forKey: .macaddr)
+        macAddr = try container.decode(MACAddr.self, forKey: .macaddr)
         airspaceFanModel = try container.decode(String.self, forKey: .model)
         do {
-            ipAddr = try container.decode(String.self, forKey: .ipaddr)
+            ipAddr = try container.decode(IPAddr.self, forKey: .ipaddr)
         } catch {
             ipAddr = UUID.init().uuidString
         }
@@ -292,8 +292,9 @@ struct FanCharacteristics: Decodable, Hashable {
         setpoint = setpointStr.map { Int($0) } ?? nil
     }
     
-    init? (data: Data) {
-        guard let tupleSource = String(data: data, encoding: .ascii) else { return nil }
+    init (data: Data?) throws {
+        guard let data = data else { throw ConnectionError.decodeError("Data was nil.")}
+        guard let tupleSource = String(data: data, encoding: .ascii) else { throw ConnectionError.decodeError("Data could not be encoded to ASCII") }
         let s = tupleSource
             .trimmingCharacters(in: .whitespaces)
             .split(separator: "<")
@@ -304,7 +305,7 @@ struct FanCharacteristics: Decodable, Hashable {
                 return newTuple
             })
         let decoder = JSONDecoder()
-        guard let chars = try? decoder.decode(FanCharacteristics.self, from: s.jsonData) else { return nil }
+        guard let chars = try? decoder.decode(FanCharacteristics.self, from: s.jsonData) else { throw ConnectionError.decodeError("Decoder failed to parse FanCharacteristics from data of length \(data.count) bytes.") }
         self = chars
     }
     
@@ -317,14 +318,14 @@ struct FanCharacteristics: Decodable, Hashable {
 }
 
 extension FanCharacteristics: Identifiable {
-    var id: String { macAddr }
+    var id: MACAddr { macAddr }
 }
 
 struct FanStatusLoader {
     typealias OutputPublisher = AnyPublisher<FanCharacteristics, ConnectionError>
-    private var ip: String
+    private var ip: IPAddr
     
-    init (addr ip: String) {
+    init (addr ip: IPAddr) {
         self.ip = ip
     }
     
@@ -332,7 +333,6 @@ struct FanStatusLoader {
         guard let url = URL(string: "http://\(ip)/fanspd.cgi?dir=\(action.rawValue)") else {
             throw ConnectionError.badUrl
         }
-        let decoder = JSONDecoder()
         let config = URLSession.shared.configuration
         config.timeoutIntervalForRequest = 10
         let session = URLSession.init(configuration: config)
@@ -343,19 +343,8 @@ struct FanStatusLoader {
         guard (200..<300).contains(r.statusCode) else {
             throw ConnectionError.serverError("Server error, code \(r.statusCode)")
         }
-        
-        return try decoder.decode(FanCharacteristics.self, from:
-                                    (String(data: data, encoding: .ascii) ?? "")
-            .trimmingCharacters(in: .whitespaces)
-            .split(separator: "<")
-            .filter({ !$0.contains("/") && $0.contains(">") })
-            .map ({ $0.split(separator: ">", maxSplits: 1) })
-            .map ({ arr -> (String, String?) in
-                let newTuple = (String(arr[0]), arr.count == 2 ? String(arr[1]) : nil)
-                return newTuple
-            })
-                .jsonData
-        )
+        let results = try FanCharacteristics(data: data)
+        return results
     }
     
     //    func loadResultsPublished (action: FanModel.Action) throws -> AnyPublisher<FanCharacteristics, ConnectionError> {
@@ -396,10 +385,10 @@ struct FanStatusLoader {
 struct Motor: MotorDelegate {
     
     enum Context { case adjusting, standby, fault }
-    private var ipAddr: String
+    private var ipAddr: IPAddr
     private var context: Context = .standby
     
-    init (atAddr addr: String) {
+    init (atAddr addr: IPAddr) {
         ipAddr = addr
     }
     
@@ -439,10 +428,10 @@ struct Motor: MotorDelegate {
 
 struct FanTimer: TimerDelegate {
     enum Context { case adjusting, standby, fault }
-    private var ipAddr: String
+    private var ipAddr: IPAddr
     private var context: Context = .standby
     
-    init (atAddr: String) {
+    init (atAddr: IPAddr) {
         ipAddr = atAddr
     }
     
@@ -477,10 +466,10 @@ struct FanTimer: TimerDelegate {
 protocol MotorDelegate {
     func refresh () async throws -> FanCharacteristics
     mutating func setSpeedAsync (to: Int) -> AsyncThrowingStream<FanCharacteristics, Error>
-    init(atAddr: String)
+    init(atAddr: IPAddr)
 }
 
 protocol TimerDelegate {
     func setTimerAsync (to: Int) -> AsyncThrowingStream<FanCharacteristics, Error>
-    init(atAddr: String)
+    init(atAddr: IPAddr)
 }

@@ -30,39 +30,43 @@ struct FanView: View {
     @State private var activeSheet: OverlaySheet?
     
     var body: some View {
-        ZStack {
-            NavigationLink(tag: OverlaySheet.fanName, selection: $activeSheet, destination: { NameSheet(sheet: $activeSheet, storageKey: StorageKey.fanName(id)) }, label: {})
-            NavigationLink(tag: OverlaySheet.timer, selection: $activeSheet, destination: { TimerSheet(activeSheet: $activeSheet, timeOnTimer: viewModel.fanCharacteristics.timer, fanViewModel: viewModel) }, label: {})
-            NavigationLink(tag: OverlaySheet.detail, selection: $activeSheet, destination: { DetailSheet(chars: viewModel.fanCharacteristics, activeSheet: $activeSheet) }, label: {})
-            NavigationLink(tag: OverlaySheet.fatalFault, selection: $activeSheet, destination: { FatalFaultSheet() }, label: {})
-            NavigationLink(tag: OverlaySheet.settings, selection: $activeSheet, destination: { SettingsView(activeSheet: $activeSheet) }, label: {})
+        if id == "No fan" {
+            NoFanView (houseViewModel: houseViewModel)
+        } else {
+            ZStack {
+                NavigationLink(tag: OverlaySheet.fanName, selection: $activeSheet, destination: { NameSheet(sheet: $activeSheet, storageKey: StorageKey.fanName(id)) }, label: {})
+                NavigationLink(tag: OverlaySheet.timer, selection: $activeSheet, destination: { TimerSheet(activeSheet: $activeSheet, timeOnTimer: viewModel.fanCharacteristics.timer, fanViewModel: viewModel) }, label: {})
+                NavigationLink(tag: OverlaySheet.detail, selection: $activeSheet, destination: { DetailSheet(chars: viewModel.fanCharacteristics, activeSheet: $activeSheet) }, label: {})
+                NavigationLink(tag: OverlaySheet.fatalFault, selection: $activeSheet, destination: { FatalFaultSheet() }, label: {})
+                NavigationLink(tag: OverlaySheet.settings, selection: $activeSheet, destination: { SettingsView(activeSheet: $activeSheet) }, label: {})
                 
                 FanInfoAreaRender(viewModel: viewModel, houseViewModel: houseViewModel, activeSheet: $activeSheet)
                 //                    .ignoresSafeArea()
                 ControllerRender(viewModel: viewModel, activeSheet: $activeSheet)
                 //                    .padding(.bottom, 45)
-        }
-        .toolbar(content: {
-            ToolbarItem(placement: .principal) {
-                FanNameRender(
-                    viewModel: viewModel,
-                    activeSheet: $activeSheet,
-                    name: $name
-                )
-                .padding(Edge.Set.bottom, 35)
             }
-        })
-        .onChange(of: houseViewModel.displayedFanID) { newId in
-            if newId == id {
-                viewModel.refreshFan()
+            .toolbar(content: {
+                ToolbarItem(placement: .principal) {
+                    FanNameRender(
+                        viewModel: viewModel,
+                        activeSheet: $activeSheet,
+                        name: $name
+                    )
+                    .padding(Edge.Set.bottom, 35)
+                }
+            })
+            .onChange(of: houseViewModel.displayedFanID) { newId in
+                if newId == id {
+                    viewModel.refreshFan()
+                }
             }
         }
     }
     
-    init (initialCharacteristics chars: FanCharacteristics, houseVM: HouseViewModel ) {
-        id = chars.macAddr
-        _name = AppStorage(wrappedValue: "\(chars.airspaceFanModel)", StorageKey.fanName(chars.macAddr).rawValue)
-        _viewModel = StateObject.init(wrappedValue: FanViewModel(chars: chars))
+    init (initialCharacteristics chars: FanCharacteristics?, houseVM: HouseViewModel ) {
+        id = chars?.macAddr ?? "No fan"
+        _name = chars == nil ? AppStorage(wrappedValue: "No fan found", StorageKey.fanName("No fan").rawValue) : AppStorage(wrappedValue: "\(chars!.airspaceFanModel)", StorageKey.fanName(chars!.macAddr).rawValue)
+        _viewModel = StateObject.init(wrappedValue: FanViewModel(chars: chars ?? FanCharacteristics()))
         houseViewModel = houseVM
 //        print("init fan view model \(chars.airspaceFanModel) selector segments \(viewModel.selectorSegments)")
         
@@ -129,43 +133,42 @@ struct BaseFanImage: View {
 
 struct FanInfoAreaRender: View {
 //    @EnvironmentObject var sharedHouseData: HouseMonitor
-    @EnvironmentObject var weather: WeatherMonitor
     @ObservedObject var viewModel: FanViewModel
     @ObservedObject var houseViewModel: HouseViewModel
     @Binding var activeSheet: OverlaySheet?
-//    @Binding var scanUntil: Date?
-    @State private var fanFrame: CGRect = .zero
+    //    @Binding var scanUntil: Date?
+//    @State private var fanFrame: CGRect = .zero
     
     var body: some View {
-                VStack (alignment: .center, spacing: 5)
-                {
-                    Spacer()
-                    Button(action: {
-                        activeSheet = .detail
-                    }, label: {
-                        IdentifiableImage.info.image
-                            .resizable()
-                            .frame(width: 35, height: 35)
-                            .aspectRatio(1.0, contentMode: .fill)
-                            .foregroundColor(viewModel.showDamperWarning || viewModel.showInterlockWarning ? .alarm : .main)
-                    })
-                if (houseViewModel.scanUntil > .now) {
-                    RefreshIndicator(houseViewModel: houseViewModel)
-                        .padding(.top, 40)
+        VStack (alignment: .center, spacing: 5) {
+            Spacer()
+            Button(action: {
+                activeSheet = .detail
+            }, label: {
+                IdentifiableImage.info.image
+                    .resizable()
+                    .frame(width: 35, height: 35)
+                    .aspectRatio(1.0, contentMode: .fill)
+                    .foregroundColor(viewModel.showDamperWarning || viewModel.showInterlockWarning ? .alarm : .main)
+            })
+            if (houseViewModel.scanUntil > .now) {
+                RefreshIndicator(houseViewModel: houseViewModel)
+                    .padding(.top, 40)
+            } else {
+                if let temp = houseViewModel.temperature {
+                    Text(temp)
+                        .padding(.top, 20)
                 }
-                if let temp = weather.currentTemp, houseViewModel.scanUntil <= .now {
-                        Text(temp.formatted(Measurement<UnitTemperature>.FormatStyle.truncatedTemp))
-                            .padding(.top, 20)
-                        if ( viewModel.showTemperatureWarning ) {
-                            Text ("It's \(weather.tooHot ? "hot" : "cold") outside.\rTurn the fan off?")
-                        }
-                    }
-                    Spacer()
+                if let msg = houseViewModel.houseMessage {
+                    Text(msg)
                 }
-                .fixedSize(horizontal: false, vertical: true)
-                .buttonStyle(BorderlessButtonStyle())
-                .padding()
-                .background(.ultraThinMaterial)
+            }
+            Spacer()
+        }
+        .fixedSize(horizontal: false, vertical: true)
+        .buttonStyle(BorderlessButtonStyle())
+        .padding()
+        .background(.ultraThinMaterial)
     }
 }
 

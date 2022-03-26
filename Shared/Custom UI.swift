@@ -9,6 +9,10 @@ import Foundation
 import SwiftUI
 import Combine
 
+typealias IPAddr = String
+
+typealias MACAddr = String
+
 struct IdentifiableImage: Identifiable, Hashable {
     static var fanLarge = IdentifiableImage(named: "fanLarge")
     static var fanIcon = IdentifiableImage(named: "fanIcon")

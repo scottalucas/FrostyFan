@@ -12,7 +12,8 @@ struct NetworkAddress {
     static var hosts: [String] {
         (firstHost...lastHost)
             .map ({ hostIpInt in
-                    [3, 2, 1, 0].map({ index in (UInt8(hostIpInt >> (index * 8) & UInt32(0xFF))) }) })
+                    [3, 2, 1, 0].map({ index in (UInt8(hostIpInt >> (index * 8) & UInt32(0xFF))) })
+            })
             .compactMap ({ hostIpArr in
                             guard
                                 hostIpArr.count == 4,

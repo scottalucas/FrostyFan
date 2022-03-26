@@ -38,12 +38,16 @@ struct RefreshIndicator: View {
             }
             .onAppear () {
                 if houseViewModel.scanUntil > .now {
-                    fire()
+                    startCountdown()
+                } else {
+                    progress = 1.0
                 }
             }
             .onChange(of: houseViewModel.scanUntil) { until in
                 if until > .now {
-                    fire()
+                    startCountdown()
+                } else {
+                    progress = 1.0
                 }
             }
     }
@@ -52,7 +56,7 @@ struct RefreshIndicator: View {
         self.houseViewModel = houseViewModel
     }
 
-    private func fire () {
+    private func startCountdown () {
         progressTimer?.invalidate()
         progressTimer = nil
         let timeToRun = houseViewModel.scanUntil.timeIntervalSinceNow
