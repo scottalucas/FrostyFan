@@ -44,9 +44,6 @@ struct AirspaceFanApp: App {
                                 break
                         }
                     })
-                    .task {
-                        print("Content view appear")
-                    }
             }
         }
     }
@@ -84,7 +81,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
                 await WeatherBackgroundTaskManager.handleTempCheckTask(task: task, loader: Weather.load)
             }
         }) {
-            print("Task registration succeeded")
+//            print("Task registration succeeded")
         } else {
             print("Task registration failed")
         }

@@ -20,12 +20,8 @@ struct FanView: View {
     typealias MACAddr = String
     let id: MACAddr
     @Environment(\.scenePhase) var scenePhase
-//    @EnvironmentObject var sharedHouseData: HouseMonitor
-    @StateObject var viewModel: FanViewModel
+    @StateObject var viewModel: FanViewModel = FanViewModel()
     @ObservedObject var houseViewModel: HouseViewModel
-//    @Binding var houseAlarm: Bool
-//    @Binding var houseInfoText: Text?
-//    @Binding var scanUntil: Date?
     @AppStorage var name: String
     @State private var activeSheet: OverlaySheet?
     
@@ -34,32 +30,75 @@ struct FanView: View {
             NoFanView (houseViewModel: houseViewModel)
         } else {
             ZStack {
-                NavigationLink(tag: OverlaySheet.fanName, selection: $activeSheet, destination: { NameSheet(sheet: $activeSheet, storageKey: StorageKey.fanName(id)) }, label: {})
-                NavigationLink(tag: OverlaySheet.timer, selection: $activeSheet, destination: { TimerSheet(activeSheet: $activeSheet, timeOnTimer: viewModel.fanCharacteristics.timer, fanViewModel: viewModel) }, label: {})
-                NavigationLink(tag: OverlaySheet.detail, selection: $activeSheet, destination: { DetailSheet(chars: viewModel.fanCharacteristics, activeSheet: $activeSheet) }, label: {})
-                NavigationLink(tag: OverlaySheet.fatalFault, selection: $activeSheet, destination: { FatalFaultSheet() }, label: {})
-                NavigationLink(tag: OverlaySheet.settings, selection: $activeSheet, destination: { SettingsView(activeSheet: $activeSheet) }, label: {})
-                
-                FanInfoAreaRender(viewModel: viewModel, houseViewModel: houseViewModel, activeSheet: $activeSheet)
+                NavigationLink(
+                    tag: OverlaySheet.fanName,
+                    selection: $activeSheet,
+                    destination: {
+                        NameSheet(
+                            sheet: $activeSheet,
+                            storageKey: StorageKey.fanName(id)) },
+                    label: {})
+                NavigationLink(
+                    tag: OverlaySheet.timer,
+                    selection: $activeSheet,
+                    destination: {
+                        TimerSheet(
+                            activeSheet: $activeSheet,
+                            setter: viewModel.setTimer(addHours:),
+                            timeOnTimer: viewModel.chars.timer)},
+                    label: {})
+                NavigationLink(
+                    tag: OverlaySheet.detail,
+                    selection: $activeSheet,
+                    destination: {
+                        DetailSheet(
+                            activeSheet: $activeSheet,
+                            chars: viewModel.chars )},
+                    label: {})
+                NavigationLink(
+                    tag: OverlaySheet.fatalFault,
+                    selection: $activeSheet,
+                    destination: {
+                        FatalFaultSheet()},
+                    label: {})
+                NavigationLink(
+                    tag: OverlaySheet.settings,
+                    selection: $activeSheet,
+                    destination: {
+                        SettingsView(activeSheet: $activeSheet)},
+                    label: {})
+
+                FanInfoAreaRender(
+                    viewModel: viewModel,
+                    houseViewModel: houseViewModel,
+                    activeSheet: $activeSheet)
                 //                    .ignoresSafeArea()
-                ControllerRender(viewModel: viewModel, activeSheet: $activeSheet)
+                ControllerRender(
+                    viewModel: viewModel,
+                    activeSheet: $activeSheet,
+                    setSpeed: viewModel.setSpeed(to:) )
                 //                    .padding(.bottom, 45)
             }
             .toolbar(content: {
                 ToolbarItem(placement: .principal) {
                     FanNameRender(
                         viewModel: viewModel,
-                        activeSheet: $activeSheet,
-                        name: $name
-                    )
-                    .padding(Edge.Set.bottom, 35)
+                        activeSheet: $activeSheet, name: $name)
+                    .padding(.bottom, 35)
                 }
             })
-            .onChange(of: houseViewModel.displayedFanID) { newId in
-                if newId == id {
-                    viewModel.refreshFan()
-                }
+            .onAppear() {
+                viewModel.visible = true
+                viewModel.foreground = scenePhase == .active
             }
+            
+            .onDisappear() {
+                viewModel.visible = false
+            }
+
+            .onChange(of: scenePhase, perform: { phase in
+                viewModel.foreground = phase == .active
+            })
         }
     }
     
@@ -68,14 +107,16 @@ struct FanView: View {
         _name = chars == nil ? AppStorage(wrappedValue: "No fan found", StorageKey.fanName("No fan").rawValue) : AppStorage(wrappedValue: "\(chars!.airspaceFanModel)", StorageKey.fanName(chars!.macAddr).rawValue)
         _viewModel = StateObject.init(wrappedValue: FanViewModel(chars: chars ?? FanCharacteristics()))
         houseViewModel = houseVM
-//        print("init fan view model \(chars.airspaceFanModel) selector segments \(viewModel.selectorSegments)")
+//        print("init fan view model \(chars?.airspaceFanModel) selector segments \(viewModel.selectorSegments)")
         
     }
 }
 
+
 struct SpeedController: View {
     @ObservedObject var viewModel: FanViewModel
-    @State var requestedSpeed: Int?
+    @Binding var requestedSpeed: Int?
+    var setSpeed: (Int?) -> ()
     var body: some View {
         SegmentedSpeedPicker (
             segments: $viewModel.selectorSegments,
@@ -85,14 +126,16 @@ struct SpeedController: View {
             indicatorBlink: $viewModel.indicatedAlarm,
             minMaxLabels: .useStrings(["Off", "Max"]))
             .onChange(of: requestedSpeed) { speed in
-                viewModel.setSpeed(to: speed)
+                setSpeed(speed)
             }
     }
 }
 
 struct ControllerRender: View {
-    var viewModel: FanViewModel
+    @ObservedObject var viewModel: FanViewModel
+    @State var requestedSpeed: Int?
     @Binding var activeSheet: OverlaySheet?
+    var setSpeed: (Int?) -> ()
     var body: some View {
         VStack {
             Spacer()
@@ -107,8 +150,8 @@ struct ControllerRender: View {
                                     .resizable()
                                     .scaledToFit()
                                     .frame(width: nil, height: 40)
-                                if viewModel.offDateText != nil {
-                                    Text(viewModel.offDateText ?? "")
+                                if let offDateText = viewModel.offDateText {
+                                    Text(offDateText)
                                         .font(.subheadline)
                                 }
                             }
@@ -116,8 +159,18 @@ struct ControllerRender: View {
                         })
                 }
             }
-            SpeedController(viewModel: viewModel)
-                .padding([.leading, .trailing], 20)
+            SegmentedSpeedPicker (
+                segments: $viewModel.selectorSegments,
+                highlightedSegment: $viewModel.currentMotorSpeed,
+                highlightedAlarm: $viewModel.showInterlockWarning,
+                indicatedSegment: $requestedSpeed,
+                indicatorBlink: $viewModel.indicatedAlarm,
+                minMaxLabels: .useStrings(["Off", "Max"]))
+            
+            .onChange(of: requestedSpeed) { speed in
+                setSpeed(speed)
+            }
+            .padding([.leading, .trailing], 20)
         }
     }
 }
@@ -132,12 +185,9 @@ struct BaseFanImage: View {
 }
 
 struct FanInfoAreaRender: View {
-//    @EnvironmentObject var sharedHouseData: HouseMonitor
     @ObservedObject var viewModel: FanViewModel
     @ObservedObject var houseViewModel: HouseViewModel
     @Binding var activeSheet: OverlaySheet?
-    //    @Binding var scanUntil: Date?
-//    @State private var fanFrame: CGRect = .zero
     
     var body: some View {
         VStack (alignment: .center, spacing: 5) {
@@ -173,13 +223,12 @@ struct FanInfoAreaRender: View {
 }
 
 struct FanNameRender: View {
-//    @EnvironmentObject var sharedHouseData: HouseMonitor
-    @EnvironmentObject var weatherMonitor: WeatherMonitor
     @ObservedObject var viewModel: FanViewModel
-    @Binding var activeSheet: OverlaySheet?
-    @Binding var name: String
+//    @Binding var showTemperatureWarning: Bool
 //    @Binding var showDamperWarning: Bool
 //    @Binding var showInterlockWarning: Bool
+    @Binding var activeSheet: OverlaySheet?
+    @Binding var name: String
     
     var body: some View {
         VStack (alignment: /*@START_MENU_TOKEN@*/.center/*@END_MENU_TOKEN@*/, spacing: 0) {
@@ -253,9 +302,6 @@ struct FanViewPreviewContainer: View {
         //                .accentColor(.main)
         
     }
-    
-    
-    
 }
 
 struct FanView_Previews: PreviewProvider {
@@ -270,7 +316,7 @@ struct FanView_Previews: PreviewProvider {
 //        let vm = FanViewModel(chars: fan)
         return Group {
             FanViewPreviewContainer()
-            FanNameRender(viewModel: FanViewModel(chars: FanViewPreviewContainer.FanMock().chars), activeSheet: .constant(nil), name: .constant("Test"))
+//            FanNameRender(showTemperatureWarning: .constant(false), showDamperWarning: .constant(false), showInterlockWarning: .constant(false), activeSheet: .constant(nil), name: .constant("Test fan"))
 //            FanImageRender(activeSheet: .constant(nil), viewModel: vm)
 //            VStack {
 //                BaseFanImage()
@@ -280,5 +326,23 @@ struct FanView_Previews: PreviewProvider {
 //        .environmentObject(HouseMonitor.shared)
         .environmentObject(WeatherMonitor.shared)
         .foregroundColor(.main)
+    }
+}
+
+struct TestView: View {
+    @StateObject var testFanViewModel: TestFanViewModel
+    @AppStorage("test") var name: String = "Not found"
+    
+    @ObservedObject var vm: HouseViewModel
+    @State private var macAddr: MACAddr
+    
+    var body: some View {
+        Text(macAddr)
+    }
+    
+    init (initialCharacteristics: FanCharacteristics?, houseVM: HouseViewModel) {
+        vm = houseVM
+        macAddr = initialCharacteristics?.macAddr ?? "Nil mac address"
+        _testFanViewModel = StateObject.init(wrappedValue: TestFanViewModel(chars: initialCharacteristics ?? FanCharacteristics() ))
     }
 }

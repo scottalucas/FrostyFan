@@ -39,7 +39,7 @@ struct RotatingView<V>: View where V: View {
         }
     }
     var body: some View {
-            TimelineView(
+            TimelineView (
                 InertialRotator.Scheduler(driver: driver)
             ) { timeline in
                 BaseView(pacer: timeline.date, driver: driver, base: rotatedView)

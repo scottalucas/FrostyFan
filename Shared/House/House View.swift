@@ -9,20 +9,17 @@ import SwiftUI
 import Combine
 
 struct HouseView: View {
-    @StateObject var viewModel: HouseViewModel
-    @State private var currentTab: Int = 0
-    @State private var info: String = ""
-    @State private var fanLabel: String = "Fan"
-//    @State var scanUntil: Date?
-    
+    @StateObject var viewModel = HouseViewModel()
+    @Environment(\.scenePhase) var scenePhase
+
     var body: some View {
         Group {
             if viewModel.fanSet.count == 0 {
-                FanView(initialCharacteristics: nil, houseVM: viewModel)
+                FanView (initialCharacteristics: nil, houseVM: viewModel)
             } else {
                 TabView (selection: $viewModel.displayedFanID) {
                     ForEach (Array(viewModel.fanSet), id: \.id) { chars in
-                        FanView(initialCharacteristics: chars, houseVM: viewModel)
+                        FanView (initialCharacteristics: chars, houseVM: viewModel)
                             .tag(chars.id)
                             .padding(.bottom, 50)
                     }
@@ -51,10 +48,16 @@ struct HouseView: View {
         .pulldownRefresh {
             await viewModel.scan()
         }
+        
+        .onChange(of: scenePhase) { phase in
+            if phase == .active && !URLSessionMgr.shared.networkAvailable.value {
+                viewModel.fanSet.removeAll()
+            }
+        }
     }
     
     init(viewModel: HouseViewModel? = nil) {
-        _viewModel = StateObject(wrappedValue: viewModel ?? HouseViewModel())
+//        _viewModel = StateObject(wrappedValue: viewModel ?? HouseViewModel())
     }
 }
 
@@ -116,8 +119,8 @@ class ViewModelMock: HouseViewModel {
         fanB.speed = 2
         fanC.airspaceFanModel = "4300"
         fanC.macAddr = UUID.init().uuidString
-        fanSet.update(with: fanC)
         fanSet.update(with: fanB)
+        fanSet.update(with: fanC)
     }
 }
 

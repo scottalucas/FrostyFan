@@ -35,7 +35,7 @@ struct Weather {
             let coord = Storage.coordinate,
             let url = url(atCoord: coord)
         else {
-            print ("Weather retrieve returned stored weather,\r\tthrottle: \(abs(Storage.lastForecastUpdate.timeIntervalSinceNow) <= 15 * 60)\r\tCoordinate available: \(UserDefaults.standard.object(forKey: StorageKey.coordinate.rawValue) != nil)\r\tURL valid: \(Storage.coordinate.map ({ url(atCoord: $0) }) != nil)")
+//            print ("Weather retrieve returned stored weather,\r\tthrottle: \(abs(Storage.lastForecastUpdate.timeIntervalSinceNow) <= 15 * 60)\r\tCoordinate available: \(UserDefaults.standard.object(forKey: StorageKey.coordinate.rawValue) != nil)\r\tURL valid: \(Storage.coordinate.map ({ url(atCoord: $0) }) != nil)")
             return
         }
         
@@ -120,13 +120,13 @@ class WeatherMonitor: ObservableObject {
                     guard let cancelled = monitorTask?.isCancelled, !cancelled else {
                         throw BackgroundTaskError.taskCancelled
                     }
-                    print("Weather monitor loop @ \(Date.now.formatted()), last update \(Storage.lastForecastUpdate.formatted())")
+//                    print("Weather monitor loop @ \(Date.now.formatted()), last update \(Storage.lastForecastUpdate.formatted())")
                     try await updateWeatherConditions()
                     issueTempNotification()
                     try await Task.sleep(interval: interval) //run the loop every 5 minutes to respond as conditions change
                 } catch {
-                    let e = error as? BackgroundTaskError ?? error
-                    print("exited weather monitor loop @ \(Date.now.formatted()), error: \(e.localizedDescription)")
+//                    let e = error as? BackgroundTaskError ?? error
+//                    print("exited weather monitor loop @ \(Date.now.formatted()), error: \(e.localizedDescription)")
                     break
                 }
             }

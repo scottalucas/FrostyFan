@@ -21,7 +21,7 @@ struct NoFanView: View {
                     RefreshIndicator(houseViewModel: houseViewModel)
                         .tint(.main)
                 } else {
-                    Text("No fans found")
+                    Text(houseViewModel.houseMessage ?? "No fans found")
                 }
             }
             .padding([.top, .bottom], 50)

@@ -9,7 +9,7 @@ import Foundation
 import Combine
 import SwiftUI
 
-struct FanModel {
+class FanModel {
     var fanCharacteristics: CurrentValueSubject<FanCharacteristics, Never>
     var motorContext = CurrentValueSubject<Motor.Context, Never>(.standby)
     var timerContext = CurrentValueSubject<FanTimer.Context, Never>(.standby)
@@ -17,6 +17,9 @@ struct FanModel {
     private var timer: TimerDelegate!
     private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
     private var ipAddr: String
+    private var invalidFan: Bool {
+        fanCharacteristics.value.ipAddr == "INVALID"
+    }
 //    private var monitorTask: Task<(), Never>?
     
     init(usingChars chars: FanCharacteristics) {
@@ -27,7 +30,8 @@ struct FanModel {
 //        print("init fan model \(chars.ipAddr)")
     }
     
-    mutating func setFan(toSpeed finalTarget: Int) async {
+    func setFan(toSpeed finalTarget: Int) async {
+        guard !invalidFan else { return }
         motorContext.send(.adjusting)
         print("start motor adjust")
         do {
@@ -42,7 +46,8 @@ struct FanModel {
         }
     }
     
-    mutating func setFan(addHours hours: Int) async {
+    func setFan(addHours hours: Int) async {
+        guard !invalidFan else { return }
         guard hours > 0 else {
             timerContext.send(.fault)
             return
@@ -62,9 +67,13 @@ struct FanModel {
         }
     }
     
-    mutating func refresh() async throws {
-        let newChars = try await motor.refresh()
-        fanCharacteristics.send(newChars)
+    func refresh() async throws {
+        guard !invalidFan else { return }
+        print("executing refresh")
+//        Task {
+            let newChars = try await motor.refresh()
+            fanCharacteristics.send(newChars)
+//        }
     }
     
 //    private func fanMonitor () async {
@@ -102,7 +111,7 @@ struct FanModel {
 }
 
 extension FanModel {
-    init () {
+    convenience init () {
         print("Test fan model init")
         self.init(usingChars: FanCharacteristics())
     }
@@ -313,7 +322,7 @@ struct FanCharacteristics: Decodable, Hashable {
         speed = 0
         macAddr = UUID.init().uuidString.appending("BEEF")
         airspaceFanModel = "Whole House Fan"
-        ipAddr = UUID.init().uuidString
+        ipAddr = "INVALID"
     }
 }
 

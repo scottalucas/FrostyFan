@@ -10,8 +10,6 @@ import SwiftUI
 import Combine
 
 class HouseViewModel: ObservableObject {
-    //    @Published var fanChars = Set<FanCharacteristics>()
-    typealias IPAddr = String
     @Published var fanSet = Set<FanCharacteristics>()
     @Published var displayedFanID: FanView.MACAddr = "not set"
     @Published var displayedRPM: Int = 0
@@ -20,14 +18,13 @@ class HouseViewModel: ObservableObject {
     @Published var temperature: String?
     @Published var fansRunning = false
     @Published var scanUntil: Date = .distantPast
+    private var bag = Set<AnyCancellable>()
 //    static var scanDuration: TimeInterval = 15.0
     
     init () {
-        //        fanViews = Set( initialFans.map { FanView( initialCharacteristics: $0 ) } )
-        //        fanChars = initialFans
         Task {
-            scanUntil = .now.addingTimeInterval(House.scanDuration)
-            await scan(timeout: House.scanDuration)
+            scanUntil = .now.addingTimeInterval( URLSessionMgr.shared.networkAvailable.value ? House.scanDuration : 1.0 )
+            await scan( timeout: URLSessionMgr.shared.networkAvailable.value ? House.scanDuration : 1.0 )
             scanUntil = .distantPast
         }
 
@@ -58,28 +55,36 @@ class HouseViewModel: ObservableObject {
             }
             .assign(to: &$houseAlarm)
         
-        $fansRunning
-            .map {
-                $0 && (WeatherMonitor.shared.tooHot || WeatherMonitor.shared.tooCold)
-            }
-            .assign(to: &$houseAlarm)
-        
         WeatherMonitor.shared.$currentTemp
             .compactMap {
                 $0?.formatted(Measurement.FormatStyle.truncatedTemp)
             }
             .assign(to: &$temperature)
         
+        URLSessionMgr.shared.networkAvailable
+            .sink(receiveValue: {networkAvailable in
+                if networkAvailable && self.fanSet.count == 0 {
+                    Task { await self.scan() }
+                } else if (!networkAvailable) {
+                    self.fanSet.removeAll()
+                }
+            })
+            .store(in: &bag)
+        
         Publishers
-            .CombineLatest3 (
+            .CombineLatest4 (
                 WeatherMonitor.shared.$tooHot
                     .prepend(false),
                 WeatherMonitor.shared.$tooCold
                     .prepend(false),
                 WeatherMonitor.shared.$currentTemp
-                    .prepend(nil)
+                    .prepend(nil),
+                URLSessionMgr.shared.networkAvailable
             )
-            .map { (tooHot, tooCold, temp) in
+            .map { (tooHot, tooCold, temp, networkAvailable) in
+                if !networkAvailable {
+                    return "Network unavailable"
+                }
                 guard let temp = temp else { return nil }
                 if tooHot {
                     return "It's hot outside (\(temp.formatted(Measurement.FormatStyle.truncatedTemp))).\rTurn off fan?"
@@ -93,16 +98,15 @@ class HouseViewModel: ObservableObject {
     }
     
     func scan (timeout: TimeInterval = House.scanDuration) async {
-        print("scan started")
+//        print("scan started")
+//        if !URLSessionMgr.shared.networkAvailable.value { print("network not available"); return }
         let hosts = NetworkAddress
             .hosts
-            .appending("192.168.1.180:8080")
+            .appending("192.168.1.179:8080")
         guard hosts.count > 0 else { return }
-        let config = URLSession.shared.configuration
-        config.timeoutIntervalForRequest = House.scanDuration
+        print("hosts count \(hosts.count)")
         fanSet.removeAll()
         scanUntil = .now.addingTimeInterval(timeout)
-        let session = URLSession.init(configuration: config)
             do {
                 try await withThrowingTaskGroup(of: (IPAddr, Data?).self) { group in
                     
@@ -110,19 +114,18 @@ class HouseViewModel: ObservableObject {
                         try? await Task.sleep(interval: timeout)
                         throw ConnectionError.timeout
                     }
-                    
                     for ip in hosts {
                         guard let url = URL(string: "http://\(ip)/fanspd.cgi?dir=\(FanModel.Action.refresh.rawValue)") else { continue }
                         group.addTask {
-                            let d = try? await session.data(from: url).0
+                            let d = try? await URLSessionMgr.shared.session.data(from: url).0
                             return (ip, d)
                         }
                     }
                     
                     for try await (ipAddr, optData) in group {
                         do {
-                            var chars = try FanCharacteristics(data: optData)
                             guard !group.isCancelled else { print("group cancelled"); return }
+                            var chars = try FanCharacteristics(data: optData)
                             chars.ipAddr = ipAddr
                             fanSet.update(with: chars)
                         } catch {
@@ -133,26 +136,10 @@ class HouseViewModel: ObservableObject {
                     }
                 }
             } catch {
-                print("Exited scan with error \((error as? ConnectionError)?.description ?? error.localizedDescription)")
+//                print("Exited scan with error \((error as? ConnectionError)?.description ?? error.localizedDescription)")
             }
         scanUntil = .distantPast
-        print("scan finished")
+//        print("scan finished")
     }
-    
-    //    func scan () async throws {
-    //        guard !(HouseMonitor.shared.scanning ?? false) else { return }
-    //        print("Scanning...")
-    //        dataSource.lowLevelScan()
-    ////        fanChars.removeAll()
-    //        do {
-    //            for try await item in dataSource.lowLevelScan() {
-    ////                let fView = FanView(initialCharacteristics: item)
-    //                fanChars.update(with: item)
-    //                displayedFanID = item.macAddr
-    //            }
-    //        } catch {
-    //            print(error)
-    //            HouseMonitor.shared.scanning = false
-    //        }
-    //    }
 }
+

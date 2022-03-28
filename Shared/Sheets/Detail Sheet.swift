@@ -8,8 +8,8 @@
 import SwiftUI
 
 struct DetailSheet: View {
-    var data = [DetailSheetEntry]()
     @Binding var activeSheet: OverlaySheet?
+    var data = [DetailSheetEntry]()
     
     let columns = [
         GridItem(.flexible()),
@@ -64,7 +64,7 @@ struct DetailSheet: View {
         }
         .navigationBarBackButtonHidden(true)
     }
-    init (chars: FanCharacteristics, activeSheet: Binding<OverlaySheet?>) {
+    init (activeSheet: Binding<OverlaySheet?>, chars: FanCharacteristics ) {
         _activeSheet = activeSheet
         data = chars.labelValueDictionary
             .sorted(by: { $0.0 < $1.0 })
@@ -101,7 +101,7 @@ struct DetailSheet_Previews: PreviewProvider {
     }
     static var previews: some View {
         NavigationView {
-            DetailSheet(chars: chars, activeSheet: .constant(.detail))
+            DetailSheet(activeSheet: .constant(.detail), chars: chars)
         }
 
 //        DetailSheetEntry(label: "Speed", value: "10")
