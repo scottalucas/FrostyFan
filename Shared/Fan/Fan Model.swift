@@ -9,7 +9,7 @@ import Foundation
 import Combine
 import SwiftUI
 
-class FanModel {
+struct FanModel {
     var fanCharacteristics: CurrentValueSubject<FanCharacteristics, Never>
     var motorContext = CurrentValueSubject<Motor.Context, Never>(.standby)
     var timerContext = CurrentValueSubject<FanTimer.Context, Never>(.standby)
@@ -30,13 +30,14 @@ class FanModel {
 //        print("init fan model \(chars.ipAddr)")
     }
     
-    func setFan(toSpeed finalTarget: Int) async {
+    mutating func setFan(toSpeed finalTarget: Int) async {
         guard !invalidFan else { return }
         motorContext.send(.adjusting)
         print("start motor adjust")
         do {
             for try await char in motor.setSpeedAsync(to: finalTarget) {
                 print( "In loop with speed \(char.speed)" )
+                guard !Task.isCancelled else { return }
                 fanCharacteristics.send(char)
             }
             motorContext.send(.standby)
@@ -58,6 +59,7 @@ class FanModel {
         print("timer target \(target)")
         do {
             for try await char in timer.setTimerAsync(to: target) {
+                guard !Task.isCancelled else { return }
                 fanCharacteristics.send(char)
             }
             timerContext.send(.standby)
@@ -67,13 +69,16 @@ class FanModel {
         }
     }
     
-    func refresh() async throws {
+    func refresh() {
         guard !invalidFan else { return }
         print("executing refresh")
-//        Task {
-            let newChars = try await motor.refresh()
-            fanCharacteristics.send(newChars)
-//        }
+        Task {
+            let newChars = try? await motor.refresh()
+            guard !Task.isCancelled else { return }
+            if let chars = newChars {
+                fanCharacteristics.send(chars)
+            }
+        }
     }
     
 //    private func fanMonitor () async {
@@ -111,7 +116,7 @@ class FanModel {
 }
 
 extension FanModel {
-    convenience init () {
+    init () {
         print("Test fan model init")
         self.init(usingChars: FanCharacteristics())
     }

@@ -88,16 +88,16 @@ struct FanView: View {
                 }
             })
             .onAppear() {
-                viewModel.visible = true
-                viewModel.foreground = scenePhase == .active
+                viewModel.transition(visible: true, foreground: scenePhase == .active)
             }
             
             .onDisappear() {
-                viewModel.visible = false
+                viewModel.transition(visible: false, foreground: scenePhase == .active)
             }
 
             .onChange(of: scenePhase, perform: { phase in
-                viewModel.foreground = phase == .active
+                let visible = houseViewModel.displayedFanID == id
+                viewModel.transition(visible: visible, foreground: scenePhase == .active)
             })
         }
     }

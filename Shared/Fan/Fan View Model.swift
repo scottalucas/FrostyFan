@@ -21,24 +21,24 @@ class FanViewModel: ObservableObject {
     @Published var showDamperWarning = false
     @Published var showInterlockWarning = false
     @Published var showTemperatureWarning = false
-    @Published var visible: Bool?
-    @Published var foreground: Bool?
+//    @Published var visible: Bool?
+//    @Published var foreground: Bool?
     var chars: FanCharacteristics {
         model.fanCharacteristics.value
     }
-    private var fanMonitor: FanMonitor?
+    private var fanMonitor: FanMonitor!
     private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
-    private var bag = Set<AnyCancellable>()
+//    private var bag = Set<AnyCancellable>()
 
     init (chars: FanCharacteristics) {
         self.model = FanModel(usingChars: chars)
         startSubscribers(initialChars: chars)
-        fanMonitor = FanMonitor (id: model.id, refresh )
+        fanMonitor = FanMonitor (id: model.id, model.refresh)
 //        fanMonitor?.start()
     }
     
     deinit {
-        print("Deinit fan view model \(model.fanCharacteristics.value.macAddr)")
+//        print("Deinit fan view model \(model.fanCharacteristics.value.macAddr)")
         fanMonitor?.stop()
     }
     
@@ -64,29 +64,14 @@ class FanViewModel: ObservableObject {
         }
     }
     
-    func refresh() async throws {
-        try await model.refresh()
+    func transition (visible: Bool, foreground: Bool) {
+        if (visible && foreground) {
+            model.refresh ()
+            fanMonitor.start ()
+        } else {
+            fanMonitor.stop()
+        }
     }
-    
-//    func visible (_ visible: Bool) {
-//        if visible {
-//            print("visible \(model.id)")
-//            Task { try? await model.refresh() }
-//            //            fanMonitor.start()
-//        }
-//    }
-//    
-//    func phase (_ phase: ScenePhase) {
-//        print ("phase \(phase) for id \(model.id)")
-//        switch phase {
-//            case .background:
-//                fanMonitor?.stop()
-//            case .active:
-//                fanMonitor?.start()
-//            default:
-//                break
-//        }
-//    }
     
     private func registerBackgroundTask() {
         backgroundTask = UIApplication.shared.beginBackgroundTask { [weak self] in
@@ -152,49 +137,6 @@ class FanViewModel: ObservableObject {
             .map { $0 && ( $1 || $2) }
             .assign(to: &$showTemperatureWarning)
         
-        Publishers
-            .CombineLatest (
-                $visible
-                    .prepend(nil),
-                $foreground
-                    .prepend(nil)
-            )
-            .throttle(for: 0.5, scheduler: DispatchQueue.main, latest: true)
-            .sink(receiveValue: { [self] (optVisible, optForeground) in
-//                print("Case \tvisible: \(optVisible) \tforeground \(optForeground) \tid \(self.model.id)")
-
-                switch (optVisible, optForeground) {
-                    case (true, true): //start the monitor and do a refresh when the app is in foreground and the fan is visible
-//                        print("refresh true, monitor on")
-                        Task {
-                            do {
-                                try await self.refresh ()
-                            } catch {
-                                self.fanMonitor?.stop()
-                            }
-                        }
-                        self.fanMonitor?.start()
-                    case (true, nil): //do a refresh if the fan is visible and the background state of the app hasn't been set
-//                        print("refresh yes, monitor don't change")
-
-                        Task {
-                            do {
-                                try await self.refresh ()
-                            } catch {
-                                self.fanMonitor?.stop()
-                            }
-                        }
-                    case (_, false), (false, _): //stop monitor any time the app goes into background or the fan isn't visible
-//                        print("refresh no, monitor stop")
-
-                        self.fanMonitor?.stop()
-                    default:
-//                        print ("refresh no, monitor don't change")
-                        break
-                }
-            })
-            .store(in: &bag)
-        
         model.fanCharacteristics
             .prepend (chars)
             .map { $0.timer }
@@ -231,17 +173,14 @@ class FanMonitor {
         let interval = TimeInterval( 5 * 60 ) //5 minute loop interval
         if let t = task, !t.isCancelled { return }
             stop()
-        print("Monitor started \(id)")
+//        print("Monitor started \(id)")
             task = Task {
                 while true {
                     do {
-                        //                    print("Fan monitor loop @ \(Date.now.formatted()), last update \(Storage.lastForecastUpdate.formatted())")
                         try await Task.sleep(interval: interval) //run the loop every 5 minutes to respond as conditions change
                         guard let t = task, !t.isCancelled else { throw BackgroundTaskError.taskCancelled }
                         try await refresh ()
                     } catch {
-                        //                    let e = error as? BackgroundTaskError ?? error
-                        //                    print("exited fan monitor loop @ \(Date.now.formatted()), error: \(e.localizedDescription)")
                         break
                     }
                 }
@@ -252,7 +191,7 @@ class FanMonitor {
     fileprivate func stop () {
         task?.cancel()
         task = nil
-        print ("Monitor suspended \(id)")
+//        print ("Monitor suspended \(id)")
     }
 }
 

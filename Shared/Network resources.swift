@@ -130,7 +130,7 @@ struct NetworkAddress {
 }
 
 class URLSessionMgr {
-    static var shared: URLSessionMgr { URLSessionMgr () }
+    static var shared: URLSessionMgr = URLSessionMgr ()
     var networkAvailable: CurrentValueSubject<Bool, Never> = .init(false)
     private let monitor = NWPathMonitor(requiredInterfaceType: .wifi)
     private let queue = DispatchQueue(label: "Monitor")
@@ -148,21 +148,12 @@ class URLSessionMgr {
     
     private func start() {
         monitor.pathUpdateHandler = { path in
-            if path.status == .satisfied && !path.isExpensive && path.supportsIPv4 && !NetworkAddress.hosts.isEmpty { //make sure path is appropriate for scanning
-                DispatchQueue.main.async {
-                    self.networkAvailable.send(true)
-                }
+            if path.status == .satisfied && !path.isExpensive && !NetworkAddress.hosts.isEmpty { //make sure path is appropriate for scanning
+                self.networkAvailable.send(true)
             } else {
-                DispatchQueue.main.async {
-//                    let a = path.unsatisfiedReason
-//                    print("No connection, reason: \(a).")
-                    self.networkAvailable.send(false)
-                }
+                self.networkAvailable.send(false)
             }
         }
         monitor.start(queue: queue)
-        
     }
-    
-//    func urlSession(_ session: URLSession, taskIsWaitingForConnectivity task: URLSessionTask) {}
 }

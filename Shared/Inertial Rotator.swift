@@ -71,7 +71,10 @@ class InertialRotator: ObservableObject {
         lastRpm = nextRpm
     }
     
+    deinit { print ("IR deinit") }
+    
     init (initialRpm: Int, standardRotation sRot: Angle, transitionSpeed: TransitionSpeed = .standard) {
+        print("IR init")
         self.standardAngle = sRot
         nextRpm = initialRpm
         self.transition = transitionSpeed

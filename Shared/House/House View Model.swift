@@ -104,7 +104,8 @@ class HouseViewModel: ObservableObject {
             .hosts
             .appending("192.168.1.179:8080")
         guard hosts.count > 0 else { return }
-        print("hosts count \(hosts.count)")
+        let sess = URLSessionMgr.shared.session
+//        print("hosts count \(hosts.count)")
         fanSet.removeAll()
         scanUntil = .now.addingTimeInterval(timeout)
             do {
@@ -117,7 +118,7 @@ class HouseViewModel: ObservableObject {
                     for ip in hosts {
                         guard let url = URL(string: "http://\(ip)/fanspd.cgi?dir=\(FanModel.Action.refresh.rawValue)") else { continue }
                         group.addTask {
-                            let d = try? await URLSessionMgr.shared.session.data(from: url).0
+                            let d = try? await sess.data(from: url).0
                             return (ip, d)
                         }
                     }
