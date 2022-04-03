@@ -40,7 +40,7 @@ struct HouseView: View {
                 .resizable()
                 .aspectRatio(1.0, contentMode: .fit)
                 .scaleEffect(1.75)
-                .rotatingView(speed: $viewModel.displayedRPM, symmetry: .degrees(60.0))
+                .rotate(rpm: $viewModel.displayedRPM)
                 .padding(.bottom, viewModel.fanSet.count > 1 ? 30 : 0)
                 .blur(radius: 30)
                 .foregroundColor(viewModel.houseAlarm ? .alarm : .main)

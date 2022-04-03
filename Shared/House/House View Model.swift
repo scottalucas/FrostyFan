@@ -30,7 +30,11 @@ class HouseViewModel: ObservableObject {
 
         $fanSet
             .combineLatest($displayedFanID)
-            .map { (fanChars, id) in (fanChars.first(where: { $0.macAddr == id })?.speed) ?? 0 }
+            .compactMap { (fanChars, id) in
+                guard let chars = fanChars.first(where: { char in char.macAddr == id }), let levels = FanViewModel.speedTable[chars.airspaceFanModel] else { return nil }
+                let speed = chars.speed
+                return Int( 80.0  * (Double(speed) / Double(levels - 1) ) )
+            }
             .assign(to: &$displayedRPM)
         
         $fanSet
