@@ -360,40 +360,6 @@ struct FanStatusLoader {
         let results = try FanCharacteristics(data: data)
         return results
     }
-    
-    //    func loadResultsPublished (action: FanModel.Action) throws -> AnyPublisher<FanCharacteristics, ConnectionError> {
-    //        guard let url = URL(string: "http://\(ip)/fanspd.cgi?dir=\(action.rawValue)") else {
-    //            throw ConnectionError.badUrl
-    //        }
-    //        let decoder = JSONDecoder()
-    //        let config = URLSession.shared.configuration
-    //        config.timeoutIntervalForRequest = 10
-    //        let session = URLSession.init(configuration: config)
-    //        return session
-    //            .dataTaskPublisher(for: url)
-    //            .tryMap { (data, response) -> FanCharacteristics in
-    //                guard let r = (response as? HTTPURLResponse) else {
-    //                    throw ConnectionError.serverError("Server error: could not interpret server response.")
-    //                }
-    //                guard (200..<300).contains(r.statusCode) else {
-    //                    throw ConnectionError.serverError("Server error, code \(r.statusCode)")
-    //                }
-    //                return try decoder.decode(FanCharacteristics.self, from:
-    //                                            (String(data: data, encoding: .ascii) ?? "")
-    //                                            .trimmingCharacters(in: .whitespaces)
-    //                                            .split(separator: "<")
-    //                                            .filter({ !$0.contains("/") && $0.contains(">") })
-    //                                            .map ({ $0.split(separator: ">", maxSplits: 1) })
-    //                                            .map ({ arr -> (String, String?) in
-    //                    let newTuple = (String(arr[0]), arr.count == 2 ? String(arr[1]) : nil)
-    //                    return newTuple
-    //                }).jsonData )
-    //            }
-    //            .mapError {
-    //                ($0 as? ConnectionError) ?? ConnectionError.cast($0)
-    //            }
-    //            .eraseToAnyPublisher()
-    //    }
 }
 
 struct Motor: MotorDelegate {
@@ -425,7 +391,7 @@ struct Motor: MotorDelegate {
                     continuation.yield(chars) //send new chars to fan model
                     guard chars.speed != target else { continuation.finish() ; return } //finish if we hit the target speed
                     for _ in (0..<3) { //loop to wait when fan is unresponsive. Will send .refresh at 4 second intervals and see if the fan speed changes. If it does, break out of the loop. If not, try again for up to 3 times.
-                        guard preAdjustSpeed == chars.speed else { break } //check if fan is responsive. If so, break out of the unresponsive wait look
+                        guard preAdjustSpeed == chars.speed else { break } //check if fan is responsive. If so, break out of the unresponsive wait loop
                         try await Task.sleep(nanoseconds: UInt64(4.0 * 1_000_000_000)) //wait for 4 seconds
                         preAdjustSpeed = chars.speed // take note of the speed before getting a refresh. Note we should have a pending adjustment at this point.
                         chars = try await getter.loadResultsAsync(action: .refresh) //check the chars

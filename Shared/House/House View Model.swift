@@ -10,60 +10,24 @@ import SwiftUI
 import Combine
 
 class HouseViewModel: ObservableObject {
-    @Published var fanSet = Set<FanCharacteristics>()
-    @Published var displayedFanID: FanView.MACAddr = "not set"
-    @Published var displayedRPM: Int = 0
-    @Published var houseAlarm: Bool = false
-    @Published var houseMessage: String?
-    @Published var temperature: String?
-    @Published var fansRunning = false
-    @Published var scanUntil: Date = .distantPast
+    @Published var fanSet = Set<FanView>()
+    private var fansRunning: Bool {
+        fanSet.reduce(false, { $0 || $1.viewModel.displayedRPM > 0 })
+    }
     private var bag = Set<AnyCancellable>()
-//    static var scanDuration: TimeInterval = 15.0
     
-    init () {
+    init (initialFans: Set<FanCharacteristics>) {
         Task {
-            scanUntil = .now.addingTimeInterval( URLSessionMgr.shared.networkAvailable.value ? House.scanDuration : 1.0 )
             await scan( timeout: URLSessionMgr.shared.networkAvailable.value ? House.scanDuration : 1.0 )
-            scanUntil = .distantPast
         }
 
-        $fanSet
-            .combineLatest($displayedFanID)
-            .compactMap { (fanChars, id) in
-                guard let chars = fanChars.first(where: { char in char.macAddr == id }), let levels = FanViewModel.speedTable[chars.airspaceFanModel] else { return nil }
-                let speed = chars.speed
-                return Int( 80.0  * (Double(speed) / Double(levels - 1) ) )
-            }
-            .assign(to: &$displayedRPM)
-        
-        $fanSet
-            .map { $0.map({ $0.speed }).reduce(0, +) > 0 }
-            .assign(to: &$fansRunning)
-        
-        Publishers
-            .CombineLatest3 (
-                WeatherMonitor.shared
-                    .$tooHot
-                    .prepend(false),
-                WeatherMonitor.shared
-                    .$tooCold
-                    .prepend(false),
-            $fansRunning
-                    .prepend(false)
-            )
-            .map { (tooHot, tooCold, running) in
+        WeatherMonitor.shared.$tooHot.prepend(false)
+            .combineLatest(WeatherMonitor.shared.$tooCold.prepend(false))
+            .map { [weak self] (tooHot, tooCold) in
                 if !(tooHot || tooCold) { return false }
-                else if running { return true }
-                else { return false }
+                else { return self?.fansRunning ?? false }
             }
-            .assign(to: &$houseAlarm)
-        
-        WeatherMonitor.shared.$currentTemp
-            .compactMap {
-                $0?.formatted(Measurement.FormatStyle.truncatedTemp)
-            }
-            .assign(to: &$temperature)
+            .assign(to: &HouseStatus.shared.$houseTempAlarm)
         
         URLSessionMgr.shared.networkAvailable
             .sink(receiveValue: {networkAvailable in
@@ -84,21 +48,23 @@ class HouseViewModel: ObservableObject {
                 WeatherMonitor.shared.$currentTemp
                     .prepend(nil),
                 URLSessionMgr.shared.networkAvailable
+                    .prepend(true)
             )
             .map { (tooHot, tooCold, temp, networkAvailable) in
                 if !networkAvailable {
                     return "Network unavailable"
                 }
-                guard let temp = temp else { return nil }
+                guard temp != nil else { return nil }
                 if tooHot {
-                    return "It's hot outside (\(temp.formatted(Measurement.FormatStyle.truncatedTemp))).\rTurn off fan?"
+                    return "It's hot outside.\rTurn off fan?"
                 } else if tooCold {
-                    return "It's cold outside (\(temp.formatted(Measurement.FormatStyle.truncatedTemp))).\rTurn off fan?"
+                    return "It's cold outside.\rTurn off fan?"
                 } else {
                     return nil
                 }
             }
-            .assign(to: &$houseMessage)
+            .prepend ("Publisher")
+            .assign(to: &HouseStatus.shared.$houseMessage)
     }
     
     func scan (timeout: TimeInterval = House.scanDuration) async {
@@ -106,12 +72,12 @@ class HouseViewModel: ObservableObject {
 //        if !URLSessionMgr.shared.networkAvailable.value { print("network not available"); return }
         let hosts = NetworkAddress
             .hosts
-            .appending("192.168.1.179:8080")
+            .appending("192.168.1.180:8080")
         guard hosts.count > 0 else { return }
         let sess = URLSessionMgr.shared.session
 //        print("hosts count \(hosts.count)")
         fanSet.removeAll()
-        scanUntil = .now.addingTimeInterval(timeout)
+        HouseStatus.shared.scanUntil = .now.addingTimeInterval(timeout)
             do {
                 try await withThrowingTaskGroup(of: (IPAddr, Data?).self) { group in
                     
@@ -132,7 +98,9 @@ class HouseViewModel: ObservableObject {
                             guard !group.isCancelled else { print("group cancelled"); return }
                             var chars = try FanCharacteristics(data: optData)
                             chars.ipAddr = ipAddr
-                            fanSet.update(with: chars)
+                            let _ = DispatchQueue.main.sync { [chars] in
+                                fanSet.update(with: FanView(initialCharacteristics: chars))
+                            }
                         } catch {
                             if let err = error as? ConnectionError, case .timeout = err {
                                 throw err
@@ -143,8 +111,18 @@ class HouseViewModel: ObservableObject {
             } catch {
 //                print("Exited scan with error \((error as? ConnectionError)?.description ?? error.localizedDescription)")
             }
-        scanUntil = .distantPast
+        HouseStatus.shared.scanUntil = .distantPast
 //        print("scan finished")
     }
 }
 
+class HouseStatus: ObservableObject {
+    @Published var displayedFanID: FanView.ID = ""
+    @Published var houseTempAlarm: Bool = false
+    @Published var houseMessage: String?
+    @Published var scanUntil: Date = .distantPast
+    static var shared = HouseStatus()
+    private init () {
+        houseMessage = "Init"
+    }
+}

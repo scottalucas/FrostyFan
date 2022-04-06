@@ -17,17 +17,17 @@ enum OverlaySheet: String, Identifiable {
 }
 
 struct FanView: View {
-    typealias MACAddr = String
-    let id: MACAddr
     @Environment(\.scenePhase) var scenePhase
     @StateObject var viewModel: FanViewModel = FanViewModel()
-    @ObservedObject var houseViewModel: HouseViewModel
+    var id: MACAddr {
+        viewModel.id
+    }
     @AppStorage var name: String
     @State private var activeSheet: OverlaySheet?
     
     var body: some View {
         if id == "No fan" {
-            NoFanView (houseViewModel: houseViewModel)
+            NoFanView ()
         } else {
             ZStack {
                 NavigationLink(
@@ -67,18 +67,28 @@ struct FanView: View {
                     destination: {
                         SettingsView(activeSheet: $activeSheet)},
                     label: {})
-
-                FanInfoAreaRender(
+                
+                FanInfoAreaRender (
                     viewModel: viewModel,
-                    houseViewModel: houseViewModel,
                     activeSheet: $activeSheet)
                 //                    .ignoresSafeArea()
-                ControllerRender(
+                ControllerRender (
                     viewModel: viewModel,
                     activeSheet: $activeSheet,
                     setSpeed: viewModel.setSpeed(to:) )
                 //                    .padding(.bottom, 45)
             }
+            .background (
+                IdentifiableImage.fanIcon.image
+                    .resizable()
+                    .aspectRatio(1.0, contentMode: .fit)
+                    .scaleEffect(1.75)
+                    .rotate(rpm: $viewModel.displayedRPM)
+                //                    .padding(.bottom, viewModel.fanSet.count > 1 ? 30 : 0)
+                    .blur(radius: 30)
+                    .foregroundColor (viewModel.houseTempAlarm ? .alarm : .main)
+                    .edgesIgnoringSafeArea(.all)
+            )
             .toolbar(content: {
                 ToolbarItem(placement: .principal) {
                     FanNameRender(
@@ -88,26 +98,24 @@ struct FanView: View {
                 }
             })
             .onAppear() {
-                viewModel.transition(visible: true, foreground: scenePhase == .active)
+                viewModel.appInForeground = scenePhase == .active
             }
             
             .onDisappear() {
-                viewModel.transition(visible: false, foreground: scenePhase == .active)
+                viewModel.appInForeground = scenePhase == .active
             }
-
+            
             .onChange(of: scenePhase, perform: { phase in
-                let visible = houseViewModel.displayedFanID == id
-                viewModel.transition(visible: visible, foreground: scenePhase == .active)
+                viewModel.appInForeground = scenePhase == .active
             })
         }
     }
     
-    init (initialCharacteristics chars: FanCharacteristics?, houseVM: HouseViewModel ) {
-        id = chars?.macAddr ?? "No fan"
+    init (initialCharacteristics chars: FanCharacteristics?) {
         _name = chars == nil ? AppStorage(wrappedValue: "No fan found", StorageKey.fanName("No fan").rawValue) : AppStorage(wrappedValue: "\(chars!.airspaceFanModel)", StorageKey.fanName(chars!.macAddr).rawValue)
-        _viewModel = StateObject.init(wrappedValue: FanViewModel(chars: chars ?? FanCharacteristics()))
-        houseViewModel = houseVM
-//        print("init fan view model \(chars?.airspaceFanModel) selector segments \(viewModel.selectorSegments)")
+        _viewModel = StateObject.init(wrappedValue: FanViewModel(chars: chars ?? FanCharacteristics(), id: chars?.macAddr ?? "No fan"))
+        //        houseViewModel = houseVM
+        //        print("init fan view model \(chars?.airspaceFanModel) selector segments \(viewModel.selectorSegments)")
         
     }
 }
@@ -125,9 +133,9 @@ struct SpeedController: View {
             indicatedSegment: $requestedSpeed,
             indicatorBlink: $viewModel.indicatedAlarm,
             minMaxLabels: .useStrings(["Off", "Max"]))
-            .onChange(of: requestedSpeed) { speed in
-                setSpeed(speed)
-            }
+        .onChange(of: requestedSpeed) { speed in
+            setSpeed(speed)
+        }
     }
 }
 
@@ -172,6 +180,7 @@ struct ControllerRender: View {
             }
             .padding([.leading, .trailing], 20)
         }
+        .foregroundColor(HouseStatus.shared.houseTempAlarm ? .alarm : .main)
     }
 }
 
@@ -186,7 +195,7 @@ struct BaseFanImage: View {
 
 struct FanInfoAreaRender: View {
     @ObservedObject var viewModel: FanViewModel
-    @ObservedObject var houseViewModel: HouseViewModel
+    //    @ObservedObject var houseViewModel: HouseViewModel
     @Binding var activeSheet: OverlaySheet?
     
     var body: some View {
@@ -201,16 +210,19 @@ struct FanInfoAreaRender: View {
                     .aspectRatio(1.0, contentMode: .fill)
                     .foregroundColor(viewModel.showDamperWarning || viewModel.showInterlockWarning ? .alarm : .main)
             })
-            if (houseViewModel.scanUntil > .now) {
-                RefreshIndicator(houseViewModel: houseViewModel)
+            if (viewModel.scanUntil > .now) {
+                RefreshIndicator(scanUntil: $viewModel.scanUntil)
                     .padding(.top, 40)
             } else {
-                if let temp = houseViewModel.temperature {
-                    Text(temp)
-                        .padding(.top, 20)
+                if let temp = WeatherMonitor.shared.currentTemp {
+                    Text(temp.formatted(Measurement<UnitTemperature>.FormatStyle.truncatedTemp))
+                        .bold()
+                        .font(.largeTitle)
+                        .padding([.bottom,.top], 20)
                 }
-                if let msg = houseViewModel.houseMessage {
+                if let msg = viewModel.houseMessage {
                     Text(msg)
+//                        .multilineTextAlignment(.center)
                 }
             }
             Spacer()
@@ -224,9 +236,9 @@ struct FanInfoAreaRender: View {
 
 struct FanNameRender: View {
     @ObservedObject var viewModel: FanViewModel
-//    @Binding var showTemperatureWarning: Bool
-//    @Binding var showDamperWarning: Bool
-//    @Binding var showInterlockWarning: Bool
+    //    @Binding var showTemperatureWarning: Bool
+    //    @Binding var showDamperWarning: Bool
+    //    @Binding var showInterlockWarning: Bool
     @Binding var activeSheet: OverlaySheet?
     @Binding var name: String
     
@@ -240,7 +252,7 @@ struct FanNameRender: View {
                 Spacer()
                 HStack {
                     Group {
-                        if ( viewModel.showTemperatureWarning ) {
+                        if ( viewModel.houseTempAlarm ) {
                             IdentifiableImage.thermometer.image
                         }
                         if viewModel.showDamperWarning {
@@ -285,15 +297,18 @@ struct FanViewPreviewContainer: View {
             a.speed = 1
             a.damper = .notOperating
             a.interlock1 = true
+            a.macAddr = "Test fan"
             chars = a
+//            HouseStatus.shared.houseMessage = "Test"
+
         }
     }
-    var houseMock = HouseViewModel()
+//    var houseMock = HouseViewModel(initialFans: [])
     @State private var scanUntil: Date? = .now.addingTimeInterval(3.0)
     
     var body: some View {
         
-        FanView(initialCharacteristics: FanMock().chars, houseVM: houseMock)
+        FanView(initialCharacteristics: FanMock().chars)
         //                .environmentObject(SharedHouseData.shared)
         //                .environmentObject(Weather())
             .preferredColorScheme(.light)
@@ -305,27 +320,34 @@ struct FanViewPreviewContainer: View {
 }
 
 struct FanView_Previews: PreviewProvider {
-//    struct InjectedIndicators {
-//        static var indicators: HouseMonitor {
-//            let retVal = HouseMonitor.shared
-//            retVal.scanning = true
-//            return retVal
-//        }
-//    }
+    //    struct InjectedIndicators {
+    //        static var indicators: HouseMonitor {
+    //            let retVal = HouseMonitor.shared
+    //            retVal.scanning = true
+    //            return retVal
+    //        }
+    //    }
     static var previews: some View {
-//        let vm = FanViewModel(chars: fan)
-        return Group {
-            FanViewPreviewContainer()
-//            FanNameRender(showTemperatureWarning: .constant(false), showDamperWarning: .constant(false), showInterlockWarning: .constant(false), activeSheet: .constant(nil), name: .constant("Test fan"))
-//            FanImageRender(activeSheet: .constant(nil), viewModel: vm)
-//            VStack {
-//                BaseFanImage()
-//                Spacer()
-//            }
-        }
-//        .environmentObject(HouseMonitor.shared)
-        .environmentObject(WeatherMonitor.shared)
-        .foregroundColor(.main)
+        //        let vm = FanViewModel(chars: fan)
+        FanViewPreviewContainer()
+            .task {
+                try? await Task.sleep(interval: 2.0)
+                URLSessionMgr.shared.networkAvailable.send(true)
+                WeatherMonitor.shared.currentTemp = .init(value: 10, unit: .fahrenheit)
+                WeatherMonitor.shared.tooCold = true
+                WeatherMonitor.shared.tooHot = false
+                HouseStatus.shared.houseTempAlarm = true
+//                HouseStatus.shared.houseMessage = "test"
+//                HouseStatus.shared.scanUntil = .now.addingTimeInterval(2.0)
+            }
+        //            FanNameRender(showTemperatureWarning: .constant(false), showDamperWarning: .constant(false), showInterlockWarning: .constant(false), activeSheet: .constant(nil), name: .constant("Test fan"))
+        //            FanImageRender(activeSheet: .constant(nil), viewModel: vm)
+        //            VStack {
+        //                BaseFanImage()
+        //                Spacer()
+        //            }
+        //        .environmentObject(HouseMonitor.shared)
+            
     }
 }
 

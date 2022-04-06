@@ -9,7 +9,7 @@ import Foundation
 import SwiftUI
 
 struct RefreshIndicator: View {
-    @ObservedObject var houseViewModel: HouseViewModel
+    @Binding var scanUntil: Date
     @State private var progress: Double = 0.0
     @State private var progressTimer: Timer?
 //    private var scanUntil: Date = .distantPast
@@ -37,13 +37,13 @@ struct RefreshIndicator: View {
                 Spacer ()
             }
             .onAppear () {
-                if houseViewModel.scanUntil > .now {
+                if scanUntil > .now {
                     startCountdown()
                 } else {
                     progress = 1.0
                 }
             }
-            .onChange(of: houseViewModel.scanUntil) { until in
+            .onChange(of: scanUntil) { until in
                 if until > .now {
                     startCountdown()
                 } else {
@@ -52,23 +52,23 @@ struct RefreshIndicator: View {
             }
     }
     
-    init(houseViewModel: HouseViewModel) {
-        self.houseViewModel = houseViewModel
+    init(scanUntil: Binding<Date>) {
+        _scanUntil = scanUntil
     }
 
     private func startCountdown () {
         progressTimer?.invalidate()
         progressTimer = nil
-        let timeToRun = houseViewModel.scanUntil.timeIntervalSinceNow
+        let timeToRun = scanUntil.timeIntervalSinceNow
         guard timeToRun > 0 else { return }
         progressTimer = Timer.scheduledTimer(withTimeInterval: timeToRun/100.0, repeats: true) { _ in
-            guard houseViewModel.scanUntil > .now else {
+            guard scanUntil > .now else {
                 progress = 1.0
                 progressTimer?.invalidate()
                 progressTimer = nil
                 return
             }
-            progress = 1 - (houseViewModel.scanUntil.timeIntervalSinceNow/timeToRun)
+            progress = 1 - (scanUntil.timeIntervalSinceNow/timeToRun)
         }
         
     }
@@ -117,7 +117,7 @@ struct RefreshIndicatorPreviewContainer: View {
     @State private var start: Date?
     
     var body: some View {
-        RefreshIndicator(houseViewModel: HouseViewModel())
+        RefreshIndicator(scanUntil: .constant(.distantFuture))
             .task {
                 try? await Task.sleep(interval: 1.0)
                 start = .now.addingTimeInterval(5)

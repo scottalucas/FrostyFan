@@ -69,6 +69,15 @@ extension Color {
 struct BackgroundTaskIdentifier {
     static var tempertureOutOfRange = "com.porchdog.whf001.WeatherMonitor.backgroundWeatherCheck"
 }
+//
+//extension Notification.Name {
+//    static let houseUpdates = Notification.Name("houseUpdates")
+//}
+//
+//enum HouseNotificationUserInfoKey: Hashable {
+//    case scanUntil, houseMessage, activeFan, houseAlarm
+//}
+
 //com.porchdog.whf001.WeatherMonitor.backgroundWeatherCheck
 //extension View {
 //    func overlaySheet(dataSource source: FanViewModel, activeSheet: Binding<OverlaySheet?>) -> some View {

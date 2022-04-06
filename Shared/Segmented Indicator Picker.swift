@@ -184,21 +184,21 @@ struct SegmentedSpeedPicker: View {
                         }
                     , alignment: .topLeading)
                 .onChange(of: indicatedSegment) { newTarget in
-                    guard let newTarget = newTarget else {
+                    guard let newTarget = newTarget, let highlightedSegment = highlightedSegment else {
                         indicatorOn = false
                         return
                     }
-                    indicatorOn = indicatedSegment != highlightedSegment
+                    indicatorOn = newTarget != highlightedSegment
                     withAnimation(.easeInOut(duration: 0.5)) {
                         indicatorOffset = cellWidth * CGFloat (newTarget)
                     }
                 }
                 .onChange(of: highlightedSegment) { newHighlight in
-                    guard let newHighlight = newHighlight else {
+                    guard let newHighlight = newHighlight, let indicatedSegment = indicatedSegment else {
                         indicatorOn = false
                         return
                     }
-                    indicatorOn = indicatedSegment != highlightedSegment
+                    indicatorOn = indicatedSegment != newHighlight
                     withAnimation(.easeInOut(duration: 0.5)) {
                         highlightOffset = cellWidth * CGFloat (newHighlight)
                     }
@@ -206,10 +206,12 @@ struct SegmentedSpeedPicker: View {
                 .onAppear() {
                     highlightOffset = cellWidth * CGFloat (highlightedSegment ?? 0)
                     indicatorOffset = cellWidth * CGFloat (indicatedSegment ?? 0)
-                    if let h = highlightedSegment, let t = indicatedSegment {
-                        indicatorOn.toggle()
-                        indicatorOn = t == h ? false : true
+//                    indicatorOn.toggle()
+                    guard let h = highlightedSegment, let t = indicatedSegment else {
+                        indicatorOn = false
+                        return
                     }
+                    indicatorOn = t != h
                 }
         }
         .frame(minWidth: 125, idealWidth: 300, maxWidth: 325, minHeight: 20, idealHeight: 30, maxHeight: 40)
@@ -293,6 +295,9 @@ struct IndicatorOpacity: ViewModifier {
                     opacity = finalOpacity
                 }
             }
+            .onAppear(perform: {
+                on = false
+            })
     }
 }
 
