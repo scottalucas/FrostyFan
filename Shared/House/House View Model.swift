@@ -18,7 +18,7 @@ class HouseViewModel: ObservableObject {
     
     init (initialFans: Set<FanCharacteristics>) {
         Task {
-            await scan( timeout: URLSessionMgr.shared.networkAvailable.value ? House.scanDuration : 1.0 )
+            await scan ( timeout: URLSessionMgr.shared.networkAvailable.value ? House.scanDuration : 1.0 )
         }
 
         WeatherMonitor.shared.$tooHot.prepend(false)
@@ -54,7 +54,7 @@ class HouseViewModel: ObservableObject {
                 if !networkAvailable {
                     return "Network unavailable"
                 }
-                guard temp != nil else { return nil }
+                guard temp != nil, HouseStatus.shared.fansRunning else { return nil }
                 if tooHot {
                     return "It's hot outside.\rTurn off fan?"
                 } else if tooCold {
@@ -72,11 +72,13 @@ class HouseViewModel: ObservableObject {
 //        if !URLSessionMgr.shared.networkAvailable.value { print("network not available"); return }
         let hosts = NetworkAddress
             .hosts
+            .appending("192.168.1.179:8080")
             .appending("192.168.1.180:8080")
         guard hosts.count > 0 else { return }
         let sess = URLSessionMgr.shared.session
 //        print("hosts count \(hosts.count)")
         fanSet.removeAll()
+        HouseStatus.shared.clearFans()
         HouseStatus.shared.scanUntil = .now.addingTimeInterval(timeout)
             do {
                 try await withThrowingTaskGroup(of: (IPAddr, Data?).self) { group in
@@ -118,9 +120,18 @@ class HouseViewModel: ObservableObject {
 
 class HouseStatus: ObservableObject {
     @Published var displayedFanID: FanView.ID = ""
+    @Published var fansOperating: Bool = false
     @Published var houseTempAlarm: Bool = false
     @Published var houseMessage: String?
     @Published var scanUntil: Date = .distantPast
+    private var _fansRunning: [FanView.ID : Bool] = [:]
+    var fansRunning: Bool {
+        _fansRunning.values.contains(where: { $0 })
+    }
+    func updateStatus ( forFan fan: FanView.ID, isOperating operating: Bool) {
+        _fansRunning[fan] = operating
+    }
+    func clearFans () { _fansRunning.removeAll() }
     static var shared = HouseStatus()
     private init () {
         houseMessage = "Init"

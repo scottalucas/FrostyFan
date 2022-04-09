@@ -33,11 +33,11 @@ struct HouseView: View {
             await viewModel.scan()
         }
         
-        .onChange(of: scenePhase) { phase in
-            if phase == .active && !URLSessionMgr.shared.networkAvailable.value {
-                viewModel.fanSet.removeAll()
-            }
-        }
+//        .onChange(of: scenePhase) { phase in
+//            if phase == .active && !URLSessionMgr.shared.networkAvailable.value {
+//                viewModel.fanSet.removeAll()
+//            }
+//        }
         .onChange(of: selectedTab) { newId in
             HouseStatus.shared.displayedFanID = newId
         }

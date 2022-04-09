@@ -17,11 +17,8 @@ enum OverlaySheet: String, Identifiable {
 }
 
 struct FanView: View {
-    @Environment(\.scenePhase) var scenePhase
-    @StateObject var viewModel: FanViewModel = FanViewModel()
-    var id: MACAddr {
-        viewModel.id
-    }
+    @StateObject var viewModel: FanViewModel
+    var id: MACAddr
     @AppStorage var name: String
     @State private var activeSheet: OverlaySheet?
     
@@ -84,7 +81,6 @@ struct FanView: View {
                     .aspectRatio(1.0, contentMode: .fit)
                     .scaleEffect(1.75)
                     .rotate(rpm: $viewModel.displayedRPM)
-                //                    .padding(.bottom, viewModel.fanSet.count > 1 ? 30 : 0)
                     .blur(radius: 30)
                     .foregroundColor (viewModel.houseTempAlarm ? .alarm : .main)
                     .edgesIgnoringSafeArea(.all)
@@ -97,21 +93,23 @@ struct FanView: View {
                     .padding(.bottom, 35)
                 }
             })
-            .onAppear() {
-                viewModel.appInForeground = scenePhase == .active
-            }
-            
-            .onDisappear() {
-                viewModel.appInForeground = scenePhase == .active
-            }
-            
-            .onChange(of: scenePhase, perform: { phase in
-                viewModel.appInForeground = scenePhase == .active
-            })
+//            .onAppear() {
+//                viewModel.appInForeground = true
+//            }
+//            .onDisappear() {
+//                viewModel.appInForeground = false
+//            }
+//            .onScenePhaseChange(phase: .active) {
+//                viewModel.appInForeground = true
+//            }
+//            .onScenePhaseChange(phase: .background) {
+//                viewModel.appInForeground = false
+//            }
         }
     }
     
     init (initialCharacteristics chars: FanCharacteristics?) {
+        id = chars?.macAddr ?? UUID.init().uuidString
         _name = chars == nil ? AppStorage(wrappedValue: "No fan found", StorageKey.fanName("No fan").rawValue) : AppStorage(wrappedValue: "\(chars!.airspaceFanModel)", StorageKey.fanName(chars!.macAddr).rawValue)
         _viewModel = StateObject.init(wrappedValue: FanViewModel(chars: chars ?? FanCharacteristics(), id: chars?.macAddr ?? "No fan"))
         //        houseViewModel = houseVM

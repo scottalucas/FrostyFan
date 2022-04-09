@@ -69,52 +69,26 @@ extension Color {
 struct BackgroundTaskIdentifier {
     static var tempertureOutOfRange = "com.porchdog.whf001.WeatherMonitor.backgroundWeatherCheck"
 }
-//
-//extension Notification.Name {
-//    static let houseUpdates = Notification.Name("houseUpdates")
-//}
-//
-//enum HouseNotificationUserInfoKey: Hashable {
-//    case scanUntil, houseMessage, activeFan, houseAlarm
-//}
 
-//com.porchdog.whf001.WeatherMonitor.backgroundWeatherCheck
-//extension View {
-//    func overlaySheet(dataSource source: FanViewModel, activeSheet: Binding<OverlaySheet?>) -> some View {
-//        modifier(OverlaySheetRender(dataSource: source, activeSheet: activeSheet))
-//    }
-//}
+public struct OnScenePhaseChange: ViewModifier {
+    @Environment(\.scenePhase) private var scenePhase
+    public let phase: ScenePhase
+    public let action: () -> ()
+    public func body(content: Content) -> some View {
+        content
+            .onChange(of: scenePhase, perform: { newPhase in
+                if newPhase == phase {
+                    action ()
+                }
+            })
+    }
+}
 
-//struct OverlaySheetRender: ViewModifier {
-//    @Binding var activeSheet: OverlaySheet?
-//    @ObservedObject var data: FanViewModel
-//
-//    func body (content: Content) -> some View {
-//        content
-//            .sheet(item: $activeSheet, onDismiss: {
-//                defer { Task { await data.setTimerWheel(to: 0) } }
-//                if data.timerWheelPosition > 0 {
-//                    data.setTimer(addHours: data.timerWheelPosition)
-//                }
-//            }) {
-//                switch $0 {
-//                    case .detail:
-//                        DetailSheet(chars: data.chars, activeSheet: $activeSheet)
-//                    case .fanName:
-//                        NameSheet(sheet: .constant(.fanName), storageKey: StorageKey.fanName(data.chars.macAddr))
-//                    case .timer:
-//                        TimerSheet(wheelPosition: $data.timerWheelPosition, activeSheet: $activeSheet, timeOnTimer: data.chars.timer)
-//                    case .fatalFault:
-//                        FatalFaultSheet()
-//                }
-//            }
-//    }
-//    init (dataSource: FanViewModel, activeSheet: Binding<OverlaySheet?>) {
-//        self._activeSheet = activeSheet
-//        self.data = dataSource
-//    }
-//}
-
+extension View {
+    func onScenePhaseChange (phase: ScenePhase, action: @escaping () -> () ) -> some View  {
+        modifier ( OnScenePhaseChange ( phase: phase, action: action ) )
+    }
+}
 
 struct Utilities_Previews: PreviewProvider {
 //    struct GlobalIndicatorHolder {

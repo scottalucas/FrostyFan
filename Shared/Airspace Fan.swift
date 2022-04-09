@@ -14,7 +14,7 @@ import UserNotifications
 @main
 struct AirspaceFanApp: App {
     
-    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @UIApplicationDelegateAdaptor private var appDelegate: AppDelegate
     @Environment(\.scenePhase) var scenePhase
     
     let location = Location()
@@ -25,27 +25,38 @@ struct AirspaceFanApp: App {
         WindowGroup {
             NavigationView {
                 houseView
-                    .environmentObject(weather)
-                    .environmentObject(location)
                     .background(Color.background)
                     .foregroundColor(.main)
-                    .onChange(of: scenePhase, perform: { newPhase in
-                        switch newPhase {
-                            case .active:
-                                BGTaskScheduler.shared.cancelAllTaskRequests()
-                                weather.monitor()
-                            case .background:
-                                print("background")
-                                WeatherBackgroundTaskManager.scheduleBackgroundTempCheckTask (forId: BackgroundTaskIdentifier.tempertureOutOfRange, waitUntil: WeatherMonitor.shared.weatherServiceNextCheckDate())
-                                weather.suspendMonitor()
-                            case .inactive:
-                                break
-                            @unknown default:
-                                break
-                        }
-                    })
+            }
+            .environmentObject(weather)
+            .environmentObject(location)
+            .onScenePhaseChange(phase: .active) {
+                print("foreground in modifier")
+                BGTaskScheduler.shared.cancelAllTaskRequests()
+                WeatherMonitor.shared.monitor ()
+            }
+            .onScenePhaseChange(phase: .background) {
+                print("background in modifier")
+                WeatherBackgroundTaskManager.scheduleBackgroundTempCheckTask (forId: BackgroundTaskIdentifier.tempertureOutOfRange, waitUntil: WeatherMonitor.shared.weatherServiceNextCheckDate())
+                WeatherMonitor.shared.suspendMonitor ()
             }
         }
+//        .onChange(of: scenePhase, perform: { newPhase in
+//            switch newPhase {
+//                case .active:
+//                    print("foreground in app view")
+////                    BGTaskScheduler.shared.cancelAllTaskRequests()
+////                    WeatherMonitor.shared.monitor()
+//                case .background:
+//                    print("background in app view")
+////                    WeatherBackgroundTaskManager.scheduleBackgroundTempCheckTask (forId: BackgroundTaskIdentifier.tempertureOutOfRange, waitUntil: WeatherMonitor.shared.weatherServiceNextCheckDate())
+////                    WeatherMonitor.shared.suspendMonitor()
+//                case .inactive:
+//                    break
+//                @unknown default:
+//                    break
+//            }
+//        })
     }
     
     init () {
@@ -58,19 +69,6 @@ struct AirspaceFanApp: App {
 }
 
 class AppDelegate: NSObject, UIApplicationDelegate {
-    
-//    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
-//        print("launch complete")
-//        Task {
-//            houseView.scanUntil = .now.addingTimeInterval(House.scanDuration)
-//            await houseView.viewModel.scan(timeout: House.scanDuration)
-//            houseView.scanUntil = nil
-//            
-//        }
-//        return true
-//    }
-
-//    var scheduler: BGTaskScheduler = BGTaskScheduler.shared
         
     func application(_ application: UIApplication, willFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         let center = UNUserNotificationCenter.current()
@@ -78,10 +76,10 @@ class AppDelegate: NSObject, UIApplicationDelegate {
             print("Background task called")
             guard let task = task as? BGRefreshTask else { return }
             Task {
-                await WeatherBackgroundTaskManager.handleTempCheckTask(task: task, loader: Weather.load)
+                await WeatherBackgroundTaskManager.handleTempCheckTask(task: task)
             }
         }) {
-//            print("Task registration succeeded")
+            print("Task registration succeeded")
         } else {
             print("Task registration failed")
         }
@@ -97,23 +95,18 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         
         return true
     }
-}
-
-private struct ProgressKey: EnvironmentKey {
-    static let defaultValue: Double? = nil
-}
-
-extension EnvironmentValues {
-    var updateProgress: Double? {
-        get { self[ProgressKey.self] }
-        set { self[ProgressKey.self] = newValue }
-    }
-}
-
-extension View {
-    func scanProgress(_ progress: Double?) -> some View {
-        environment(\.updateProgress, progress)
-    }
+    
+//    func applicationDidBecomeActive(_ application: UIApplication) {
+//        print("active in app delegate")
+//        BGTaskScheduler.shared.cancelAllTaskRequests()
+//        WeatherMonitor.shared.monitor ()
+//    }
+//
+//    func applicationDidEnterBackground(_ application: UIApplication) {
+//        print("background in app delegate")
+//        WeatherBackgroundTaskManager.scheduleBackgroundTempCheckTask (forId: BackgroundTaskIdentifier.tempertureOutOfRange, waitUntil: WeatherMonitor.shared.weatherServiceNextCheckDate())
+//        WeatherMonitor.shared.suspendMonitor()
+//    }
 }
 
 protocol BGTaskSched {

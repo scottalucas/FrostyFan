@@ -91,6 +91,7 @@ enum WeatherRetrievalError: Error {
     case badUrl
     case decodeError
     case tooManyTries
+    case cancelled
     case throttle (lastUpdate: String)
     case serverError (Int?)
     case unknownError (String)
@@ -127,6 +128,8 @@ enum WeatherRetrievalError: Error {
                 return "Server error \(errorDesc)."
             case .tooManyTries:
                 return "Too many attempts to retrieve weather"
+            case .cancelled:
+                return "Task cancelled"
             case .unknownError (let errorDescription):
                 return "Unknown error \(errorDescription)"
         }
@@ -152,6 +155,21 @@ enum BackgroundTaskError: Error {
                 return "No current temperature provided"
             case .taskCancelled:
                 return "Task cancelled"
+        }
+    }
+}
+
+enum NotificationError: Error {
+    case tooSoon, notificationsDisabled, dataNotAvailable
+    
+    var description: String {
+        switch self {
+            case .dataNotAvailable:
+                return "Data not available"
+            case .notificationsDisabled:
+                return "Notifications disable"
+            case .tooSoon:
+                return "Too soon for another notification"
         }
     }
 }

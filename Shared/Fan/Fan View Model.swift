@@ -31,14 +31,15 @@ class FanViewModel: ObservableObject {
     var chars: FanCharacteristics {
         model.fanCharacteristics.value
     }
-    private var fanMonitor: FanMonitor!
+    private var fanMonitor: FanMonitor?
     private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
     private var bag = Set<AnyCancellable>()
     
     init (chars: FanCharacteristics, id: FanView.ID) {
         self.model = FanModel(usingChars: chars)
         self.id = id
-        fanMonitor = FanMonitor (id: model.id, model.refresh)
+        HouseStatus.shared.updateStatus(forFan: id, isOperating: chars.speed > 0)
+//        fanMonitor = FanMonitor (id: model.id, model.refresh)
         startSubscribers(initialChars: chars)
     }
     
@@ -93,7 +94,7 @@ class FanViewModel: ObservableObject {
     private func startSubscribers(initialChars chars: FanCharacteristics) {
         
         houseStatus.$houseMessage
-            .prepend("Nothing yet")
+//            .prepend("Nothing yet")
             .assign(to: &$houseMessage)
         
         houseStatus.$scanUntil
@@ -109,10 +110,14 @@ class FanViewModel: ObservableObject {
                 .prepend(false))
             .sink(receiveValue: { [weak self] (fanPresented, appInForeground) in
                 if (fanPresented && appInForeground) {
-                    self?.model.refresh ()
-                    self?.fanMonitor.start ()
+                    guard let self = self else { return }
+                    self.model.refresh ()
+                    self.fanMonitor = nil
+                    self.fanMonitor = .init(id: self.id, self.model.refresh)
+                    self.fanMonitor?.start ()
                 } else {
-                    self?.fanMonitor.stop()
+                    self?.fanMonitor?.stop ()
+                    self?.fanMonitor = nil
                 }
             })
             .store(in: &bag)
@@ -156,6 +161,16 @@ class FanViewModel: ObservableObject {
             .receive(on: DispatchQueue.main)
             .map { $0.speed }
             .assign(to: &$currentMotorSpeed)
+        
+        model.fanCharacteristics
+            .prepend(chars)
+            .receive(on: DispatchQueue.main)
+            .map { $0.speed }
+            .sink(receiveValue: { [weak self] spd in
+                guard let self = self else { return }
+                HouseStatus.shared.updateStatus(forFan: self.id, isOperating: spd > 0)
+            })
+            .store(in: &bag)
         
         model.fanCharacteristics
             .prepend(chars)
@@ -226,6 +241,12 @@ class FanMonitor {
     private var id: String
     private var task: Task<(), Never>?
     private var refresh: () async throws -> ()
+    
+    deinit {
+        task?.cancel()
+        task = nil
+        print("fan monitor deinit")
+    }
     
     init (id: String, _ refresher: @escaping () async throws -> () ) {
         self.id = id

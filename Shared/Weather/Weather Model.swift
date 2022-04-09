@@ -14,7 +14,7 @@ import BackgroundTasks
 struct Weather {
     typealias Forecast = Array<(Date, Measurement<UnitTemperature>)>
     typealias TempMeasurement = Measurement<UnitTemperature>
-    typealias WeatherLoader = () async -> ()
+    typealias WeatherLoader = () async -> Measurement<UnitTemperature>
     private static func url(atCoord coord: Coordinate) -> URL? {
         var accumElements:[URLQueryItem] = []
         accumElements.append(URLQueryItem(name: "lat", value: String(format: "%f", coord.lat)))
@@ -29,42 +29,67 @@ struct Weather {
         return components.url
     }
     
-    static func load() async {
-        guard
-            abs(Storage.lastForecastUpdate.timeIntervalSinceNow) > 15 * 60,
-            let coord = Storage.coordinate,
-            let url = url(atCoord: coord)
-        else {
-//            print ("Weather retrieve returned stored weather,\r\tthrottle: \(abs(Storage.lastForecastUpdate.timeIntervalSinceNow) <= 15 * 60)\r\tCoordinate available: \(UserDefaults.standard.object(forKey: StorageKey.coordinate.rawValue) != nil)\r\tURL valid: \(Storage.coordinate.map ({ url(atCoord: $0) }) != nil)")
-            return
+    static fileprivate func loadCurrentTemp() async throws -> Measurement<UnitTemperature> {
+        let result: WeatherResult
+        do {
+            guard abs(Storage.lastForecastUpdate.timeIntervalSinceNow) > 15 * 60 else {
+                    throw WeatherRetrievalError.throttle(lastUpdate: Storage.lastForecastUpdate.formatted())
+            }
+            
+            guard let coord = Storage.coordinate else {
+                    throw WeatherRetrievalError.noLocation
+            }
+            
+            guard let url = url(atCoord: coord) else {
+                throw WeatherRetrievalError.badUrl
+            }
+            
+            print ("Weather service hit")
+            
+            let (weatherData, response) = try await Task.retrying(operation: {
+                try await URLSession.shared.data(from: url)
+            }).value
+            
+
+            guard let response = response as? HTTPURLResponse else {
+                throw WeatherRetrievalError.decodeError
+            }
+
+            guard (200..<300) ~= response.statusCode else {
+                throw WeatherRetrievalError.serverError(response.statusCode)
+            }
+            
+            guard let r = weatherData.decodeWeatherResult else {
+                throw WeatherRetrievalError.decodeError
+            }
+            
+            result = r
+
+            Storage.lastForecastUpdate = Date.now
+            
+            Storage.storedWeather = result
+            
+        } catch {
+            guard
+                let r = Storage.storedWeather,
+                Date.now.timeIntervalSince(Storage.lastForecastUpdate) < ( 3600 * 24 )
+            else { throw error }
+            result = r
+            print ("Weather retrieve returned stored weather,\r\tthrottle: \(abs(Storage.lastForecastUpdate.timeIntervalSinceNow) <= 15 * 60)\r\tCoordinate available: \(UserDefaults.standard.object(forKey: StorageKey.coordinate.rawValue) != nil)\r\tURL valid: \(Storage.coordinate.map ({ url(atCoord: $0) }) != nil)")
+//            return weather
         }
         
-        print ("Weather service hit")
+        var forecast = result.forecast
         
-        guard let (weatherData, response) = try? await Task.retrying(operation: {
-            try await URLSession.shared.data(from: url)
-        }).value else { return }
+        let currentConditions = (forecast[0].date.addingTimeInterval(-3600), result.currentTemp)
         
-        Storage.lastForecastUpdate = Date.now
+        forecast.insert(currentConditions, at: 0)
         
-        guard let response = response as? HTTPURLResponse else {
-            print ("Weather retrieval error, bad response")
-            return
-        }
+        //            go through forecast array to find entry closest to current time
+        let currentTemp = forecast.reduce(result.currentTemp) { abs($1.date.timeIntervalSinceNow) < ( 30 * 60 ) ? $1.temp : $0 }
         
-        guard (200..<300) ~= response.statusCode else {
-            print ("Weather retrieval error, code \(response.statusCode)")
-            return
-        }
-        
-        guard let result = weatherData.decodeWeatherResult else {
-            print ("Weather retrieval error, could not decode")
-            return
-        }
-        Storage.storedWeather = result
-        
-        return
-        }
+        return currentTemp
+    }
     
     struct WeatherObject: Codable {
         var current: Current?
@@ -102,73 +127,70 @@ struct Weather {
 }
 
 class WeatherMonitor: ObservableObject {
-    typealias TempOutOfRange = Bool
     static var shared = WeatherMonitor()
     @Published var tooHot: Bool = false
     @Published var tooCold: Bool = false
     @Published var currentTemp: Measurement<UnitTemperature>?
+    @Environment(\.scenePhase) private var phase
+    private let foregroundInterval = TimeInterval( 5 * 60 ) //5 minute loop interval
+    private let backgroundInterval = TimeInterval( 30 * 60 ) //5 minute loop interval
+    private var monitorTask: Task<(), Error> = .init(operation: {})
+    private var retries: Int = 3
     
-    private var monitorTask: Task<(), Never>?
+//    private var monitorTask: Task<(), Never>?
     
     private init () { }
     
     func monitor () {
-        let interval = TimeInterval( 5 * 60 ) //5 minute loop interval
+        monitorTask.cancel()
         monitorTask = Task {
             while true {
                 do {
-                    guard let cancelled = monitorTask?.isCancelled, !cancelled else {
-                        throw BackgroundTaskError.taskCancelled
-                    }
-//                    print("Weather monitor loop @ \(Date.now.formatted()), last update \(Storage.lastForecastUpdate.formatted())")
+                    currentTemp = try await Weather.loadCurrentTemp()
                     try await updateWeatherConditions()
-                    issueTempNotification()
-                    try await Task.sleep(interval: interval) //run the loop every 5 minutes to respond as conditions change
+                    try await Task.sleep(interval: phase == .active ? foregroundInterval : backgroundInterval)
+                    try Task.checkCancellation()
+                    retries = 3
                 } catch {
-//                    let e = error as? BackgroundTaskError ?? error
-//                    print("exited weather monitor loop @ \(Date.now.formatted()), error: \(e.localizedDescription)")
-                    break
+                    print(error.localizedDescription)
+                    if Task.isCancelled {
+                        currentTemp = nil
+                        tooHot = false
+                        tooCold = false
+                        throw WeatherRetrievalError.cancelled
+                    }
+                    
+                    if retries == 0 {
+                        currentTemp = nil
+                        tooHot = false
+                        tooCold = false
+                        throw WeatherRetrievalError.tooManyTries
+                    }
+                    
+                    if let e = error as? BackgroundTaskError, e == .tempAlarmNotSet {
+                        throw e
+                    }
+                    
+                    retries -= 1
                 }
             }
-            monitorTask?.cancel()
-            monitorTask = nil
         }
     }
 
     func suspendMonitor () {
-        monitorTask?.cancel()
+        monitorTask.cancel()
     }
     
-    func updateWeatherConditions (
-//        location: Coordinate,
-        loader: Weather.WeatherLoader = Weather.load
-    ) async throws {
-        
-        await loader()
-        
-        guard let weatherResult = Storage.storedWeather else {
-            currentTemp = nil
+    func updateWeatherConditions () async throws -> () {
+        currentTemp = try await Weather.loadCurrentTemp()
+        try Task.checkCancellation()
+        guard let ltl = Storage.lowTempLimit, let htl = Storage.highTempLimit else {
             tooHot = false
             tooCold = false
-            throw WeatherRetrievalError.unknownError("Weather result not available")
+            throw BackgroundTaskError.tempAlarmNotSet
         }
-        
-        var forecast = weatherResult.forecast
-        let currentConditions = (forecast[0].date.addingTimeInterval(-3600), weatherResult.currentTemp)
-        forecast.insert(currentConditions, at: 0)
-        
-        //go through forecast array to find entry closest to current time
-        currentTemp = forecast.reduce(weatherResult.currentTemp) { abs($1.date.timeIntervalSinceNow) < ( 30 * 60 ) ? $1.temp : $0 }
-        
-        guard let t = currentTemp, let ltl = Storage.lowTempLimit, let htl = Storage.highTempLimit else {
-            tooHot = false
-            tooCold = false
-            return
-        }
-        
-        tooCold = t.value < ltl
-        tooHot = t.value > htl
-        print("Updated current temp to \(currentTemp?.formatted() ?? "nil")")
+        tooCold = currentTemp.map ({ $0.value < ltl }) ?? false
+        tooHot = currentTemp.map ({ $0.value > htl }) ?? false
     }
     
     
@@ -213,43 +235,31 @@ class WeatherMonitor: ObservableObject {
         return nextCheck
     }
     
-    func issueTempNotification () {
-        guard
-            Storage.lastNotificationShown.addingTimeInterval(3 * 3600) < .now,
-            tooHot || tooCold,
-            let temperatureString = currentTemp.map ({ $0.formatted(Measurement<UnitTemperature>.FormatStyle.truncatedTemp) })
-        else { return }
-        let alertString = tooHot ? "high" : "low"
+    func issueTempNotification () async throws {
+//        guard Storage.lastNotificationShown.addingTimeInterval(3 * 3600) < .now else { throw NotificationError.tooSoon }
+        guard .distantPast < .now else { throw NotificationError.tooSoon }
+        guard let temperatureString = currentTemp.map ({ $0.formatted(Measurement<UnitTemperature>.FormatStyle.truncatedTemp) }) else { throw NotificationError.dataNotAvailable }
+        let subtitleString = tooHot ? "It's hot outside." : "It's cold outside."
+        let bodySubstring = tooHot ? "heating up" : "cooling down"
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
         //present the alert
         let content = UNMutableNotificationContent()
-        content.title = "Airscape Fan Temperature Alert"
-        content.subtitle = "Outside temperature is \(alertString) at \(temperatureString). Consider turning the fan off."
+        content.title = "Whole House Fan Alert"
+        content.subtitle = subtitleString
+        content.body = "Your fan is \(bodySubstring) your house. Turn it off?"
         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
-        Task {
-            do {
-                try await UNUserNotificationCenter.current().add(request)
-                Storage.lastNotificationShown = .now
-            } catch {
-                print("Failed to add notification, error: \(error.localizedDescription)")
-            }
-        }
+        try await UNUserNotificationCenter.current().add(request)
+        Storage.lastNotificationShown = .now
     }
 }
 
 class WeatherBackgroundTaskManager {
-    static func handleTempCheckTask (
-        task: BGRefreshTask,
-//        location: Coordinate,
-        loader: Weather.WeatherLoader
-    )
-    async -> () {
+    static func handleTempCheckTask (task: BGRefreshTask) async -> () {
         defer {
             scheduleBackgroundTempCheckTask(forId: BackgroundTaskIdentifier.tempertureOutOfRange, waitUntil: WeatherMonitor.shared.weatherServiceNextCheckDate()
             )
         }
         print("Background fetch being handled")
-        let monitor = WeatherMonitor.shared
         task.expirationHandler = {
             print("Background handler expired")
             task.setTaskCompleted(success: false)
@@ -257,11 +267,13 @@ class WeatherBackgroundTaskManager {
         do {
             guard await UNUserNotificationCenter.current().getStatus() == .authorized else { throw BackgroundTaskError.notAuthorized }
             
-//            guard HouseMonitor.shared.fansRunning else { throw BackgroundTaskError.fanNotOperating }
+            guard HouseStatus.shared.fansRunning else { throw BackgroundTaskError.fanNotOperating }
             
             guard Storage.temperatureAlarmEnabled else { throw BackgroundTaskError.tempAlarmNotSet }
             
-            try await monitor.updateWeatherConditions(loader: loader)
+            try await WeatherMonitor.shared.updateWeatherConditions()
+            
+            try await WeatherMonitor.shared.issueTempNotification()
             
 //            guard let ct = monitor.currentTemp else { throw BackgroundTaskError.noCurrentTemp }
             
@@ -272,33 +284,9 @@ class WeatherBackgroundTaskManager {
             } else if let err = error as? WeatherRetrievalError {
                 print ( err.description )
             } else {
-                print (error.localizedDescription)
+                print ( error.localizedDescription )
             }
             return
-        }
-        print("Successfully got weather")
-        
-        if
-            Storage.lastNotificationShown.addingTimeInterval(3 * 3600) < .now,
-            let ct = monitor.currentTemp,
-            let htl = Storage.highTempLimit,
-            let ltl = Storage.lowTempLimit,
-            (ct.value > htl || ct.value < ltl) {
-            let alertString = ct.value > htl ? "high" : "low"
-            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
-            //present the alert
-            let content = UNMutableNotificationContent()
-            content.title = "Airscape Fan Temperature Alert"
-            content.subtitle = "Outside temperature is \(alertString) at \(ct.formatted(Measurement.FormatStyle.truncatedTemp)). Consider turning the fan off."
-            let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
-            Task {
-                do {
-                    try await UNUserNotificationCenter.current().add(request)
-                    Storage.lastNotificationShown = .now
-                } catch {
-                    print("Failed to add notification, error: \(error.localizedDescription)")
-                }
-            }
         }
         
         print("Background task complete.")
