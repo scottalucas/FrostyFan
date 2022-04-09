@@ -184,7 +184,7 @@ struct FanCharacteristics: Decodable, Hashable {
     var dipSwitch: String?
     var remoteSwitch: String?
     var setpoint: Int?
-    var labelValueDictionary: [String: String] {
+    var labelValueDictionary: [String: (value: String, alarm: Bool)] {
         let iT = insideTemp.map ({
             Measurement<UnitTemperature>(value: Double($0), unit: .fahrenheit).formatted(Measurement<UnitTemperature>.FormatStyle.truncatedTemp)
         }) ?? "Not reported"
@@ -198,24 +198,24 @@ struct FanCharacteristics: Decodable, Hashable {
         }) ?? "Not reported"
         
         return [
-            "Speed" : String(speed),
-            "Timer" : String(timer),
-            "Damper" : damper == .operating ? "Opening" : "Not operating",
-            "Interlock 1" : interlock1 ? "Active" : "Not active",
-            "Interlock 2" : interlock2 ? "Active" : "Not active",
-            "MAC Address" : macAddr,
-            "Model" : airspaceFanModel,
-            "IP Address" : ipAddr,
-            "Airflow": cubicFeetPerMinute.map { "\($0) cfm" } ?? "Not reported",
-            "Software version" : softwareVersion ?? "Not reported",
-            "DNS" : dns ?? "Not reported",
-            "DIP Switch" : dipSwitch ?? "Not reported",
-            "Remote Switch" : remoteSwitch ?? "Not reported",
-            "Power" : power.map { String($0) } ?? "Not reported",
-            "Inside Temp" : iT,
-            "Attic Temp" : aT,
-            "Outside Temp" : oT,
-            "Setpoint" : setpoint.map { String($0) } ?? "Not reported"
+            "Speed" : (String(speed), false),
+            "Timer" : (String(timer), false),
+            "Damper" : (damper == .operating ? "Opening" : "Not operating", damper == .operating),
+            "Interlock 1" : (interlock1 ? "Active" : "Not active", interlock1),
+            "Interlock 2" : (interlock2 ? "Active" : "Not active", interlock2),
+            "MAC Address" : (macAddr, false),
+            "Model" : (airspaceFanModel, false),
+            "IP Address" : (ipAddr, false),
+            "Airflow": (cubicFeetPerMinute.map { "\($0) cfm" } ?? "Not reported", false),
+            "Software version" : (softwareVersion ?? "Not reported", false),
+            "DNS" : (dns ?? "Not reported", false),
+            "DIP Switch" : (dipSwitch ?? "Not reported", false),
+            "Remote Switch" : (remoteSwitch ?? "Not reported", false),
+            "Power" : (power.map { String($0) } ?? "Not reported", false),
+            "Inside Temp" : (iT, false),
+            "Attic Temp" : (aT, false),
+            "Outside Temp" : (oT, false),
+            "Setpoint" : (setpoint.map { String($0) } ?? "Not reported", false)
         ]
     }
     

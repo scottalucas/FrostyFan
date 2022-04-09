@@ -25,7 +25,7 @@ struct AirspaceFanApp: App {
         WindowGroup {
             NavigationView {
                 houseView
-                    .background(Color.background)
+                    .background(Color.pageBackground)
                     .foregroundColor(.main)
             }
             .environmentObject(weather)
@@ -65,6 +65,7 @@ struct AirspaceFanApp: App {
         UIPageControl.appearance().currentPageIndicatorTintColor = .main
         UIPageControl.appearance().pageIndicatorTintColor = .main.withAlphaComponent(0.25)
         UISegmentedControl.appearance().selectedSegmentTintColor = .main
+        UIPickerView.appearance().backgroundColor = .main
     }
 }
 

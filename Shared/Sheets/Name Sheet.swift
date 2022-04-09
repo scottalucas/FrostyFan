@@ -13,21 +13,21 @@ struct NameSheet: View {
     @State private var newName = "new name"
     var body: some View {
         ZStack {
-            Color.main.ignoresSafeArea()
+            Color.pageBackground.ignoresSafeArea()
             VStack {
                 Spacer()
                 TextField("", text: $newName)
                     .font(/*@START_MENU_TOKEN@*/.title/*@END_MENU_TOKEN@*/)
                     .padding(.horizontal, 20)
                     .padding(/*@START_MENU_TOKEN@*/.vertical/*@END_MENU_TOKEN@*/, 5)
-                    .background(Color.background)
-                    .foregroundColor(.main)
+                    .background(Color.main)
+                    .foregroundColor(.pageBackground)
                     .clipShape(Capsule())
                     .shadow(radius: 10)
 //                    .padding(.horizontal, 20)
                 Text("Current name is \" \(name)\"").font(.italic(.body)())
                     .padding(.top, 4)
-                    .foregroundColor(.background)
+                    .foregroundColor(.main)
                 Spacer()
             }
             .padding()
@@ -42,7 +42,7 @@ struct NameSheet: View {
                         Spacer()
                         Text("Update Name")
                             .font(.largeTitle)
-                            .foregroundColor(.background)
+                            .foregroundColor(.main)
                         Spacer()
                         Button("Confirm") {
                             name = newName
@@ -51,10 +51,10 @@ struct NameSheet: View {
                     }
                     Divider()
                         .ignoresSafeArea(.all, edges: [.leading, .trailing])
-                        .background(Color.background)
+                        .background(Color.main)
                     Spacer()
                 }
-                .foregroundColor(.background)
+                .foregroundColor(.main)
             }
         }
             .navigationBarBackButtonHidden(true)
@@ -67,30 +67,6 @@ struct NameSheet: View {
     }
 }
 
-struct NameSheetBackground: View {
-    var name: String
-    var body: some View {
-        ZStack {
-            Color.main
-                .ignoresSafeArea()
-            VStack (alignment: .center, spacing: 0) {
-                HStack (alignment: .firstTextBaseline) {
-                    Text(name).font(.largeTitle)
-                    Spacer()
-                    Text("Fan Name").font(.largeTitle)
-                }
-                .foregroundColor(Color.background)
-                Divider()
-                    .frame(width: nil, height: 1, alignment: .center)
-                    .background(Color.background)
-                Spacer()
-            }
-            .padding()
-        }
-    }
-}
-
-
 struct NameSheet_Previews: PreviewProvider {
     static var house = HouseViewModel(initialFans: [])
     static var myModel: FanViewModel {
@@ -102,6 +78,7 @@ struct NameSheet_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
             NameSheet(sheet: .constant(.fanName), storageKey: .fanName("String"))
+                .preferredColorScheme(.dark)
             
         }
 

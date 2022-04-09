@@ -61,7 +61,7 @@ extension Color {
     static var segmentControllerText = Color(.segmentControllerText)
     static var segmentControllerBackground = Color(.segmentControllerBackground)
     static var alarm = Color(.alarm)
-    static var background = Color(.pageBackground)
+    static var pageBackground = Color(.pageBackground)
     static var controlsTint = Color(.controlsTint)
     static var controlsBackground = Color(.controlsBackground)
 }
@@ -87,6 +87,31 @@ public struct OnScenePhaseChange: ViewModifier {
 extension View {
     func onScenePhaseChange (phase: ScenePhase, action: @escaping () -> () ) -> some View  {
         modifier ( OnScenePhaseChange ( phase: phase, action: action ) )
+    }
+}
+
+struct ColoredToggleStyle: ToggleStyle {
+    var onColor = Color(UIColor.green)
+    var offColor = Color(UIColor.systemGray5)
+    var thumbColor = Color.white
+    
+    func makeBody(configuration: Self.Configuration) -> some View {
+        HStack {
+            configuration.label // The text (or view) portion of the Toggle
+            Spacer()
+            RoundedRectangle(cornerRadius: 16, style: .circular)
+                .fill(configuration.isOn ? onColor : offColor)
+                .frame(width: 50, height: 29)
+                .overlay(
+                    Circle()
+                        .fill(thumbColor)
+                        .shadow(radius: 1, x: 0, y: 1)
+                        .padding(1.5)
+                        .offset(x: configuration.isOn ? 10 : -10))
+                .animation(.easeInOut(duration: 0.2), value: configuration.isOn)
+                .onTapGesture { configuration.isOn.toggle() }
+        }
+//        .padding(.horizontal)
     }
 }
 

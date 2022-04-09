@@ -72,7 +72,7 @@ struct HouseViewPreviews: PreviewProvider {
         return HouseView(viewModel: vm)
             .preferredColorScheme(.dark)
             .environmentObject(WeatherMonitor.shared)
-            .background(Color.background)
+            .background(Color.pageBackground)
             .foregroundColor(.main)
             .onAppear {
                 WeatherMonitor.shared.tooHot = true

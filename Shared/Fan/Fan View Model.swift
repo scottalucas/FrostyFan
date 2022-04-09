@@ -108,6 +108,7 @@ class FanViewModel: ObservableObject {
             .prepend(false)
             .combineLatest($appInForeground
                 .prepend(false))
+            .throttle(for: 1.0, scheduler: DispatchQueue.main, latest: true)
             .sink(receiveValue: { [weak self] (fanPresented, appInForeground) in
                 if (fanPresented && appInForeground) {
                     guard let self = self else { return }

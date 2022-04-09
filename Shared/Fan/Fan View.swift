@@ -93,18 +93,18 @@ struct FanView: View {
                     .padding(.bottom, 35)
                 }
             })
-//            .onAppear() {
-//                viewModel.appInForeground = true
-//            }
-//            .onDisappear() {
-//                viewModel.appInForeground = false
-//            }
-//            .onScenePhaseChange(phase: .active) {
-//                viewModel.appInForeground = true
-//            }
-//            .onScenePhaseChange(phase: .background) {
-//                viewModel.appInForeground = false
-//            }
+            .onAppear() {
+                viewModel.appInForeground = true
+            }
+            .onDisappear() {
+                viewModel.appInForeground = false
+            }
+            .onScenePhaseChange(phase: .active) {
+                viewModel.appInForeground = true
+            }
+            .onScenePhaseChange(phase: .background) {
+                viewModel.appInForeground = false
+            }
         }
     }
     
@@ -328,6 +328,7 @@ struct FanView_Previews: PreviewProvider {
     static var previews: some View {
         //        let vm = FanViewModel(chars: fan)
         FanViewPreviewContainer()
+            .preferredColorScheme(.dark)
             .task {
                 try? await Task.sleep(interval: 2.0)
                 URLSessionMgr.shared.networkAvailable.send(true)

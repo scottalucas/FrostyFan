@@ -19,30 +19,29 @@ struct DetailSheet: View {
     var body: some View {
         ZStack {
             VStack {
-                Spacer()
                 LazyVGrid(columns: columns, alignment: .leading, spacing: 20, pinnedViews: []) {
                     ForEach(data, id: \.self) { item in
                         item
                             .lineLimit(1)
                             .truncationMode(.head)
-                            .foregroundColor(.background)
+                            .foregroundColor(.pageBackground)
                     }
                 }
                 .padding(.horizontal)
-                Button ("Print Defaults", action: {
-                    let macAddr = data.first(where: {
-                        $0.label == "MAC Address"
-                    })?.value
-                    Storage.printAll(forAddr: macAddr)
-                })
-                    .foregroundColor(.background)
-                Button ("Clear Defaults", action: {
-                    Storage.clear()
-                })
-                    .foregroundColor(.background)
+//                Button ("Print Defaults", action: {
+//                    let macAddr = data.first(where: {
+//                        $0.label == "MAC Address"
+//                    })?.value
+//                    Storage.printAll(forAddr: macAddr)
+//                })
+//                    .foregroundColor(.background)
+//                Button ("Clear Defaults", action: {
+//                    Storage.clear()
+//                })
+                    .foregroundColor(.pageBackground)
                 Spacer()
             }
-            .background (Color.main)
+            .background (Color.pageBackground)
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     VStack (alignment: .center, spacing: 0) {
@@ -54,11 +53,11 @@ struct DetailSheet: View {
                             Text("Fan Details").font(.largeTitle)
                         }
                         Divider()
-                            .background(Color.background)
+                            .background(Color.main)
                             .ignoresSafeArea(.all, edges: [.leading, .trailing])
                         Spacer()
                     }
-                    .foregroundColor(.background)
+                    .foregroundColor(.main)
                 }
             }
         }
@@ -68,13 +67,16 @@ struct DetailSheet: View {
         _activeSheet = activeSheet
         data = chars.labelValueDictionary
             .sorted(by: { $0.0 < $1.0 })
-            .map { (key, value) in DetailSheetEntry(label: key, value: value) }
+            .map { (key, v) in
+                let (value, alarm) = v
+                return DetailSheetEntry(label: key, value: value, alarm: alarm) }
     }
 }
 
 struct DetailSheetEntry: View, Hashable, Identifiable {
     var label: String
     var value: String
+    var alarm: Bool
     var id: String { label }
     
     func hash(into hasher: inout Hasher) {
@@ -89,7 +91,7 @@ struct DetailSheetEntry: View, Hashable, Identifiable {
                 .shadow(radius: 10)
             Text(value).font(.body).fontWeight(.light).padding(.leading, 7.0)
         }
-        .foregroundColor(.background)
+        .foregroundColor(alarm ? .alarm : .main)
     }
 }
 
@@ -97,11 +99,15 @@ struct DetailSheet_Previews: PreviewProvider {
     static var chars: FanCharacteristics {
     var c = FanCharacteristics()
         c.speed = 4
+        c.damper = .notOperating
+//        c.interlock1 = true
+//        c.interlock2 = true
     return c
     }
     static var previews: some View {
         NavigationView {
             DetailSheet(activeSheet: .constant(.detail), chars: chars)
+                .preferredColorScheme(.light)
         }
 
 //        DetailSheetEntry(label: "Speed", value: "10")

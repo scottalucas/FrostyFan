@@ -27,22 +27,22 @@ struct TimerSheet: View {
     
     var body: some View {
         ZStack {
-            Color.main.ignoresSafeArea()
+//            Color.main.ignoresSafeArea()
             //                TimerSheetBackground(timeText: offText)
             VStack {
                 if (maxKeypresses == 0) {
-                    Color.background
+                    Color.pageBackground
                         .overlay(Text("Timer at maximum").font(.largeTitle).foregroundColor(Color.main))
                         .frame(width: nil, height: 60)
                 } else if maxKeypresses == 1 {
-                    Color.background
+                    Color.pageBackground
                         .overlay(Button(action: { wheelPosition = 1 }) {
                             Text("Set to 12 hours").font(.largeTitle).foregroundColor(Color.main)
                         })
                         .frame(width: nil, height: 60)
                 } else {
                     TimerSheetSpinner(hoursToAdd: $wheelPosition, maxKeypresses: maxKeypresses)
-                        .background(Color.background)
+                        .background(Color.pageBackground)
                         .pickerStyle(.wheel)
                 }
             }
@@ -73,10 +73,11 @@ struct TimerSheet: View {
                             })
                         }
                         Divider()
-                            .background(Color.background)
+                            .background(Color.main)
                             .ignoresSafeArea(.all, edges: [.leading, .trailing])
                         Spacer()
                     }
+                    .foregroundColor(.main)
                 }
             }
             .navigationBarBackButtonHidden(true)
@@ -85,7 +86,7 @@ struct TimerSheet: View {
             .padding()
             .shadow(radius: /*@START_MENU_TOKEN@*/10/*@END_MENU_TOKEN@*/)
             
-            .foregroundColor(.background)
+            .foregroundColor(.pageBackground)
             .onAppear(perform: {
                 wheelPosition = .zero
             })
@@ -115,29 +116,6 @@ struct TimerPickerDataSource {
     }
 }
 
-struct TimerSheetBackground: View {
-    var timeText: String
-    var body: some View {
-        ZStack {
-            Color.main
-                .ignoresSafeArea()
-            VStack (alignment: .center, spacing: 0) {
-                HStack (alignment: .firstTextBaseline) {
-                    Text("Timer").font(.largeTitle)
-                        .foregroundColor(Color.background)
-                    Spacer()
-                    Text (timeText).foregroundColor(Color.background)
-                }
-                Divider()
-                    .frame(width: nil, height: 1, alignment: .center)
-                    .background(Color.background)
-                Spacer()
-            }
-            .padding()
-        }
-    }
-}
-
 struct TimerSheetSpinner: View {
     @Binding var hoursToAdd: Int
     var maxKeypresses: Int
@@ -147,9 +125,11 @@ struct TimerSheetSpinner: View {
             ForEach(TimerPickerDataSource(pressRange: (0..<maxKeypresses)).elements, id: \.id) { element in
                 HStack {
                     Text(element.text).tag(element.id)
+                        .foregroundColor(.pageBackground)
                 }
             }
         }
+        .foregroundColor(.green)
     }
 }
 
@@ -166,6 +146,7 @@ struct Timer_View_Previews: PreviewProvider {
         //            TimerSheet(fanViewModel: FanViewModel())
         NavigationView {
             TimerSheet(activeSheet: .constant(nil), setter: { _ in }, timeOnTimer: 0)
+                .preferredColorScheme(.light)
         }
     }
 }
