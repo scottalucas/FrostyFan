@@ -55,7 +55,7 @@ struct RotatingView<BaseView>: View where BaseView: View {
     var driver: Date
     
     var body: some View {
-        baseView
+        return baseView
             .rotationEffect(deg)
             .onChange(of: driver) { _ in
                 withAnimation ( viewModel.animation )  {

@@ -24,9 +24,9 @@ struct FanView: View {
     
     var body: some View {
         if id == "No fan" {
-            NoFanView ()
+            return NoFanView ().eraseToAnyView ()
         } else {
-            ZStack {
+            return ZStack {
                 NavigationLink(
                     tag: OverlaySheet.fanName,
                     selection: $activeSheet,
@@ -105,6 +105,7 @@ struct FanView: View {
             .onScenePhaseChange(phase: .background) {
                 viewModel.appInForeground = false
             }
+            .eraseToAnyView()
         }
     }
     

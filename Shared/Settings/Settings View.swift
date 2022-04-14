@@ -29,9 +29,6 @@ struct SettingsView: View {
     @Binding var activeSheet: OverlaySheet?
     
     var body: some View {
-        ZStack {
-            Color.pageBackground
-                .ignoresSafeArea(.all, edges: .top)
             VStack {
                 List {
                     Section(header: Text("Location").settingsAppearance(.header)) {
@@ -105,11 +102,6 @@ struct SettingsView: View {
                                 }
                             }
                             .toggleStyle(ColoredToggleStyle(onColor: .main, offColor: .gray, thumbColor: .pageBackground))
-                            //                                .tint(.main)
-                            //                            else {
-                            //                                Toggle("Interlock", isOn: $interlockAlertsEnabled)
-                            //                                    .toggleStyle(SwitchToggleStyle(tint: .main))
-                            //                            }
                         }
                     }
                     .settingsAppearance(.lineLabel)
@@ -145,21 +137,18 @@ struct SettingsView: View {
                             Text ( (weatherError! as? ConnectionError).map { $0.description } ?? weatherError!.localizedDescription )
                                 .font(.caption2)
                                 .lineLimit(3)
-                            //                                    .layoutPriority(1)
                                 .padding(.trailing)
                                 .padding(.leading, 15)
                                 .fixedSize(horizontal: false, vertical: true)
                             }
                         }
                     }
-                    //                        }
-                    //                    }
                 }
                 .foregroundColor(.pageBackground)
                 .listStyle(GroupedListStyle())
+                Spacer()
             }
-        }
-            //            Spacer()
+            .background(Color.pageBackground)
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     VStack (alignment: .center, spacing: 0) {

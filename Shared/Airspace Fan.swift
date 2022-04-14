@@ -41,27 +41,11 @@ struct AirspaceFanApp: App {
                 WeatherMonitor.shared.suspendMonitor ()
             }
         }
-//        .onChange(of: scenePhase, perform: { newPhase in
-//            switch newPhase {
-//                case .active:
-//                    print("foreground in app view")
-////                    BGTaskScheduler.shared.cancelAllTaskRequests()
-////                    WeatherMonitor.shared.monitor()
-//                case .background:
-//                    print("background in app view")
-////                    WeatherBackgroundTaskManager.scheduleBackgroundTempCheckTask (forId: BackgroundTaskIdentifier.tempertureOutOfRange, waitUntil: WeatherMonitor.shared.weatherServiceNextCheckDate())
-////                    WeatherMonitor.shared.suspendMonitor()
-//                case .inactive:
-//                    break
-//                @unknown default:
-//                    break
-//            }
-//        })
     }
     
     init () {
         UITableView.appearance().backgroundColor = .clear
-        UITableView.appearance().separatorColor = .main
+        UITableView.appearance().separatorColor = .pageBackground
         UIPageControl.appearance().currentPageIndicatorTintColor = .main
         UIPageControl.appearance().pageIndicatorTintColor = .main.withAlphaComponent(0.25)
         UISegmentedControl.appearance().selectedSegmentTintColor = .main
