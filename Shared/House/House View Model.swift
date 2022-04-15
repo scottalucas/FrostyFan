@@ -8,15 +8,19 @@
 import Foundation
 import SwiftUI
 import Combine
+import os
 
 class HouseViewModel: ObservableObject {
+    var logger: Logger!
     @Published var fanSet = Set<FanView>()
     private var fansRunning: Bool {
         fanSet.reduce(false, { $0 || $1.viewModel.displayedRPM > 0 })
     }
     private var bag = Set<AnyCancellable>()
-    
     init (initialFans: Set<FanCharacteristics>) {
+        logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: String(describing: self))
+        logger.fault("blah")
+        print("init view model")
         Task {
             await scan ( timeout: URLSessionMgr.shared.networkAvailable.value ? House.scanDuration : 1.0 )
         }

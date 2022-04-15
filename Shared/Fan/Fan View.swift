@@ -65,6 +65,16 @@ struct FanView: View {
                         SettingsView(activeSheet: $activeSheet)},
                     label: {})
                 
+                Rotator(rpm: $viewModel.displayedRPM) {
+                    IdentifiableImage.fanIcon.image
+                        .resizable()
+                        .aspectRatio(1.0, contentMode: .fit)
+                        .scaleEffect(1.75)
+                    //                    .rotate(rpm: $viewModel.displayedRPM)
+                        .blur(radius: 30)
+                        .foregroundColor (viewModel.houseTempAlarm ? .alarm : .main)                        
+                }
+                
                 FanInfoAreaRender (
                     viewModel: viewModel,
                     activeSheet: $activeSheet)
@@ -75,16 +85,8 @@ struct FanView: View {
                     setSpeed: viewModel.setSpeed(to:) )
                 //                    .padding(.bottom, 45)
             }
-            .background (
-                IdentifiableImage.fanIcon.image
-                    .resizable()
-                    .aspectRatio(1.0, contentMode: .fit)
-                    .scaleEffect(1.75)
-                    .rotate(rpm: $viewModel.displayedRPM)
-                    .blur(radius: 30)
-                    .foregroundColor (viewModel.houseTempAlarm ? .alarm : .main)
-                    .edgesIgnoringSafeArea(.all)
-            )
+//            .background (
+//            )
             .toolbar(content: {
                 ToolbarItem(placement: .principal) {
                     FanNameRender(
@@ -334,7 +336,7 @@ struct FanView_Previews: PreviewProvider {
                 try? await Task.sleep(interval: 2.0)
                 URLSessionMgr.shared.networkAvailable.send(true)
                 WeatherMonitor.shared.currentTemp = .init(value: 10, unit: .fahrenheit)
-                WeatherMonitor.shared.tooCold = true
+                WeatherMonitor.shared.tooCold = false
                 WeatherMonitor.shared.tooHot = false
                 HouseStatus.shared.houseTempAlarm = true
 //                HouseStatus.shared.houseMessage = "test"

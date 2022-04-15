@@ -27,16 +27,13 @@ struct FanModel {
         timer = FanTimer(atAddr: chars.ipAddr)
         ipAddr = chars.ipAddr
         fanCharacteristics = CurrentValueSubject<FanCharacteristics, Never>.init(chars)
-//        print("init fan model \(chars.ipAddr)")
     }
     
     mutating func setFan(toSpeed finalTarget: Int) async {
         guard !invalidFan else { return }
         motorContext.send(.adjusting)
-        print("start motor adjust")
         do {
             for try await char in motor.setSpeedAsync(to: finalTarget) {
-                print( "In loop with speed \(char.speed)" )
                 guard !Task.isCancelled else { return }
                 fanCharacteristics.send(char)
             }

@@ -10,10 +10,14 @@ import CoreLocation
 import Combine
 import BackgroundTasks
 import UserNotifications
+import os
 
 @main
 struct AirspaceFanApp: App {
-    
+    let logger = Logger()
+//    OSLog(subsystem: "com.porchdog.whf001", category: String(describing: Self.self))
+    let log = Logger.init(subsystem: "com.porchdog.whf001", category: "fan")
+
     @UIApplicationDelegateAdaptor private var appDelegate: AppDelegate
     @Environment(\.scenePhase) var scenePhase
     
@@ -31,7 +35,9 @@ struct AirspaceFanApp: App {
             .environmentObject(weather)
             .environmentObject(location)
             .onScenePhaseChange(phase: .active) {
-                print("foreground in modifier")
+                logger.log("foreground in modifier")
+                log.error("test message logger")
+//                print("foreground in modifier")
                 BGTaskScheduler.shared.cancelAllTaskRequests()
                 WeatherMonitor.shared.monitor ()
             }
@@ -44,6 +50,8 @@ struct AirspaceFanApp: App {
     }
     
     init () {
+        logger.error("app init")
+        log.error("test message logger")
         UITableView.appearance().backgroundColor = .clear
         UITableView.appearance().separatorColor = .pageBackground
         UIPageControl.appearance().currentPageIndicatorTintColor = .main
@@ -52,6 +60,8 @@ struct AirspaceFanApp: App {
         UIPickerView.appearance().backgroundColor = .main
     }
 }
+
+
 
 class AppDelegate: NSObject, UIApplicationDelegate {
         

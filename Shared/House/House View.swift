@@ -25,6 +25,7 @@ struct HouseView: View {
                             .padding(.bottom, 50)
                     }
                 }
+                .ignoresSafeArea(.all)
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))
                 .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .automatic))
             }
