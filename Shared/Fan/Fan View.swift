@@ -41,7 +41,7 @@ struct FanView: View {
                     destination: {
                         TimerSheet(
                             activeSheet: $activeSheet,
-                            setter: viewModel.setTimer(addHours:),
+                            viewModel: viewModel,
                             timeOnTimer: viewModel.chars.timer)},
                     label: {})
                 NavigationLink(
@@ -81,8 +81,8 @@ struct FanView: View {
                 //                    .ignoresSafeArea()
                 ControllerRender (
                     viewModel: viewModel,
-                    activeSheet: $activeSheet,
-                    setSpeed: viewModel.setSpeed(to:) )
+                    activeSheet: $activeSheet
+                )
                 //                    .padding(.bottom, 45)
             }
 //            .background (
@@ -96,9 +96,11 @@ struct FanView: View {
                 }
             })
             .onAppear() {
+                Log.fan.info("view appeared")
                 viewModel.appInForeground = true
             }
             .onDisappear() {
+                Log.fan.info("view disappeared")
                 viewModel.appInForeground = false
             }
             .onScenePhaseChange(phase: .active) {
@@ -112,6 +114,7 @@ struct FanView: View {
     }
     
     init (initialCharacteristics chars: FanCharacteristics?) {
+        Log.fan.info("view init")
         id = chars?.macAddr ?? UUID.init().uuidString
         _name = chars == nil ? AppStorage(wrappedValue: "No fan found", StorageKey.fanName("No fan").rawValue) : AppStorage(wrappedValue: "\(chars!.airspaceFanModel)", StorageKey.fanName(chars!.macAddr).rawValue)
         _viewModel = StateObject.init(wrappedValue: FanViewModel(chars: chars ?? FanCharacteristics(), id: chars?.macAddr ?? "No fan"))
@@ -121,30 +124,10 @@ struct FanView: View {
     }
 }
 
-
-struct SpeedController: View {
-    @ObservedObject var viewModel: FanViewModel
-    @Binding var requestedSpeed: Int?
-    var setSpeed: (Int?) -> ()
-    var body: some View {
-        SegmentedSpeedPicker (
-            segments: $viewModel.selectorSegments,
-            highlightedSegment: $viewModel.currentMotorSpeed,
-            highlightedAlarm: $viewModel.showInterlockWarning,
-            indicatedSegment: $requestedSpeed,
-            indicatorBlink: $viewModel.indicatedAlarm,
-            minMaxLabels: .useStrings(["Off", "Max"]))
-        .onChange(of: requestedSpeed) { speed in
-            setSpeed(speed)
-        }
-    }
-}
-
 struct ControllerRender: View {
     @ObservedObject var viewModel: FanViewModel
     @State var requestedSpeed: Int?
     @Binding var activeSheet: OverlaySheet?
-    var setSpeed: (Int?) -> ()
     var body: some View {
         VStack {
             Spacer()
@@ -177,7 +160,8 @@ struct ControllerRender: View {
                 minMaxLabels: .useStrings(["Off", "Max"]))
             
             .onChange(of: requestedSpeed) { speed in
-                setSpeed(speed)
+                Log.fan.info("selected speed \(String(describing: speed))")
+                viewModel.setSpeed(to: speed)
             }
             .padding([.leading, .trailing], 20)
         }

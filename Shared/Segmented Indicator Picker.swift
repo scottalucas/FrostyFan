@@ -247,14 +247,6 @@ struct IndicatorOpacity: ViewModifier {
                     return .linear(duration: rawValue).repeatForever(autoreverses: true)
             }
         }
-        var description: String {
-            switch self {
-                case .fastBlink:
-                    return "fast"
-                case .slowBlink:
-                    return "slow"
-            }
-        }
     }
     
     @Binding var on: Bool

@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 55;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -32,6 +32,8 @@
 		937F7C622595239B009E4754 /* Custom UI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937F7C612595239B009E4754 /* Custom UI.swift */; };
 		937F7C7125952556009E4754 /* Test Objects.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937F7C7025952556009E4754 /* Test Objects.swift */; };
 		9380A2B227359DBA0000F465 /* No Fan View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9380A2B127359DBA0000F465 /* No Fan View.swift */; };
+		93929999280A25590043017D /* Logging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93929998280A25590043017D /* Logging.swift */; };
+		9392999B280B84CE0043017D /* Settings View Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9392999A280B84CD0043017D /* Settings View Model.swift */; };
 		93CF0A092731E44100307298 /* Fatal Fault Sheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93CF0A082731E43E00307298 /* Fatal Fault Sheet.swift */; };
 		93CF9548258984A1004BBD49 /* Fan View Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93CF9547258984A1004BBD49 /* Fan View Model.swift */; };
 		93D1EEB1273EF88600D7DF77 /* Pulldown Refresh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93D1EEB0273EF88600D7DF77 /* Pulldown Refresh.swift */; };
@@ -57,8 +59,6 @@
 		930CFF272581878C00E8E979 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		930CFF2C2581878C00E8E979 /* Fan with SwiftUI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Fan with SwiftUI.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		930CFF2F2581878C00E8E979 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		930CFF362581878D00E8E979 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		930CFF372581878D00E8E979 /* macOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = macOS.entitlements; sourceTree = "<group>"; };
 		930CFF66258187EE00E8E979 /* Network resources.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Network resources.swift"; sourceTree = "<group>"; };
 		930CFF722581881000E8E979 /* Fan Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Fan Model.swift"; sourceTree = "<group>"; };
 		930CFF8C2581884000E8E979 /* House Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "House Model.swift"; sourceTree = "<group>"; };
@@ -83,6 +83,8 @@
 		937F7C612595239B009E4754 /* Custom UI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Custom UI.swift"; sourceTree = "<group>"; };
 		937F7C7025952556009E4754 /* Test Objects.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Test Objects.swift"; sourceTree = "<group>"; };
 		9380A2B127359DBA0000F465 /* No Fan View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "No Fan View.swift"; sourceTree = "<group>"; };
+		93929998280A25590043017D /* Logging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logging.swift; sourceTree = "<group>"; };
+		9392999A280B84CD0043017D /* Settings View Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Settings View Model.swift"; sourceTree = "<group>"; };
 		93CF0A082731E43E00307298 /* Fatal Fault Sheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Fatal Fault Sheet.swift"; sourceTree = "<group>"; };
 		93CF9547258984A1004BBD49 /* Fan View Model.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Fan View Model.swift"; sourceTree = "<group>"; };
 		93D1EEB0273EF88600D7DF77 /* Pulldown Refresh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Pulldown Refresh.swift"; sourceTree = "<group>"; };
@@ -114,8 +116,6 @@
 			isa = PBXGroup;
 			children = (
 				930CFF242581878B00E8E979 /* Shared */,
-				930CFF2E2581878C00E8E979 /* iOS */,
-				930CFF352581878D00E8E979 /* macOS */,
 				936D84DE27B489AB002E9645 /* Fan with SwiftUITests */,
 				930CFF2D2581878C00E8E979 /* Products */,
 			);
@@ -138,6 +138,8 @@
 				930CFF272581878C00E8E979 /* Assets.xcassets */,
 				93F31BD3267002370056DCA1 /* Launch Screen.storyboard */,
 				930CFF66258187EE00E8E979 /* Network resources.swift */,
+				930CFF2F2581878C00E8E979 /* Info.plist */,
+				933A988325AAE47B0084C535 /* Server.plist */,
 				930CFF872581882E00E8E979 /* Fan */,
 				930CFFA12581885A00E8E979 /* House */,
 				93C94E4E259E871F005A3D43 /* Sheets */,
@@ -155,24 +157,6 @@
 				936D84DD27B489AA002E9645 /* Fan with SwiftUITests.xctest */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		930CFF2E2581878C00E8E979 /* iOS */ = {
-			isa = PBXGroup;
-			children = (
-				930CFF2F2581878C00E8E979 /* Info.plist */,
-				933A988325AAE47B0084C535 /* Server.plist */,
-			);
-			path = iOS;
-			sourceTree = "<group>";
-		};
-		930CFF352581878D00E8E979 /* macOS */ = {
-			isa = PBXGroup;
-			children = (
-				930CFF362581878D00E8E979 /* Info.plist */,
-				930CFF372581878D00E8E979 /* macOS.entitlements */,
-			);
-			path = macOS;
 			sourceTree = "<group>";
 		};
 		930CFF872581882E00E8E979 /* Fan */ = {
@@ -200,6 +184,7 @@
 			isa = PBXGroup;
 			children = (
 				930CFFD22581890700E8E979 /* Settings View.swift */,
+				9392999A280B84CD0043017D /* Settings View Model.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -210,6 +195,7 @@
 				934C8AB925AB92380037906C /* Location Model.swift */,
 				934C8AC825AB926F0037906C /* Alarm Model.swift */,
 				934C8ACF25AB92AB0037906C /* Storage Model.swift */,
+				93929998280A25590043017D /* Logging.swift */,
 			);
 			path = Support;
 			sourceTree = "<group>";
@@ -286,8 +272,9 @@
 		930CFF202581878B00E8E979 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				BuildIndependentTargetsInParallel = YES;
 				LastSwiftUpdateCheck = 1320;
-				LastUpgradeCheck = 1320;
+				LastUpgradeCheck = 1330;
 				TargetAttributes = {
 					930CFF2B2581878C00E8E979 = {
 						CreatedOnToolsVersion = 12.2;
@@ -299,7 +286,7 @@
 				};
 			};
 			buildConfigurationList = 930CFF232581878B00E8E979 /* Build configuration list for PBXProject "Fan with SwiftUI" */;
-			compatibilityVersion = "Xcode 9.3";
+			compatibilityVersion = "Xcode 13.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -346,6 +333,8 @@
 				93D1EEB427418A0A00D7DF77 /* Segmented Indicator Picker.swift in Sources */,
 				934C8AC925AB926F0037906C /* Alarm Model.swift in Sources */,
 				930CFFC5258188F400E8E979 /* Fan View.swift in Sources */,
+				9392999B280B84CE0043017D /* Settings View Model.swift in Sources */,
+				93929999280A25590043017D /* Logging.swift in Sources */,
 				93D1EEB1273EF88600D7DF77 /* Pulldown Refresh.swift in Sources */,
 				9339093F275AC008007D528D /* RangeSlider.swift in Sources */,
 				930CFF942581884B00E8E979 /* House View Model.swift in Sources */,
@@ -398,8 +387,7 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
-				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
@@ -426,9 +414,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -443,13 +429,14 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.4;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
+				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
 		};
@@ -459,8 +446,7 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
-				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
@@ -487,7 +473,6 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -499,11 +484,14 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.4;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
-				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};
@@ -513,9 +501,15 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = U5FYS9QYU3;
 				ENABLE_PREVIEWS = YES;
-				INFOPLIST_FILE = iOS/Info.plist;
+				GENERATE_INFOPLIST_FILE = NO;
+				"INFOPLIST_FILE[sdk=*]" = Shared/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -525,6 +519,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.porchdog.whf001;
 				PRODUCT_NAME = "Fan with SwiftUI";
 				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
@@ -537,9 +532,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = U5FYS9QYU3;
 				ENABLE_PREVIEWS = YES;
-				INFOPLIST_FILE = iOS/Info.plist;
+				GENERATE_INFOPLIST_FILE = NO;
+				"INFOPLIST_FILE[sdk=*]" = Shared/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -549,6 +549,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.porchdog.whf001;
 				PRODUCT_NAME = "Fan with SwiftUI";
 				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;

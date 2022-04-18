@@ -10,7 +10,7 @@ import SwiftUI
 struct TimerSheet: View {
     @State var wheelPosition = Int.zero
     @Binding var activeSheet: OverlaySheet?
-    var setter: (Int) -> ()
+    var viewModel: FanViewModel
     var timeOnTimer: Int
     var offText: String = ""
 //    var fanViewModel: FanViewModel
@@ -68,7 +68,7 @@ struct TimerSheet: View {
                             Text("Timer").font(.title)
                             Spacer()
                             Button("Confirm", action: {
-                                setter(wheelPosition)
+                                viewModel.setTimer(addHours: wheelPosition)
                                 activeSheet = nil
                             })
                         }
@@ -145,7 +145,7 @@ struct Timer_View_Previews: PreviewProvider {
         //        VStack {
         //            TimerSheet(fanViewModel: FanViewModel())
         NavigationView {
-            TimerSheet(activeSheet: .constant(nil), setter: { _ in }, timeOnTimer: 0)
+            TimerSheet(activeSheet: .constant(nil), viewModel: FanViewModel(), timeOnTimer: 0)
                 .preferredColorScheme(.light)
         }
     }

@@ -8,8 +8,9 @@
 import SwiftUI
 import Combine
 
+@MainActor
 struct HouseView: View {
-    @StateObject var viewModel = HouseViewModel(initialFans: [])
+    @StateObject var viewModel: HouseViewModel
     @Environment(\.scenePhase) var scenePhase
     @State var selectedTab: FanView.ID = ""
 
@@ -45,6 +46,7 @@ struct HouseView: View {
     }
     
     init(viewModel: HouseViewModel? = nil) {
+        Log.house.info("view init")
         _viewModel = StateObject(wrappedValue: viewModel ?? HouseViewModel(initialFans: []))
     }
 }

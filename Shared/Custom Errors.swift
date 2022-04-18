@@ -27,37 +27,9 @@ enum AdjustmentError: Error {
     static func cast(_ error: Error) -> AdjustmentError {
         .upstream(error)
     }
-    
-    var description: String {
-        switch self {
-            case .notReady(let info):
-                return "Not ready, \(info ?? "no further info.")"
-            case .notNeeded:
-                return "Not needed"
-            case .retrievalError (let err):
-                return "Retrieval error \(err.localizedDescription)"
-            case .parentOutOfScope:
-                return "Parent out of scope"
-            case .speedDidNotChange:
-                return "Speed did not change"
-            case .timerDidNotChange:
-                return "Timer did not change"
-            case .fanNotResponsive:
-                return "Fan not responsive"
-            case .missingKeys:
-                return "Missing keys"
-            case .notFound:
-                 return "Not found"
-            case .notAtTarget:
-                return "Not at target"
-            case .upstream (let err):
-                return "Upstream error \(err.localizedDescription)"
-        }
-    }
 }
 
 enum ConnectionError: Error {
-    typealias E = Self
     static func cast(_ error: Error) -> ConnectionError {
         return .upstream(error)
     }
@@ -67,23 +39,7 @@ enum ConnectionError: Error {
     case serverError (String)
     case decodeError (String)
     case upstream (Error)
-    
-    var description: String {
-        switch self {
-            case .badUrl:
-                return "Bad url"
-            case .timeout:
-                return "timeout"
-            case .networkError (let reason):
-                return "Network error \(reason)"
-            case .serverError (let reason):
-                return "Server error \(reason)"
-            case .decodeError (let reason):
-                return "Decode error \(reason)"
-            case .upstream (let err):
-                return "Upstream type: \(err.self) description: \(err.localizedDescription)"
-        }
-    }
+
 }
 
 enum WeatherRetrievalError: Error {
@@ -95,45 +51,6 @@ enum WeatherRetrievalError: Error {
     case throttle (lastUpdate: String)
     case serverError (Int?)
     case unknownError (String)
-    
-    var description: String {
-        switch self {
-            case .noLocation:
-                return "Location not permitted or not set"
-            case .badUrl:
-                return "Bad URL"
-            case .decodeError:
-                return "Could not decode data returned from weather service"
-            case .throttle (let lastUpdate):
-                return "Throttled weather service, last update was \(lastUpdate)"
-            case .serverError (let error):
-                var errorDesc = ""
-                switch error {
-                    case nil:
-                        errorDesc = "Unknown error"
-                    case .some(let errorCode):
-                        switch errorCode {
-                            case 401:
-                                errorDesc = "API key error or wrong subscription type request."
-                            case 404:
-                                errorDesc = "Wrong location or API format."
-                            case 429:
-                                errorDesc = "API call rate exceeded."
-                            case 500, 502, 503, 504:
-                                errorDesc = "API key error or wrong subscription type request."
-                            default:
-                                errorDesc = "Open weather map error \(errorCode)."
-                        }
-                }
-                return "Server error \(errorDesc)."
-            case .tooManyTries:
-                return "Too many attempts to retrieve weather"
-            case .cancelled:
-                return "Task cancelled"
-            case .unknownError (let errorDescription):
-                return "Unknown error \(errorDescription)"
-        }
-    }
 }
 
 enum BackgroundTaskError: Error {
@@ -142,34 +59,74 @@ enum BackgroundTaskError: Error {
     case tempAlarmNotSet
     case noCurrentTemp
     case taskCancelled
-    
-    var description: String {
-        switch self {
-            case .notAuthorized:
-                return "User has disabled notifications."
-            case .fanNotOperating:
-                return "No fans are operating"
-            case .tempAlarmNotSet:
-                return "User has disabled temperature alarms"
-            case .noCurrentTemp:
-                return "No current temperature provided"
-            case .taskCancelled:
-                return "Task cancelled"
-        }
-    }
 }
 
 enum NotificationError: Error {
     case tooSoon, notificationsDisabled, dataNotAvailable
+}
+
+enum SettingsError: LocalizedError {
+    case noTemp, alertsDisabled, locationDisabled, noLocation
     
-    var description: String {
+    var errorDescription: String? {
         switch self {
-            case .dataNotAvailable:
-                return "Data not available"
-            case .notificationsDisabled:
-                return "Notifications disable"
-            case .tooSoon:
-                return "Too soon for another notification"
+        case .alertsDisabled:
+            return "Notifications disabled"
+        case .locationDisabled:
+            return "Location disabled for this app"
+        case .noTemp:
+            return "Outside temperature not available"
+        case .noLocation:
+            return "Location could not be retrieved"
+        default:
+            return nil
+        }
+    }
+     
+    var failureReason: String? {
+        switch self {
+        case .alertsDisabled:
+            return "Notifications are turned off for this app"
+        case .locationDisabled:
+            return "Can't get device location"
+        case .noTemp:
+            return "Unable to retrieve temperature"
+        case .noLocation:
+            return "Error when requesting location"
+        default:
+            return nil
+        }
+    }
+     
+    var recoverySuggestion: String? {
+        switch self {
+        case .alertsDisabled:
+            return "Enable notifications?"
+        case .locationDisabled:
+            return "Enable location?"
+        case .noTemp, .noLocation:
+            return "Try again?"
+        default:
+            return nil
+        }
+    }
+    
+    func resolve () async {
+        switch self {
+        case .alertsDisabled, .locationDisabled:
+            guard
+                let url = await URL(string: UIApplication.openSettingsURLString),
+                await UIApplication.shared.canOpenURL(url)
+            else { return }
+            await UIApplication.shared.open(url)
+        case .noTemp:
+            try? await WeatherMonitor.shared.updateWeatherConditions()
+        case .noLocation:
+            if let newLoc = try? await Location().updateLocation() {
+                Storage.coordinate = newLoc
+            }
+        default:
+            return
         }
     }
 }

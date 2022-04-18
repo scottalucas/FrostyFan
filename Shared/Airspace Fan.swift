@@ -10,20 +10,16 @@ import CoreLocation
 import Combine
 import BackgroundTasks
 import UserNotifications
-import os
+import os.log
 
 @main
 struct AirspaceFanApp: App {
-    let logger = Logger()
-//    OSLog(subsystem: "com.porchdog.whf001", category: String(describing: Self.self))
-    let log = Logger.init(subsystem: "com.porchdog.whf001", category: "fan")
-
     @UIApplicationDelegateAdaptor private var appDelegate: AppDelegate
     @Environment(\.scenePhase) var scenePhase
     
     let location = Location()
-    let weather = WeatherMonitor.shared
-    let houseView = HouseView()
+    let weather: WeatherMonitor
+    let houseView: HouseView
     
     var body: some Scene {
         WindowGroup {
@@ -35,14 +31,12 @@ struct AirspaceFanApp: App {
             .environmentObject(weather)
             .environmentObject(location)
             .onScenePhaseChange(phase: .active) {
-                logger.log("foreground in modifier")
-                log.error("test message logger")
-//                print("foreground in modifier")
+                Log.app.info("app in foreground")
                 BGTaskScheduler.shared.cancelAllTaskRequests()
                 WeatherMonitor.shared.monitor ()
             }
             .onScenePhaseChange(phase: .background) {
-                print("background in modifier")
+                Log.app.info("app in background")
                 WeatherBackgroundTaskManager.scheduleBackgroundTempCheckTask (forId: BackgroundTaskIdentifier.tempertureOutOfRange, waitUntil: WeatherMonitor.shared.weatherServiceNextCheckDate())
                 WeatherMonitor.shared.suspendMonitor ()
             }
@@ -50,44 +44,35 @@ struct AirspaceFanApp: App {
     }
     
     init () {
-        logger.error("app init")
-        log.error("test message logger")
+        weather = WeatherMonitor.shared
+        houseView = HouseView()
         UITableView.appearance().backgroundColor = .clear
         UITableView.appearance().separatorColor = .pageBackground
         UIPageControl.appearance().currentPageIndicatorTintColor = .main
         UIPageControl.appearance().pageIndicatorTintColor = .main.withAlphaComponent(0.25)
         UISegmentedControl.appearance().selectedSegmentTintColor = .main
         UIPickerView.appearance().backgroundColor = .main
+        Log.app.info("App started")
     }
 }
 
 
 
 class AppDelegate: NSObject, UIApplicationDelegate {
-        
+
     func application(_ application: UIApplication, willFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
-        let center = UNUserNotificationCenter.current()
         if BGTaskScheduler.shared.register(forTaskWithIdentifier: BackgroundTaskIdentifier.tempertureOutOfRange, using: nil, launchHandler: { task in
-            print("Background task called")
+            Log.background.info("Background task called")
             guard let task = task as? BGRefreshTask else { return }
             Task {
                 await WeatherBackgroundTaskManager.handleTempCheckTask(task: task)
+                Log.background.info("Background task handle complete.")
             }
         }) {
-            print("Task registration succeeded")
+            Log.background.info("Background task registered for tempOutOfRange event.")
         } else {
-            print("Task registration failed")
+            Log.background.error("Background task failed to register for tempOutOfRange event.")
         }
-        
-        center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
-            
-            if error != nil || !granted {
-                print("Error requesting notification authorization, \(error?.localizedDescription ?? "not permitted by user.")")
-                BGTaskScheduler.shared.cancelAllTaskRequests()
-                print("Background tasks cancelled.")
-            }
-        }
-        
         return true
     }
     

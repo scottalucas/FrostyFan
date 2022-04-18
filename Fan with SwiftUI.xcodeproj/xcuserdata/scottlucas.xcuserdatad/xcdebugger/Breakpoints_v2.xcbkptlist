@@ -27,8 +27,8 @@
             filePath = "Shared/House/House View.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "24"
-            endingLineNumber = "24"
+            startingLineNumber = "25"
+            endingLineNumber = "25"
             landmarkName = "body"
             landmarkType = "24">
             <Actions>
@@ -52,8 +52,8 @@
             filePath = "Shared/Weather/Weather Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "302"
-            endingLineNumber = "302"
+            startingLineNumber = "311"
+            endingLineNumber = "311"
             landmarkName = "scheduleBackgroundTempCheckTask(forId:waitUntil:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -68,8 +68,8 @@
             filePath = "Shared/Weather/Weather Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "268"
-            endingLineNumber = "268"
+            startingLineNumber = "277"
+            endingLineNumber = "277"
             landmarkName = "handleTempCheckTask(task:)"
             landmarkType = "7">
             <Actions>
@@ -93,8 +93,8 @@
             filePath = "Shared/Weather/Weather Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "272"
-            endingLineNumber = "272"
+            startingLineNumber = "281"
+            endingLineNumber = "281"
             landmarkName = "handleTempCheckTask(task:)"
             landmarkType = "7">
             <Actions>
@@ -118,8 +118,8 @@
             filePath = "Shared/Weather/Weather Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "274"
-            endingLineNumber = "274"
+            startingLineNumber = "283"
+            endingLineNumber = "283"
             landmarkName = "handleTempCheckTask(task:)"
             landmarkType = "7">
             <Actions>
@@ -143,8 +143,8 @@
             filePath = "Shared/Weather/Weather Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "281"
-            endingLineNumber = "281"
+            startingLineNumber = "290"
+            endingLineNumber = "290"
             landmarkName = "handleTempCheckTask(task:)"
             landmarkType = "7">
             <Actions>
@@ -215,8 +215,8 @@
             filePath = "Shared/Fan/Fan View Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "39"
-            endingLineNumber = "39"
+            startingLineNumber = "41"
+            endingLineNumber = "41"
             landmarkName = "init(chars:id:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -231,8 +231,8 @@
             filePath = "Shared/Weather/Weather Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "149"
-            endingLineNumber = "149"
+            startingLineNumber = "157"
+            endingLineNumber = "157"
             landmarkName = "monitor()"
             landmarkType = "7">
             <Actions>
@@ -318,8 +318,8 @@
             filePath = "Shared/Weather/Weather Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "153"
-            endingLineNumber = "153"
+            startingLineNumber = "161"
+            endingLineNumber = "161"
             landmarkName = "monitor()"
             landmarkType = "7">
             <Actions>
@@ -343,8 +343,8 @@
             filePath = "Shared/Weather/Weather Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "157"
-            endingLineNumber = "157"
+            startingLineNumber = "166"
+            endingLineNumber = "166"
             landmarkName = "monitor()"
             landmarkType = "7">
             <Actions>
@@ -415,8 +415,8 @@
             filePath = "Shared/Weather/Weather Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "145"
-            endingLineNumber = "145"
+            startingLineNumber = "152"
+            endingLineNumber = "152"
             landmarkName = "monitor()"
             landmarkType = "7">
             <Actions>

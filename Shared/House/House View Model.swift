@@ -10,23 +10,25 @@ import SwiftUI
 import Combine
 import os
 
+@MainActor
 class HouseViewModel: ObservableObject {
-    var logger: Logger!
-    @Published var fanSet = Set<FanView>()
+    @Published var fanSet: Set<FanView>
+    
     private var fansRunning: Bool {
         fanSet.reduce(false, { $0 || $1.viewModel.displayedRPM > 0 })
     }
+    
     private var bag = Set<AnyCancellable>()
     init (initialFans: Set<FanCharacteristics>) {
-        logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: String(describing: self))
-        logger.fault("blah")
-        print("init view model")
+        Log.house.info("view model init")
+        fanSet = []
         Task {
             await scan ( timeout: URLSessionMgr.shared.networkAvailable.value ? House.scanDuration : 1.0 )
         }
 
         WeatherMonitor.shared.$tooHot.prepend(false)
             .combineLatest(WeatherMonitor.shared.$tooCold.prepend(false))
+            .receive(on: DispatchQueue.main)
             .map { [weak self] (tooHot, tooCold) in
                 if !(tooHot || tooCold) { return false }
                 else { return self?.fansRunning ?? false }
@@ -34,6 +36,7 @@ class HouseViewModel: ObservableObject {
             .assign(to: &HouseStatus.shared.$houseTempAlarm)
         
         URLSessionMgr.shared.networkAvailable
+            .receive(on: DispatchQueue.main)
             .sink(receiveValue: {networkAvailable in
                 if networkAvailable && self.fanSet.count == 0 {
                     Task { await self.scan() }
@@ -54,6 +57,7 @@ class HouseViewModel: ObservableObject {
                 URLSessionMgr.shared.networkAvailable
                     .prepend(true)
             )
+            .receive(on: DispatchQueue.main)
             .map { (tooHot, tooCold, temp, networkAvailable) in
                 if !networkAvailable {
                     return "Network unavailable"
@@ -83,7 +87,7 @@ class HouseViewModel: ObservableObject {
 //        print("hosts count \(hosts.count)")
         fanSet.removeAll()
         HouseStatus.shared.clearFans()
-        HouseStatus.shared.scanUntil = .now.addingTimeInterval(timeout)
+        HouseStatus.shared.scanUntil(.now.addingTimeInterval(timeout))
             do {
                 try await withThrowingTaskGroup(of: (IPAddr, Data?).self) { group in
                     
@@ -117,11 +121,12 @@ class HouseViewModel: ObservableObject {
             } catch {
 //                print("Exited scan with error \((error as? ConnectionError)?.description ?? error.localizedDescription)")
             }
-        HouseStatus.shared.scanUntil = .distantPast
+        HouseStatus.shared.scanUntil(.distantPast)
 //        print("scan finished")
     }
 }
 
+@MainActor
 class HouseStatus: ObservableObject {
     @Published var displayedFanID: FanView.ID = ""
     @Published var fansOperating: Bool = false
@@ -134,6 +139,9 @@ class HouseStatus: ObservableObject {
     }
     func updateStatus ( forFan fan: FanView.ID, isOperating operating: Bool) {
         _fansRunning[fan] = operating
+    }
+    func scanUntil(_ date: Date) {
+            scanUntil = date
     }
     func clearFans () { _fansRunning.removeAll() }
     static var shared = HouseStatus()

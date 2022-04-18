@@ -10,9 +10,10 @@ import SwiftUI
 import Combine
 import Network
 
+@MainActor
 class FanViewModel: ObservableObject {
     private var model: FanModel
-    private var houseStatus = HouseStatus.shared
+    private var houseStatus: HouseStatus
     var id: FanView.ID
     @Published var selectorSegments: Int = 2
     @Published var currentMotorSpeed: Int?
@@ -36,14 +37,17 @@ class FanViewModel: ObservableObject {
     private var bag = Set<AnyCancellable>()
     
     init (chars: FanCharacteristics, id: FanView.ID) {
+        Log.fan.info("view model init")
         self.model = FanModel(usingChars: chars)
         self.id = id
+        self.houseStatus = HouseStatus.shared
         HouseStatus.shared.updateStatus(forFan: id, isOperating: chars.speed > 0)
 //        fanMonitor = FanMonitor (id: model.id, model.refresh)
         startSubscribers(initialChars: chars)
     }
     
     deinit {
+        Log.fan.info("view model deinit")
         //        print("Deinit fan view model \(model.fanCharacteristics.value.macAddr)")
         fanMonitor?.stop()
     }
@@ -224,12 +228,15 @@ class FanViewModel: ObservableObject {
     }
 }
 
+@MainActor
 class NoFanViewModel: ObservableObject {
     @Published var scanUntil: Date = .distantPast //from Notification
     @Published var houseMessage: String? //from Notification
-    private var houseStatus = HouseStatus.shared
+    private var houseStatus: HouseStatus
     
     init ( ) {
+        Log.fan.info("no fan view model init")
+        houseStatus = HouseStatus.shared
         houseStatus.$houseMessage
             .assign(to: &$houseMessage)
         
@@ -250,6 +257,7 @@ class FanMonitor {
     }
     
     init (id: String, _ refresher: @escaping () async throws -> () ) {
+        Log.fan.info("fan monitor init")
         self.id = id
         refresh = refresher
     }
@@ -259,9 +267,11 @@ class FanMonitor {
         if let t = task, !t.isCancelled { return }
         stop()
         //        print("Monitor started \(id)")
+        Log.fan.info("fan monitor loop start")
         task = Task {
             while true {
                 do {
+                    Log.fan.info("fan monitor loop")
                     try await Task.sleep(interval: interval) //run the loop every 5 minutes to respond as conditions change
                     guard let t = task, !t.isCancelled else { throw BackgroundTaskError.taskCancelled }
                     try await refresh ()
@@ -274,6 +284,7 @@ class FanMonitor {
     }
     
     fileprivate func stop () {
+        Log.fan.info("fan monitor loop kill")
         task?.cancel()
         task = nil
         //        print ("Monitor suspended \(id)")

@@ -23,14 +23,16 @@ struct FanModel {
 //    private var monitorTask: Task<(), Never>?
     
     init(usingChars chars: FanCharacteristics) {
+        Log.fan.info("model init")
         motor = Motor(atAddr: chars.ipAddr)
         timer = FanTimer(atAddr: chars.ipAddr)
         ipAddr = chars.ipAddr
         fanCharacteristics = CurrentValueSubject<FanCharacteristics, Never>.init(chars)
     }
     
-    mutating func setFan(toSpeed finalTarget: Int) async {
+    func setFan(toSpeed finalTarget: Int) async {
         guard !invalidFan else { return }
+        Log.fan.info("Set speed to \(finalTarget)")
         motorContext.send(.adjusting)
         do {
             for try await char in motor.setSpeedAsync(to: finalTarget) {
@@ -40,12 +42,13 @@ struct FanModel {
             motorContext.send(.standby)
         } catch {
             motorContext.send(.fault)
-            print("error setting speed \(error)")
+            Log.fan.error("error setting speed \(error.localizedDescription)")
         }
     }
     
     func setFan(addHours hours: Int) async {
         guard !invalidFan else { return }
+        Log.fan.info("Increase timer by \(hours)")
         guard hours > 0 else {
             timerContext.send(.fault)
             return
@@ -62,12 +65,13 @@ struct FanModel {
             timerContext.send(.standby)
         } catch {
             timerContext.send(.fault)
-            print("Error setting timer \(error)")
+            Log.fan.error("error setting timer \(error.localizedDescription)")
         }
     }
     
     func refresh() {
         guard !invalidFan else { return }
+        Log.fan.info("refresh")
         print("executing refresh")
         Task {
             let newChars = try? await motor.refresh()
@@ -136,28 +140,12 @@ extension FanModel: Identifiable {
 }
 
 extension FanModel {
-    
     enum Action: Int {
         case refresh = 0
         case faster = 1
         case timer = 2
         case slower = 3
         case off = 4
-        
-        var description: String {
-            switch self {
-                case .refresh:
-                    return "refresh"
-                case .faster:
-                    return "faster"
-                case .timer:
-                    return "timer"
-                case .slower:
-                    return "slower"
-                case .off:
-                    return "off"
-            }
-        }
     }
 }
 
@@ -442,7 +430,7 @@ struct FanTimer: TimerDelegate {
 
 protocol MotorDelegate {
     func refresh () async throws -> FanCharacteristics
-    mutating func setSpeedAsync (to: Int) -> AsyncThrowingStream<FanCharacteristics, Error>
+    func setSpeedAsync (to: Int) -> AsyncThrowingStream<FanCharacteristics, Error>
     init(atAddr: IPAddr)
 }
 

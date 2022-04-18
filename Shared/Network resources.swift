@@ -151,6 +151,7 @@ class URLSessionMgr {
             if path.status == .satisfied && !path.isExpensive && !NetworkAddress.hosts.isEmpty { //make sure path is appropriate for scanning
                 self.networkAvailable.send(true)
             } else {
+                Log.house.error("network unavailable, status : \(path.status), expensive: \(path.isExpensive), host count: \(NetworkAddress.hosts.count)")
                 self.networkAvailable.send(false)
             }
         }

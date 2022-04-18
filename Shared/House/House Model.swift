@@ -8,10 +8,8 @@
 import Foundation
 import SwiftUI
 import Combine
-import os.log
 
 class House {
-    let logger = Logger()
     static var scanDuration: TimeInterval = 5.0
     var fanSet = Set<FanCharacteristics>() {
         didSet {
@@ -20,7 +18,6 @@ class House {
     }
     var fansRunning = false
     init () {
-        logger.log("House model init")
-        print("house model init")
+        Log.house.info("model init")
     }
 }
