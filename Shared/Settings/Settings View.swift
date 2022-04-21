@@ -11,7 +11,6 @@ import UserNotifications
 
 struct SettingsView: View {
     @StateObject var viewModel = SettingViewModel()
-    
     @Binding var activeSheet: OverlaySheet?
     @State private var showAlert: Bool = false
     
@@ -19,11 +18,17 @@ struct SettingsView: View {
         List {
             SettingsLocationSection ( viewModel: viewModel )
             SettingsSwitchesSection ( viewModel: viewModel )
+            if viewModel.temperatureAlertsEnabled {
+                Section (header: Text("Temp Alarm Range").settingsAppearance(.header)) {
+                    TemperatureSelector(tempAlertsEnabled: $viewModel.temperatureAlertsEnabled)
+                        .padding(.top, 25)
+                }
+            }
             SettingsWeatherErrorSection ( viewModel: viewModel )
         }
         .foregroundColor(.pageBackground)
         .listStyle(GroupedListStyle())
-        .alert(
+        .alert (
             "Not Available",
             isPresented: $showAlert,
             actions: {
@@ -34,10 +39,16 @@ struct SettingsView: View {
             message: {
                 Text(viewModel.settingsError?.failureReason ?? "")
             })
+        .background(Color.pageBackground)
+        .onAppear(perform: {
+            viewModel.appeared()
+        })
+        .onChange(of: viewModel.settingsError) { newValue in
+            showAlert = newValue != nil
+        }
         
         Spacer()
         
-            .background(Color.pageBackground)
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     VStack (alignment: .center, spacing: 0) {
@@ -63,17 +74,14 @@ struct SettingsView: View {
                 }
             }
             .navigationBarBackButtonHidden(true)
-            .onAppear(perform: {
-                viewModel.appeared()
-            })
-            .onChange(of: viewModel.settingsError) { newValue in
-                showAlert = newValue != nil
-            }
+    }
+    init (activeSheet: Binding<OverlaySheet?>) {
+        _activeSheet = activeSheet
     }
 }
 
 struct SettingsLocationSection: View {
-    var viewModel: SettingViewModel
+    @ObservedObject var viewModel: SettingViewModel
     
     @ViewBuilder
     var body: some View {
@@ -86,6 +94,7 @@ struct SettingsLocationSection: View {
                         Text(displayString)
                             .font(.caption2.italic())
                     }
+                    .settingsAppearance(.lineLabel)
                     Spacer()
                     Button(action: {
                         viewModel.clearLocation()
@@ -97,6 +106,7 @@ struct SettingsLocationSection: View {
             case .unknown:
                 HStack {
                     Text("Location unknown")
+                        .settingsAppearance(.lineLabel)
                     Spacer()
                     Button(action: {
                         Task { await viewModel.updateLocation() }
@@ -108,6 +118,7 @@ struct SettingsLocationSection: View {
             case .unavailable:
                 HStack {
                     Text("Location off for this device")
+                        .settingsAppearance(.lineLabel)
                     Spacer()
                     Button(action: {
                         UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!)
@@ -124,25 +135,29 @@ struct SettingsLocationSection: View {
 }
 
 struct SettingsSwitchesSection: View {
-    var viewModel: SettingViewModel
+    @ObservedObject var viewModel: SettingViewModel
     @AppStorage(StorageKey.interlockAlarmEnabled.rawValue) var interlockAlertsEnabled: Bool = false
     @AppStorage(StorageKey.temperatureAlarmEnabled.rawValue) var temperatureAlertsEnabled: Bool = false
     
     var body: some View {
-        VStack {
-            Toggle("Interlock", isOn: $interlockAlertsEnabled)
-            Toggle("Temperature", isOn: $temperatureAlertsEnabled)
-        }
-        .toggleStyle(ColoredToggleStyle(onColor: .main, offColor: .gray, thumbColor: .pageBackground))
-        
-        .onChange(of: interlockAlertsEnabled) { newValue in
-            if newValue {
-                viewModel.validateInterlockAlert()
+        Section(header: Text("Alerts").settingsAppearance(.header)) {
+            VStack {
+                Toggle("Interlock", isOn: $interlockAlertsEnabled)
+                Toggle("Temperature", isOn: $temperatureAlertsEnabled)
             }
-        }
-        .onChange(of: temperatureAlertsEnabled) { newValue in
-            if newValue {
-                viewModel.validateTempAlert()
+            .toggleStyle(ColoredToggleStyle(onColor: .main, offColor: .gray, thumbColor: .pageBackground))
+            .settingsAppearance(.lineLabel)
+            
+            
+            .onChange(of: interlockAlertsEnabled) { newValue in
+                if newValue {
+                    viewModel.validateInterlockAlert()
+                }
+            }
+            .onChange(of: temperatureAlertsEnabled) { newValue in
+                if newValue {
+                    viewModel.validateTempAlert()
+                }
             }
         }
     }
@@ -155,7 +170,7 @@ struct SettingsSwitchesSection: View {
 struct SettingsWeatherErrorSection: View {
     @AppStorage(StorageKey.coordinate.rawValue) var coordinateData: Data?
     @AppStorage(StorageKey.temperatureAlarmEnabled.rawValue) var temperatureAlertsEnabled: Bool = false
-    private var viewModel: SettingViewModel
+    @ObservedObject private var viewModel: SettingViewModel
     @ViewBuilder
     var body: some View {
         if
@@ -272,9 +287,11 @@ struct TemperatureSelector: View {
             highTempLimit = Measurement(value: nht, unit: UnitTemperature.fahrenheit).value
         }
         .onChange(of: tempAlertsEnabled) { enabled in
+            Log.settings.debug("Temp slider enabled: \(enabled)")
             if enabled { initHiLowTemps() }
         }
         .onAppear(perform: {
+            Log.settings.debug("Temp slider appeared")
             initHiLowTemps()
         })
     }

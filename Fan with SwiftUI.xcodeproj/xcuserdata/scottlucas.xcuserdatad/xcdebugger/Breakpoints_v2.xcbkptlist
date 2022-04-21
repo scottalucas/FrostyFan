@@ -158,49 +158,49 @@
             </Actions>
             <Locations>
                <Location
-                  uuid = "243997F9-0CF3-4269-A568-DBCB2B81BB1C - ef87610574b6dc75"
+                  uuid = "243997F9-0CF3-4269-A568-DBCB2B81BB1C - ee2e63987ff78315"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
-                  symbolName = "(1) await resume partial function for static Fan_with_SwiftUI.WeatherBackgroundTaskManager.handleTempCheckTask(task: Fan_with_SwiftUI.BGRefreshTask) async -&gt; ()"
+                  symbolName = "(3) suspend resume partial function for static Fan_with_SwiftUI.WeatherBackgroundTaskManager.handleTempCheckTask(task: Fan_with_SwiftUI.BGRefreshTask) async -&gt; ()"
                   moduleName = "Fan with SwiftUI"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/scottlucas/Dropbox/Personal%20files/Mad%20Scientist/Swift%20Development/Fan/Airscape%20Fan%20SwiftUI/whf001/Shared/Weather/Weather%20Model.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "281"
-                  endingLineNumber = "281"
-                  offsetFromSymbolStart = "704">
+                  startingLineNumber = "290"
+                  endingLineNumber = "290"
+                  offsetFromSymbolStart = "1244">
                </Location>
                <Location
-                  uuid = "243997F9-0CF3-4269-A568-DBCB2B81BB1C - 863e1d29de5c6077"
+                  uuid = "243997F9-0CF3-4269-A568-DBCB2B81BB1C - f79db3d656d3d2f2"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
-                  symbolName = "(2) await resume partial function for static Fan_with_SwiftUI.WeatherBackgroundTaskManager.handleTempCheckTask(task: Fan_with_SwiftUI.BGRefreshTask) async -&gt; ()"
+                  symbolName = "(8) suspend resume partial function for static Fan_with_SwiftUI.WeatherBackgroundTaskManager.handleTempCheckTask(task: Fan_with_SwiftUI.BGRefreshTask) async -&gt; ()"
                   moduleName = "Fan with SwiftUI"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/scottlucas/Dropbox/Personal%20files/Mad%20Scientist/Swift%20Development/Fan/Airscape%20Fan%20SwiftUI/whf001/Shared/Weather/Weather%20Model.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "281"
-                  endingLineNumber = "281"
-                  offsetFromSymbolStart = "1572">
+                  startingLineNumber = "290"
+                  endingLineNumber = "290"
+                  offsetFromSymbolStart = "600">
                </Location>
                <Location
-                  uuid = "243997F9-0CF3-4269-A568-DBCB2B81BB1C - 5e7518cc207b2479"
+                  uuid = "243997F9-0CF3-4269-A568-DBCB2B81BB1C - 526725afb7bcb8f7"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
-                  symbolName = "(3) await resume partial function for static Fan_with_SwiftUI.WeatherBackgroundTaskManager.handleTempCheckTask(task: Fan_with_SwiftUI.BGRefreshTask) async -&gt; ()"
+                  symbolName = "(9) suspend resume partial function for static Fan_with_SwiftUI.WeatherBackgroundTaskManager.handleTempCheckTask(task: Fan_with_SwiftUI.BGRefreshTask) async -&gt; ()"
                   moduleName = "Fan with SwiftUI"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/scottlucas/Dropbox/Personal%20files/Mad%20Scientist/Swift%20Development/Fan/Airscape%20Fan%20SwiftUI/whf001/Shared/Weather/Weather%20Model.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "281"
-                  endingLineNumber = "281"
-                  offsetFromSymbolStart = "1640">
+                  startingLineNumber = "290"
+                  endingLineNumber = "290"
+                  offsetFromSymbolStart = "600">
                </Location>
             </Locations>
          </BreakpointContent>
@@ -215,8 +215,8 @@
             filePath = "Shared/Fan/Fan View Model.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "41"
-            endingLineNumber = "41"
+            startingLineNumber = "42"
+            endingLineNumber = "42"
             landmarkName = "init(chars:id:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -246,37 +246,22 @@
             </Actions>
             <Locations>
                <Location
-                  uuid = "472D1071-C3DD-4089-99F8-C5A113625843 - 92bcca2692de274d"
+                  uuid = "472D1071-C3DD-4089-99F8-C5A113625843 - d8575ea7ce9dba24"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
-                  symbolName = "closure #1 @Sendable () async throws -&gt; () in Fan_with_SwiftUI.WeatherMonitor.monitor() -&gt; ()"
+                  symbolName = "(1) suspend resume partial function for closure #1 @Sendable () async throws -&gt; () in Fan_with_SwiftUI.WeatherMonitor.monitor() -&gt; ()"
                   moduleName = "Fan with SwiftUI"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/scottlucas/Dropbox/Personal%20files/Mad%20Scientist/Swift%20Development/Fan/Airscape%20Fan%20SwiftUI/whf001/Shared/Weather/Weather%20Model.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "149"
-                  endingLineNumber = "149"
-                  offsetFromSymbolStart = "356">
+                  startingLineNumber = "157"
+                  endingLineNumber = "157"
+                  offsetFromSymbolStart = "1064">
                </Location>
                <Location
-                  uuid = "472D1071-C3DD-4089-99F8-C5A113625843 - ac0e252bdc877d7e"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "(1) await resume partial function for closure #1 @Sendable () async throws -&gt; () in Fan_with_SwiftUI.WeatherMonitor.monitor() -&gt; ()"
-                  moduleName = "Fan with SwiftUI"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/scottlucas/Dropbox/Personal%20files/Mad%20Scientist/Swift%20Development/Fan/Airscape%20Fan%20SwiftUI/whf001/Shared/Weather/Weather%20Model.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "149"
-                  endingLineNumber = "149"
-                  offsetFromSymbolStart = "148">
-               </Location>
-               <Location
-                  uuid = "472D1071-C3DD-4089-99F8-C5A113625843 - fb46564aead6cb61"
+                  uuid = "472D1071-C3DD-4089-99F8-C5A113625843 - fb46564aead6c599"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
@@ -286,24 +271,69 @@
                   urlString = "file:///Users/scottlucas/Dropbox/Personal%20files/Mad%20Scientist/Swift%20Development/Fan/Airscape%20Fan%20SwiftUI/whf001/Shared/Weather/Weather%20Model.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "149"
-                  endingLineNumber = "149"
-                  offsetFromSymbolStart = "1644">
+                  startingLineNumber = "157"
+                  endingLineNumber = "157"
+                  offsetFromSymbolStart = "40">
                </Location>
                <Location
-                  uuid = "472D1071-C3DD-4089-99F8-C5A113625843 - 6fdc7e5f7641968"
+                  uuid = "472D1071-C3DD-4089-99F8-C5A113625843 - 449ddcd393976562"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
-                  symbolName = "(3) await resume partial function for closure #1 @Sendable () async throws -&gt; () in Fan_with_SwiftUI.WeatherMonitor.monitor() -&gt; ()"
+                  symbolName = "(7) suspend resume partial function for closure #1 @Sendable () async throws -&gt; () in Fan_with_SwiftUI.WeatherMonitor.monitor() -&gt; ()"
                   moduleName = "Fan with SwiftUI"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/scottlucas/Dropbox/Personal%20files/Mad%20Scientist/Swift%20Development/Fan/Airscape%20Fan%20SwiftUI/whf001/Shared/Weather/Weather%20Model.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "149"
-                  endingLineNumber = "149"
-                  offsetFromSymbolStart = "316">
+                  startingLineNumber = "157"
+                  endingLineNumber = "157"
+                  offsetFromSymbolStart = "936">
+               </Location>
+               <Location
+                  uuid = "472D1071-C3DD-4089-99F8-C5A113625843 - ef611c9ae217871d"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(8) suspend resume partial function for closure #1 @Sendable () async throws -&gt; () in Fan_with_SwiftUI.WeatherMonitor.monitor() -&gt; ()"
+                  moduleName = "Fan with SwiftUI"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/scottlucas/Dropbox/Personal%20files/Mad%20Scientist/Swift%20Development/Fan/Airscape%20Fan%20SwiftUI/whf001/Shared/Weather/Weather%20Model.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "157"
+                  endingLineNumber = "157"
+                  offsetFromSymbolStart = "384">
+               </Location>
+               <Location
+                  uuid = "472D1071-C3DD-4089-99F8-C5A113625843 - 16355c5d3296a93c"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(9) suspend resume partial function for closure #1 @Sendable () async throws -&gt; () in Fan_with_SwiftUI.WeatherMonitor.monitor() -&gt; ()"
+                  moduleName = "Fan with SwiftUI"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/scottlucas/Dropbox/Personal%20files/Mad%20Scientist/Swift%20Development/Fan/Airscape%20Fan%20SwiftUI/whf001/Shared/Weather/Weather%20Model.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "157"
+                  endingLineNumber = "157"
+                  offsetFromSymbolStart = "1600">
+               </Location>
+               <Location
+                  uuid = "472D1071-C3DD-4089-99F8-C5A113625843 - 639c8e13bf14f6cb"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(10) suspend resume partial function for closure #1 @Sendable () async throws -&gt; () in Fan_with_SwiftUI.WeatherMonitor.monitor() -&gt; ()"
+                  moduleName = "Fan with SwiftUI"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/scottlucas/Dropbox/Personal%20files/Mad%20Scientist/Swift%20Development/Fan/Airscape%20Fan%20SwiftUI/whf001/Shared/Weather/Weather%20Model.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "157"
+                  endingLineNumber = "157"
+                  offsetFromSymbolStart = "1600">
                </Location>
             </Locations>
          </BreakpointContent>
@@ -358,49 +388,64 @@
             </Actions>
             <Locations>
                <Location
-                  uuid = "EA63FED5-3278-4B7A-A7B7-1FAE2093F94F - ac0e252bdc877386"
+                  uuid = "EA63FED5-3278-4B7A-A7B7-1FAE2093F94F - 449ddcd393976649"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
-                  symbolName = "(1) await resume partial function for closure #1 @Sendable () async throws -&gt; () in Fan_with_SwiftUI.WeatherMonitor.monitor() -&gt; ()"
+                  symbolName = "(7) suspend resume partial function for closure #1 @Sendable () async throws -&gt; () in Fan_with_SwiftUI.WeatherMonitor.monitor() -&gt; ()"
                   moduleName = "Fan with SwiftUI"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/scottlucas/Dropbox/Personal%20files/Mad%20Scientist/Swift%20Development/Fan/Airscape%20Fan%20SwiftUI/whf001/Shared/Weather/Weather%20Model.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "157"
-                  endingLineNumber = "157"
-                  offsetFromSymbolStart = "392">
+                  startingLineNumber = "166"
+                  endingLineNumber = "166"
+                  offsetFromSymbolStart = "3008">
                </Location>
                <Location
-                  uuid = "EA63FED5-3278-4B7A-A7B7-1FAE2093F94F - fb46564aead6c599"
+                  uuid = "EA63FED5-3278-4B7A-A7B7-1FAE2093F94F - ef611c9ae2178436"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
-                  symbolName = "(2) await resume partial function for closure #1 @Sendable () async throws -&gt; () in Fan_with_SwiftUI.WeatherMonitor.monitor() -&gt; ()"
+                  symbolName = "(8) suspend resume partial function for closure #1 @Sendable () async throws -&gt; () in Fan_with_SwiftUI.WeatherMonitor.monitor() -&gt; ()"
                   moduleName = "Fan with SwiftUI"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/scottlucas/Dropbox/Personal%20files/Mad%20Scientist/Swift%20Development/Fan/Airscape%20Fan%20SwiftUI/whf001/Shared/Weather/Weather%20Model.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "157"
-                  endingLineNumber = "157"
-                  offsetFromSymbolStart = "656">
+                  startingLineNumber = "166"
+                  endingLineNumber = "166"
+                  offsetFromSymbolStart = "3252">
                </Location>
                <Location
-                  uuid = "EA63FED5-3278-4B7A-A7B7-1FAE2093F94F - 6fdc7e5f7641790"
+                  uuid = "EA63FED5-3278-4B7A-A7B7-1FAE2093F94F - 16355c5d3296aa17"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
-                  symbolName = "(3) await resume partial function for closure #1 @Sendable () async throws -&gt; () in Fan_with_SwiftUI.WeatherMonitor.monitor() -&gt; ()"
+                  symbolName = "(9) suspend resume partial function for closure #1 @Sendable () async throws -&gt; () in Fan_with_SwiftUI.WeatherMonitor.monitor() -&gt; ()"
                   moduleName = "Fan with SwiftUI"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/scottlucas/Dropbox/Personal%20files/Mad%20Scientist/Swift%20Development/Fan/Airscape%20Fan%20SwiftUI/whf001/Shared/Weather/Weather%20Model.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "157"
-                  endingLineNumber = "157"
-                  offsetFromSymbolStart = "760">
+                  startingLineNumber = "166"
+                  endingLineNumber = "166"
+                  offsetFromSymbolStart = "3252">
+               </Location>
+               <Location
+                  uuid = "EA63FED5-3278-4B7A-A7B7-1FAE2093F94F - 639c8e13bf14f5e0"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(10) suspend resume partial function for closure #1 @Sendable () async throws -&gt; () in Fan_with_SwiftUI.WeatherMonitor.monitor() -&gt; ()"
+                  moduleName = "Fan with SwiftUI"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/scottlucas/Dropbox/Personal%20files/Mad%20Scientist/Swift%20Development/Fan/Airscape%20Fan%20SwiftUI/whf001/Shared/Weather/Weather%20Model.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "166"
+                  endingLineNumber = "166"
+                  offsetFromSymbolStart = "3252">
                </Location>
             </Locations>
          </BreakpointContent>
@@ -428,6 +473,55 @@
                   </ActionContent>
                </BreakpointActionProxy>
             </Actions>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "79495862-0CA0-4555-81E1-E480F8F55467"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Shared/Settings/Settings View Model.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "99"
+            endingLineNumber = "99"
+            landmarkName = "updateLocation()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "FD06C932-83C2-4FEB-988C-284C5494AAD0"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Shared/Support/Location Model.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "59"
+            endingLineNumber = "59"
+            landmarkName = "locationManager(_:didUpdateLocations:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "AFA3C669-F229-423C-9B51-125494538AF3"
+            shouldBeEnabled = "Yes"
+            condition = "hosts.count &gt; 100"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Shared/House/House View Model.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "91"
+            endingLineNumber = "91"
+            landmarkName = "scan(_:timeout:)"
+            landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

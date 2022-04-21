@@ -13,38 +13,39 @@ import os
 @MainActor
 class HouseViewModel: ObservableObject {
     @Published var fanSet: Set<FanView>
-    
-    private var fansRunning: Bool {
-        fanSet.reduce(false, { $0 || $1.viewModel.displayedRPM > 0 })
-    }
-    
+
     private var bag = Set<AnyCancellable>()
     init (initialFans: Set<FanCharacteristics>) {
-        Log.house.info("view model init")
         fanSet = []
+        Log.house.info("view model init")
         Task {
-            await scan ( timeout: URLSessionMgr.shared.networkAvailable.value ? House.scanDuration : 1.0 )
+            Log.house.debug("Scanning in houseviewmodel init")
+            Log.house.debug("\(Storage.knownFans)")
+            await scan ( Set<String>.init(["192.168.1.179:8080", "192.168.1.180:8080"]), timeout: URLSessionMgr.shared.networkAvailable.value ? House.scanDuration : 1.0 )
+//            await scan ( Storage.knownFans, timeout: URLSessionMgr.shared.networkAvailable.value ? House.scanDuration : 1.0 )
         }
 
         WeatherMonitor.shared.$tooHot.prepend(false)
             .combineLatest(WeatherMonitor.shared.$tooCold.prepend(false))
             .receive(on: DispatchQueue.main)
-            .map { [weak self] (tooHot, tooCold) in
+            .map { (tooHot, tooCold) in
                 if !(tooHot || tooCold) { return false }
-                else { return self?.fansRunning ?? false }
+                else { return HouseStatus.shared.fansRunning }
             }
             .assign(to: &HouseStatus.shared.$houseTempAlarm)
         
-        URLSessionMgr.shared.networkAvailable
-            .receive(on: DispatchQueue.main)
-            .sink(receiveValue: {networkAvailable in
-                if networkAvailable && self.fanSet.count == 0 {
-                    Task { await self.scan() }
-                } else if (!networkAvailable) {
-                    self.fanSet.removeAll()
-                }
-            })
-            .store(in: &bag)
+//        URLSessionMgr.shared.networkAvailable
+//            .receive(on: DispatchQueue.main)
+//            .sink(receiveValue: { networkAvailable in
+//                if networkAvailable && self.fanSet.count == 0 {
+//                    Task {
+//                        Log.house.debug("scanning in network available change")
+//                        await self.scan(Storage.knownFans) }
+//                } else if (!networkAvailable) {
+//                    self.fanSet.removeAll()
+//                }
+//            })
+//            .store(in: &bag)
         
         Publishers
             .CombineLatest4 (
@@ -71,22 +72,26 @@ class HouseViewModel: ObservableObject {
                     return nil
                 }
             }
-            .prepend ("Publisher")
+            .prepend ("Checking for known fans, \rplease wait...")
             .assign(to: &HouseStatus.shared.$houseMessage)
     }
     
-    func scan (timeout: TimeInterval = House.scanDuration) async {
+    func scan (_ hostList: Set<String>, timeout: TimeInterval = House.scanDuration) async {
 //        print("scan started")
 //        if !URLSessionMgr.shared.networkAvailable.value { print("network not available"); return }
-        let hosts = NetworkAddress
+        
+        let allHosts = NetworkAddress
             .hosts
             .appending("192.168.1.179:8080")
             .appending("192.168.1.180:8080")
-        guard hosts.count > 0 else { return }
+        
+        let hosts = hostList.count == 0 ? Set(allHosts) : hostList
+        
         let sess = URLSessionMgr.shared.session
-//        print("hosts count \(hosts.count)")
+        Log.house.info ("scanning \(hosts.count) hosts")
         fanSet.removeAll()
         HouseStatus.shared.clearFans()
+        Storage.knownFans = []
         HouseStatus.shared.scanUntil(.now.addingTimeInterval(timeout))
             do {
                 try await withThrowingTaskGroup(of: (IPAddr, Data?).self) { group in
@@ -108,9 +113,8 @@ class HouseViewModel: ObservableObject {
                             guard !group.isCancelled else { print("group cancelled"); return }
                             var chars = try FanCharacteristics(data: optData)
                             chars.ipAddr = ipAddr
-                            let _ = DispatchQueue.main.sync { [chars] in
-                                fanSet.update(with: FanView(initialCharacteristics: chars))
-                            }
+                            fanSet.update(with: FanView(initialCharacteristics: chars))
+                            Storage.knownFans.update(with: ipAddr)
                         } catch {
                             if let err = error as? ConnectionError, case .timeout = err {
                                 throw err
@@ -128,6 +132,7 @@ class HouseViewModel: ObservableObject {
 
 @MainActor
 class HouseStatus: ObservableObject {
+    static var shared = HouseStatus()
     @Published var displayedFanID: FanView.ID = ""
     @Published var fansOperating: Bool = false
     @Published var houseTempAlarm: Bool = false
@@ -144,8 +149,7 @@ class HouseStatus: ObservableObject {
             scanUntil = date
     }
     func clearFans () { _fansRunning.removeAll() }
-    static var shared = HouseStatus()
     private init () {
-        houseMessage = "Init"
+        Log.house.info("house status init")
     }
 }

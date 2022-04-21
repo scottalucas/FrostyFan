@@ -174,7 +174,7 @@ import CoreLocation
 //extension UserDefaults: UserDefaultsProtocol {}
 enum StorageKey: Equatable, RawRepresentable, CaseIterable {
     static var allCases: [StorageKey] {
-        return [.interlockAlarmEnabled, .temperatureAlarmEnabled, .lowTempLimit, .highTempLimit, .forecast, .lastForecastUpdate, .lastNotificationShown, .coordinate, .fanName("")]
+        return [.knownFans, .interlockAlarmEnabled, .temperatureAlarmEnabled, .lowTempLimit, .highTempLimit, .forecast, .lastForecastUpdate, .lastNotificationShown, .coordinate, .fanName("")]
     }
     
     init?(rawValue: String) {
@@ -190,7 +190,8 @@ enum StorageKey: Equatable, RawRepresentable, CaseIterable {
         
     typealias RawValue = String
     
-    case interlockAlarmEnabled, //bool
+    case knownFans, //data, decode to [String]
+         interlockAlarmEnabled, //bool
          temperatureAlarmEnabled, //bool
          lowTempLimit, //double
          highTempLimit, //double
@@ -202,6 +203,8 @@ enum StorageKey: Equatable, RawRepresentable, CaseIterable {
     
     var rawValue: String {
         switch self {
+        case .knownFans:
+            return "knownFans"
             case .interlockAlarmEnabled:
                 return "interlock"
             case .temperatureAlarmEnabled:
@@ -225,6 +228,17 @@ enum StorageKey: Equatable, RawRepresentable, CaseIterable {
 }
 
 struct Storage {
+    static var knownFans: Set<String> {
+        get {
+            UserDefaults.standard.object(forKey: StorageKey.knownFans.rawValue) == nil ? [] : UserDefaults.standard.data(forKey: StorageKey.knownFans.rawValue)?.decodeFans ?? []
+        }
+        set {
+            let encoder = JSONEncoder()
+            let dat = (try? encoder.encode(newValue)) ?? Data()
+            UserDefaults.standard.set(dat, forKey: StorageKey.knownFans.rawValue)
+        }
+    }
+    
     static var interlockAlarmEnabled: Bool {
         get {
             UserDefaults.standard.object(forKey: StorageKey.interlockAlarmEnabled.rawValue) == nil ? false : UserDefaults.standard.bool(forKey: StorageKey.interlockAlarmEnabled.rawValue)

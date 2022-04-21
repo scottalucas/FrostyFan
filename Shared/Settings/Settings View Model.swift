@@ -12,7 +12,6 @@ import UserNotifications
 import BackgroundTasks
 
 class SettingViewModel: ObservableObject {
-    @EnvironmentObject var location: Location
     @Environment(\.scenePhase) var scenePhase
     @AppStorage(StorageKey.temperatureAlarmEnabled.rawValue) var temperatureAlertsEnabled: Bool = false
     @AppStorage(StorageKey.interlockAlarmEnabled.rawValue) var interlockAlertsEnabled: Bool = false
@@ -24,6 +23,7 @@ class SettingViewModel: ObservableObject {
     private var initCoord: Data?
     private var initHighTempLimit: Double?
     private var initLowTempLimit: Double?
+    private var location = Location()
     @Published var showLocation: LocationSectionStatus = .unknown
     @Published var showTempSwitch: Bool = true
 //    @Published var showNoNotisAlert: Bool = false
@@ -35,10 +35,11 @@ class SettingViewModel: ObservableObject {
     
     init() {
         appeared()
+        Log.settings.info("view model init")
     }
     
     func validateTempAlert () {
-        Task {
+        Task { @MainActor in 
             do {
                 guard await notificationsAuthorized() else {
                     throw SettingsError.alertsDisabled
@@ -66,7 +67,7 @@ class SettingViewModel: ObservableObject {
     }
     
     func validateInterlockAlert () {
-        Task {
+        Task { @MainActor in
             do {
                 guard await notificationsAuthorized() else {
                     throw SettingsError.alertsDisabled
@@ -80,7 +81,7 @@ class SettingViewModel: ObservableObject {
         }
     }
     
-    func retryTemperature () async {
+    @MainActor func retryTemperature () async {
         do {
             try await WeatherMonitor.shared.updateWeatherConditions()
             guard WeatherMonitor.shared.currentTemp != nil else {
@@ -91,9 +92,10 @@ class SettingViewModel: ObservableObject {
         }
     }
     
-    func updateLocation () async {
+    @MainActor func updateLocation () async {
         do {
             let newCoord = try await location.updateLocation()
+            Log.settings.info ("new location recieved, \(newCoord.description, privacy: .private)")
             coordinateData = newCoord.data
             showLocation = .known("\(newCoord.lat.latitudeStr) \(newCoord.lon.longitudeStr)")
         } catch {
@@ -103,8 +105,9 @@ class SettingViewModel: ObservableObject {
         }
     }
     
-    func clearLocation () {
+    @MainActor func clearLocation () {
         location.clearLocation()
+        showLocation = .unknown
     }
     
     func appeared () {
@@ -113,6 +116,28 @@ class SettingViewModel: ObservableObject {
         initLowTempLimit = lowTempLimit
         initTempAlertsEnabled = temperatureAlertsEnabled
         initInterlockAlertsEnabled = interlockAlertsEnabled
+        Task { @MainActor in
+                do {
+                    guard await notificationsAuthorized() else {
+                        throw SettingsError.alertsDisabled
+                    }
+                    guard coordinateData != nil else {
+                        throw SettingsError.noLocation
+                    }
+                } catch (let err as SettingsError) {
+                    switch err {
+                    case .alertsDisabled:
+                        temperatureAlertsEnabled = false
+                        interlockAlertsEnabled = false
+                    case .noLocation:
+                        temperatureAlertsEnabled = false
+                    default:
+                        break
+                    }
+                    Log.settings.info("appeared with error \( err.errorDescription ?? "" )")
+                } catch {}
+        }
+        
         if let cData = coordinateData, let coord = cData.decodeCoordinate {
             showLocation = .known("\(coord.lat.latitudeStr) \(coord.lon.longitudeStr)")
         } else if CLLocationManager.locationServicesEnabled() {

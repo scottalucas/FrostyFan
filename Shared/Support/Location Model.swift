@@ -31,37 +31,18 @@ class Location: NSObject, ObservableObject {
         Log.location.info("Device location enabled: \(self.mgr.authorizationStatus.description)")
         Log.location.info("Location stored: \(Storage.coordinate == nil ? "false" : "true")")
     }
-/*
- func updateLocation() async throws -> Location2 {
-   return try await withCheckedThrowingContinuation({ [weak self] (continuation: LocationCheckedThrowingContinuation) in
-     guard let self = self else {
-       return
-     }
 
-     self.locationCheckedThrowingContinuation = continuation
-
-     self.locationManager.delegate = self
-     self.locationManager.desiredAccuracy = kCLLocationAccuracyBest
-     self.locationManager.requestWhenInUseAuthorization()
-     self.locationManager.startUpdatingLocation()
-   })
- }
- */
     func updateLocation () async throws -> Coordinate {
         return try await withCheckedThrowingContinuation({ [weak self] continuation in
             guard let self = self else { return }
+            let authorized = ( mgr.authorizationStatus == .authorizedWhenInUse || mgr.authorizationStatus == .authorizedAlways )
             self.locationCheckedThrowingContinuation = continuation
-            self.mgr.requestWhenInUseAuthorization()
-//            self.mgr.stopUpdatingLocation()
+            if authorized {
+                mgr.startUpdatingLocation()
+            } else {
+                self.mgr.requestWhenInUseAuthorization()
+            }
         })
-        
-//        if mgr.authorizationStatus == .authorizedAlways || mgr.authorizationStatus == .authorizedWhenInUse {
-//            Log.location.info("location updating")
-//            mgr.startUpdatingLocation()
-//        } else {
-//            Log.location.info("location user permission requested")
-//            mgr.requestWhenInUseAuthorization()
-//        }
     }
     
     func clearLocation () {
@@ -90,35 +71,14 @@ extension Location: CLLocationManagerDelegate {
         locationCheckedThrowingContinuation = nil
         Log.location.error("location manager failed with error \(error.localizedDescription)")
     }
-//    
-//    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-//        Log.location.error("location auth changed to \(manager.authorizationStatus.description)")
-//
-//        if manager.authorizationStatus == .authorizedAlways || manager.authorizationStatus == .authorizedWhenInUse {
-//            mgr.startUpdatingLocation()
-//        }
-//    }
     
-    
-    
-//    func getLocationPermission() {
-//        switch (CLLocationManager.locationServicesEnabled(), mgr.authorizationStatus) {
-//        case (false, _):
-////                lat = nil
-////                lon = nil
-//                coordinate = nil
-////                locationPermission = .deviceProhibited
-//        case (_, .authorizedAlways), (_, .authorizedWhenInUse):
-////            locationPermission = .appAllowed
-//        case (_, .notDetermined):
-////            locationPermission = .unknown
-//        default:
-////                lat = nil
-////                lon = nil
-//                coordinate = nil
-////                locationPermission = .appProhibited
-//        }
-//    }
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        Log.location.error("location auth changed to \(manager.authorizationStatus.description)")
+
+        if manager.authorizationStatus == .authorizedAlways || manager.authorizationStatus == .authorizedWhenInUse {
+            mgr.startUpdatingLocation()
+        }
+    }
 }
 
 public typealias Location2 = CLLocationCoordinate2D
@@ -161,19 +121,4 @@ extension LocationManager: CLLocationManagerDelegate {
     locationCheckedThrowingContinuation?.resume(throwing: error)
     locationCheckedThrowingContinuation = nil
   }
-}
-
-extension Double {
-    var latitudeStr: String {
-        let formatter = NumberFormatter()
-        formatter.positiveFormat = "##0.00\u{00B0} N"
-        formatter.negativeFormat = "##0.00\u{00B0} S"
-        return formatter.string(from: NSNumber(value: self)) ?? "nil"
-    }
-    var longitudeStr: String {
-        let formatter = NumberFormatter()
-        formatter.positiveFormat = "##0.00\u{00B0} E"
-        formatter.negativeFormat = "##0.00\u{00B0} W"
-        return formatter.string(from: NSNumber(value: self)) ?? "nil"
-    }
 }

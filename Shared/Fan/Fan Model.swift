@@ -32,7 +32,7 @@ struct FanModel {
     
     func setFan(toSpeed finalTarget: Int) async {
         guard !invalidFan else { return }
-        Log.fan.info("Set speed to \(finalTarget)")
+        Log.fan.info("\(fanCharacteristics.value.macAddr) Set speed to \(finalTarget)")
         motorContext.send(.adjusting)
         do {
             for try await char in motor.setSpeedAsync(to: finalTarget) {
@@ -56,7 +56,7 @@ struct FanModel {
         timerContext.send(.adjusting)
         let current = fanCharacteristics.value.timer
         let target = min (current + hours * 60, 12 * 60) - 10
-        print("timer target \(target)")
+//        print("timer target \(target)")
         do {
             for try await char in timer.setTimerAsync(to: target) {
                 guard !Task.isCancelled else { return }
@@ -72,7 +72,7 @@ struct FanModel {
     func refresh() {
         guard !invalidFan else { return }
         Log.fan.info("refresh")
-        print("executing refresh")
+//        print("executing refresh")
         Task {
             let newChars = try? await motor.refresh()
             guard !Task.isCancelled else { return }
@@ -118,7 +118,7 @@ struct FanModel {
 
 extension FanModel {
     init () {
-        print("Test fan model init")
+//        print("Test fan model init")
         self.init(usingChars: FanCharacteristics())
     }
 }

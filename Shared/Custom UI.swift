@@ -343,3 +343,57 @@ extension IndicatorOpacity.IndicatorBlink: CustomStringConvertible {
         }
     }
 }
+
+extension Coordinate: CustomStringConvertible {
+    var description: String {
+        return "\(lat.latitudeStr) \(lon.longitudeStr)"
+    }
+}
+
+extension Double {
+    var latitudeStr: String {
+        let formatter = NumberFormatter()
+        formatter.positiveFormat = "##0.00\u{00B0} N"
+        formatter.negativeFormat = "##0.00\u{00B0} S"
+        return formatter.string(from: NSNumber(value: self)) ?? "nil"
+    }
+    var longitudeStr: String {
+        let formatter = NumberFormatter()
+        formatter.positiveFormat = "##0.00\u{00B0} E"
+        formatter.negativeFormat = "##0.00\u{00B0} W"
+        return formatter.string(from: NSNumber(value: self)) ?? "nil"
+    }
+}
+
+extension Angle {
+    var degFormat: String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 1
+        let a = NSNumber(value: self.degrees)
+        return formatter.string(from: a) ?? ""
+    }
+}
+struct SizePreferenceKey: PreferenceKey {
+  static var defaultValue: CGSize = .zero
+
+  static func reduce(value: inout CGSize, nextValue: () -> CGSize) {
+    value = nextValue()
+  }
+}
+
+struct MeasureSizeModifier: ViewModifier {
+  func body(content: Content) -> some View {
+    content.background(GeometryReader { geometry in
+      Color.clear.preference(key: SizePreferenceKey.self,
+                             value: geometry.size)
+    })
+  }
+}
+
+extension View {
+  func measureSize(perform action: @escaping (CGSize) -> Void) -> some View {
+    self.modifier(MeasureSizeModifier())
+      .onPreferenceChange(SizePreferenceKey.self, perform: action)
+  }
+}

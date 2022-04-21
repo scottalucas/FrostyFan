@@ -146,6 +146,17 @@ extension Data {
     }
 }
 
+extension Data {
+    var decodeFans: Set<String> {
+        let decoder = JSONDecoder()
+        do {
+            return try decoder.decode(Set<String>.self, from: self)
+        } catch {
+            return []
+        }
+    }
+}
+
 extension Data { //where Data contains a WeatherObject
     var decodeWeatherResult: Weather.WeatherResult? {
         let decoder = JSONDecoder()

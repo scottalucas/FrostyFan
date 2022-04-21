@@ -95,6 +95,7 @@ struct PulldownRefresh: ViewModifier {
                         verticalOffset = .zero
                     }
                     Task {
+                        Log.house.debug("Scanning from pulldown refresh")
                         await complete()
                         isEnabled = true
                     }

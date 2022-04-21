@@ -15,20 +15,20 @@ class FanViewModel: ObservableObject {
     private var model: FanModel
     private var houseStatus: HouseStatus
     var id: FanView.ID
+    var id2 = UUID().uuidString
     @Published var selectorSegments: Int = 2
     @Published var currentMotorSpeed: Int?
     
     @Published var scanUntil: Date = .distantPast //from HouseStatus.shared
     @Published var houseMessage: String? //from HouseStatus.shared
     @Published var houseTempAlarm: Bool = false //from HouseStatus.shared
-    
     @Published var appInForeground = false
     @Published var indicatedAlarm: IndicatorOpacity.IndicatorBlink?
     @Published var offDateText: String?
     @Published var showTimerIcon = true
     @Published var showDamperWarning = false
     @Published var showInterlockWarning = false
-    @Published var displayedRPM: Int = 0
+    var displayedRPM = CurrentValueSubject<Int, Never>(0)
     var chars: FanCharacteristics {
         model.fanCharacteristics.value
     }
@@ -37,13 +37,14 @@ class FanViewModel: ObservableObject {
     private var bag = Set<AnyCancellable>()
     
     init (chars: FanCharacteristics, id: FanView.ID) {
-        Log.fan.info("view model init")
+//        currentMotorSpeed = chars.speed
         self.model = FanModel(usingChars: chars)
         self.id = id
         self.houseStatus = HouseStatus.shared
         HouseStatus.shared.updateStatus(forFan: id, isOperating: chars.speed > 0)
 //        fanMonitor = FanMonitor (id: model.id, model.refresh)
         startSubscribers(initialChars: chars)
+        Log.fan.info("view model init \(self.id2) \(id)")
     }
     
     deinit {
@@ -163,8 +164,8 @@ class FanViewModel: ObservableObject {
         
         model.fanCharacteristics
             .prepend(chars)
-            .receive(on: DispatchQueue.main)
             .map { $0.speed }
+            .receive(on: DispatchQueue.main)
             .assign(to: &$currentMotorSpeed)
         
         model.fanCharacteristics
@@ -184,10 +185,14 @@ class FanViewModel: ObservableObject {
                 guard
                     let levels = FanViewModel.speedTable[String(chars.airspaceFanModel.prefix(4))] else { return nil }
                 return (chars.speed, levels) }
+            .removeDuplicates(by: { ($0.0 == $1.0) && ($0.1 == $1.1) })
             .map {
                 Int( 80.0 * (Double($0.speed) / max( 1.0, Double($0.levels - 1) ) ) )
             }
-            .assign(to: &$displayedRPM)
+            .sink(receiveValue: { [weak self] val in
+                self?.displayedRPM.send(val)
+            })
+            .store(in: &bag)
         
 //        Publishers
 //            .CombineLatest3 (
@@ -253,7 +258,7 @@ class FanMonitor {
     deinit {
         task?.cancel()
         task = nil
-        print("fan monitor deinit")
+        Log.fan.debug("fan monitor deinit")
     }
     
     init (id: String, _ refresher: @escaping () async throws -> () ) {

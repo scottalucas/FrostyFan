@@ -10,13 +10,18 @@ import SwiftUI
 
 struct SegmentedSpeedPicker: View {
     @Binding var segments: Int
-    @Binding var highlightedSegment: Int?
+    @Binding var highlightedSegment: Int? //user selection, indicates either current motor speed or user selection
     @Binding var highlightedSegmentAlarm: Bool
-    @Binding var indicatedSegment: Int?
+    @Binding var indicatedSegment: Int? //indicates current motor speed when target != speed, hidden otherwise
     @Binding var indicatorBlink: IndicatorOpacity.IndicatorBlink?
     @State private var indicatorOn: Bool = false
     @State private var indicatorOffset: CGFloat = 0
     @State private var highlightOffset: CGFloat = 0
+    @State private var msg: String = "init"
+    @State private var width: CGFloat = .zero
+    @State private var cornerRadius: CGFloat = .zero
+    @State private var cellWidth: CGFloat = .zero
+
     var minMaxLabels: PickerLabel.Appearance
     var middleLabels: PickerLabel.Appearance
     
@@ -57,45 +62,45 @@ struct SegmentedSpeedPicker: View {
         var labelViews = Array<AnyView>()
         
         switch minMaxLabels {
-            case .useImages(let i):
-                let image = i.first ?? Image(uiImage: UIImage(systemName: "circle")!)
-                labelViews = [image.eraseToAnyView()]
-            case .useStrings(let s):
-                let string = s.first ?? "Min"
-                labelViews = [Text(string).eraseToAnyView()]
-            case .fillIntegerSequence:
-                labelViews = [Text("0").eraseToAnyView()]
+        case .useImages(let i):
+            let image = i.first ?? Image(uiImage: UIImage(systemName: "circle")!)
+            labelViews = [image.eraseToAnyView()]
+        case .useStrings(let s):
+            let string = s.first ?? "Min"
+            labelViews = [Text(string).eraseToAnyView()]
+        case .fillIntegerSequence:
+            labelViews = [Text("0").eraseToAnyView()]
         }
         
         switch middleLabels {
-            case .fillIntegerSequence:
-                labelViews.append(contentsOf: (1..<segments - 1).map { Text(String($0)).eraseToAnyView() })
-            case .useImages(let i):
-                let finalMiddleLabels: Array<AnyView> = Array<AnyView>.init(repeating: Image(uiImage: UIImage(systemName: "circle")!).eraseToAnyView(), count: segments - 2)
-                    .enumerated()
-                    .map { (index, view) in
-                        guard i.indices.contains(index) else { return view }
-                        return i[index].eraseToAnyView()
-                    }
-                labelViews.append(contentsOf: finalMiddleLabels)
-            case .useStrings(let s):
-                let finalMiddleLabels: Array<AnyView> = Array<AnyView>.init(repeating: Text("•").eraseToAnyView(), count: segments - 2)
-                    .enumerated()
-                    .map { (index, view) in
-                        guard s.indices.contains(index) else { return view }
-                        return Text(s[index]).eraseToAnyView()
-                    }
-                labelViews.append(contentsOf: finalMiddleLabels)
-                break
+        case .fillIntegerSequence:
+            labelViews.append(contentsOf: (1..<segments - 1).map { Text(String($0)).eraseToAnyView() })
+        case .useImages(let i):
+            let finalMiddleLabels: Array<AnyView> = Array<AnyView>.init(repeating: Image(uiImage: UIImage(systemName: "circle")!).eraseToAnyView(), count: segments - 2)
+                .enumerated()
+                .map { (index, view) in
+                    guard i.indices.contains(index) else { return view }
+                    return i[index].eraseToAnyView()
+                }
+            labelViews.append(contentsOf: finalMiddleLabels)
+        case .useStrings(let s):
+            let finalMiddleLabels: Array<AnyView> = Array<AnyView>.init(repeating: Text("•").eraseToAnyView(), count: segments - 2)
+                .enumerated()
+                .map { (index, view) in
+                    guard s.indices.contains(index) else { return view }
+                    return Text(s[index]).eraseToAnyView()
+                }
+            labelViews.append(contentsOf: finalMiddleLabels)
+            break
         }
         
         switch minMaxLabels {
-            case .useImages(let i):
-                labelViews.append((i.last ?? Image(uiImage: UIImage(systemName: "circle")!)).eraseToAnyView())
-            case .useStrings(let s):
-                labelViews.append(Text(s.last ?? "Max").eraseToAnyView())
-            case .fillIntegerSequence:
-                labelViews.append(Text(String(segments - 1)).eraseToAnyView())
+        case .useImages(let i):
+            labelViews.append((i.last ?? Image(uiImage: UIImage(systemName: "circle")!)).eraseToAnyView())
+        case .useStrings(let s):
+            labelViews.append(Text(s.last ?? "Max").eraseToAnyView())
+        case .fillIntegerSequence:
+            labelViews.append(Text(String(segments - 1)).eraseToAnyView())
         }
         
         var retVal = Array<PickerLabel>()
@@ -104,24 +109,24 @@ struct SegmentedSpeedPicker: View {
             let highlighted: Bool
             let separator: Bool
             switch (i, highlightedSegment) {
-                case (0, nil):
-                    highlighted = false
-                    separator = false
-                case (0,0):
-                    highlighted = true
-                    separator = false
-                case (let i, .some(let h)) where i == h:
-                    highlighted = true //t
-                    separator = false
-                case (let i, .some(let h)) where i == h + 1:
-                    highlighted = false
-                    separator = false
-                case (let i, _) where i == 0:
-                    highlighted = false
-                    separator = false
-                default:
-                    highlighted = false
-                    separator = true
+            case (0, nil):
+                highlighted = false
+                separator = false
+            case (0,0):
+                highlighted = true
+                separator = false
+            case (let i, .some(let h)) where i == h:
+                highlighted = true //t
+                separator = false
+            case (let i, .some(let h)) where i == h + 1:
+                highlighted = false
+                separator = false
+            case (let i, _) where i == 0:
+                highlighted = false
+                separator = false
+            default:
+                highlighted = false
+                separator = true
             }
             retVal.append(PickerLabel(id: i, labelView: labelViews[i], highlighted: highlighted, visibleSeparator: separator, cells: segments, separatorPaddingFactor: 0.1))
         }
@@ -129,29 +134,30 @@ struct SegmentedSpeedPicker: View {
     }
     
     var body: some View {
-        GeometryReader { geo in
-            let width = geo.size.width
-            let cornerRadius = geo.size.height * 0.3
-            let cellWidth = width / CGFloat(segments)
-            RoundedRectangle(cornerRadius: cornerRadius)
-                .foregroundColor(.segmentControllerBackground)
-                .overlay (
-                    VStack {
-                        if highlightedSegment == nil {
-                            RoundedRectangle(cornerRadius: cornerRadius)
-                                .foregroundColor(Color.clear)
-                        } else {
-                            RoundedRectangle(cornerRadius: cornerRadius)
+        RoundedRectangle(cornerRadius: cornerRadius)
+            .measureSize {
+                width = $0.width
+                cornerRadius = $0.height * 0.3
+                cellWidth = $0.width/CGFloat(segments)
+            }
+            .foregroundColor(.segmentControllerBackground)
+            .overlay (
+                VStack {
+                    if highlightedSegment == nil {
+                        RoundedRectangle(cornerRadius: cornerRadius)
+                            .foregroundColor(Color.clear)
+                    } else {
+                        RoundedRectangle(cornerRadius: cornerRadius)
+                            .inset(by: 3.0)
+                            .strokeBorder(lineWidth: 1.0)
+                            .foregroundColor(
+                                highlightedSegmentAlarm ? Color(.alarm) : Color(.clear)
+                            )
+                            .background(RoundedRectangle(cornerRadius: cornerRadius)
                                 .inset(by: 3.0)
-                                .strokeBorder(lineWidth: 1.0)
-                                .foregroundColor(
-                                    highlightedSegmentAlarm ? Color(.alarm) : Color(.clear)
-                                )
-                                .background(RoundedRectangle(cornerRadius: cornerRadius)
-                                    .inset(by: 3.0)
-                                    .fill()
-                                    .foregroundColor(Color(.systemBackground))
-                                    .shadow(color: highlightedSegmentAlarm ? Color(.alarm) : Color(.black), radius: 0.75, x: 0.5, y: 0.5)
+                                .fill()
+                                .foregroundColor(Color(.systemBackground))
+                                .shadow(color: highlightedSegmentAlarm ? Color(.alarm) : Color(.black), radius: 0.75, x: 0.5, y: 0.5)
                                 )
                                 .frame(width: cellWidth)
                                 .offset(x: highlightOffset, y: 0)
@@ -183,6 +189,10 @@ struct SegmentedSpeedPicker: View {
                             -(boxDim.height/2)
                         }
                     , alignment: .topLeading)
+            
+                .onChange(of: segments) { newSegments in
+                    cellWidth = width / CGFloat ( newSegments )
+                }
                 .onChange(of: indicatedSegment) { newTarget in
                     guard let newTarget = newTarget, let highlightedSegment = highlightedSegment else {
                         indicatorOn = false
@@ -193,16 +203,16 @@ struct SegmentedSpeedPicker: View {
                         indicatorOffset = cellWidth * CGFloat (newTarget)
                     }
                 }
+            
                 .onChange(of: highlightedSegment) { newHighlight in
-                    guard let newHighlight = newHighlight, let indicatedSegment = indicatedSegment else {
-                        indicatorOn = false
-                        return
-                    }
-                    indicatorOn = indicatedSegment != newHighlight
+                    let highlight = newHighlight ?? 0
+//                    print("\(highlight) \(cellWidth)")
                     withAnimation(.easeInOut(duration: 0.5)) {
-                        highlightOffset = cellWidth * CGFloat (newHighlight)
+                        highlightOffset = cellWidth * CGFloat (highlight)
                     }
+                    indicatorOn = indicatedSegment.map { $0 != highlight } ?? false
                 }
+            
                 .onAppear() {
                     highlightOffset = cellWidth * CGFloat (highlightedSegment ?? 0)
                     indicatorOffset = cellWidth * CGFloat (indicatedSegment ?? 0)
@@ -213,8 +223,8 @@ struct SegmentedSpeedPicker: View {
                     }
                     indicatorOn = t != h
                 }
-        }
-        .frame(minWidth: 125, idealWidth: 300, maxWidth: 325, minHeight: 20, idealHeight: 30, maxHeight: 40)
+//        }
+//        .frame(minWidth: 125, idealWidth: 300, maxWidth: 325, minHeight: 20, idealHeight: 30, maxHeight: 40)
     }
     
     init (
@@ -310,5 +320,6 @@ struct Segmented_Indicator_Picker_Previews: PreviewProvider {
             highlightedAlarm: .constant(false),
             indicatedSegment: .mock(3),
             indicatorBlink: .mock(nil))
+        .frame(width: 300, height: 25)
     }
 }

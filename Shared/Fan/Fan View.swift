@@ -65,15 +65,16 @@ struct FanView: View {
                         SettingsView(activeSheet: $activeSheet)},
                     label: {})
                 
-                Rotator(rpm: $viewModel.displayedRPM) {
-                    IdentifiableImage.fanIcon.image
-                        .resizable()
-                        .aspectRatio(1.0, contentMode: .fit)
-                        .scaleEffect(1.75)
-                    //                    .rotate(rpm: $viewModel.displayedRPM)
-                        .blur(radius: 30)
-                        .foregroundColor (viewModel.houseTempAlarm ? .alarm : .main)                        
-                }
+                RotatorRender (content:
+                                IdentifiableImage.fanIcon.image
+                                    .resizable()
+                                    .aspectRatio(1.0, contentMode: .fit)
+                                    .scaleEffect(1.75)
+                                        //                    .rotate(rpm: $viewModel.displayedRPM)
+                                    .blur(radius: 30)
+                                    .foregroundColor (viewModel.houseTempAlarm ? .alarm : .main)
+                                
+                                , viewModel: viewModel)
                 
                 FanInfoAreaRender (
                     viewModel: viewModel,
@@ -124,6 +125,13 @@ struct FanView: View {
     }
 }
 
+struct RotatorRender<Content: View>: View {
+    var content: Content
+    var viewModel: FanViewModel
+    var body: some View {
+        Rotator(rpm: viewModel.displayedRPM, content: content)
+    }
+}
 struct ControllerRender: View {
     @ObservedObject var viewModel: FanViewModel
     @State var requestedSpeed: Int?
@@ -158,7 +166,10 @@ struct ControllerRender: View {
                 indicatedSegment: $requestedSpeed,
                 indicatorBlink: $viewModel.indicatedAlarm,
                 minMaxLabels: .useStrings(["Off", "Max"]))
-            
+            .frame(height: 50)
+            .onAppear() {
+                requestedSpeed = viewModel.currentMotorSpeed
+            }
             .onChange(of: requestedSpeed) { speed in
                 Log.fan.info("selected speed \(String(describing: speed))")
                 viewModel.setSpeed(to: speed)

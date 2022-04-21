@@ -32,7 +32,7 @@ struct HouseView: View {
             }
         }
         .pulldownRefresh {
-            await viewModel.scan()
+            await viewModel.scan([])
         }
         
 //        .onChange(of: scenePhase) { phase in
