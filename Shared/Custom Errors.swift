@@ -66,14 +66,16 @@ enum NotificationError: Error {
 }
 
 enum SettingsError: LocalizedError {
-    case noTemp, alertsDisabled, locationDisabled, noLocation
+    case noTemp, alertsDisabled, locationDisabledForApp, locationDisabledForDevice, noLocation
     
     var errorDescription: String? {
         switch self {
         case .alertsDisabled:
             return "Notifications disabled"
-        case .locationDisabled:
+        case .locationDisabledForApp:
             return "Location disabled for this app"
+        case .locationDisabledForDevice:
+            return "Location disabled for this device"
         case .noTemp:
             return "Outside temperature not available"
         case .noLocation:
@@ -87,8 +89,10 @@ enum SettingsError: LocalizedError {
         switch self {
         case .alertsDisabled:
             return "Notifications are turned off for this app"
-        case .locationDisabled:
-            return "Can't get device location"
+        case .locationDisabledForApp:
+            return "Can't get location, app is not authorized"
+        case .locationDisabledForDevice:
+            return "Location disabled for this device"
         case .noTemp:
             return "Unable to retrieve temperature"
         case .noLocation:
@@ -102,18 +106,20 @@ enum SettingsError: LocalizedError {
         switch self {
         case .alertsDisabled:
             return "Enable notifications?"
-        case .locationDisabled:
+        case .locationDisabledForApp, .locationDisabledForDevice:
             return "Enable location?"
-        case .noTemp, .noLocation:
-            return "Try again?"
+        case .noLocation:
+            return "Get location?"
+        case .noTemp:
+            return "Try getting weather again?"
         default:
             return nil
         }
     }
     
-    func resolve () async {
+    func resolve (using vm: SettingViewModel) async throws {
         switch self {
-        case .alertsDisabled, .locationDisabled:
+        case .alertsDisabled, .locationDisabledForApp, .locationDisabledForDevice:
             guard
                 let url = await URL(string: UIApplication.openSettingsURLString),
                 await UIApplication.shared.canOpenURL(url)
@@ -122,9 +128,7 @@ enum SettingsError: LocalizedError {
         case .noTemp:
             try? await WeatherMonitor.shared.updateWeatherConditions()
         case .noLocation:
-            if let newLoc = try? await Location().updateLocation() {
-                Storage.coordinate = newLoc
-            }
+            await vm.updateLocation()
         default:
             return
         }

@@ -65,17 +65,15 @@ struct FanView: View {
                         SettingsView(activeSheet: $activeSheet)},
                     label: {})
                 
-                RotatorRender (content:
-                                IdentifiableImage.fanIcon.image
-                                    .resizable()
-                                    .aspectRatio(1.0, contentMode: .fit)
-                                    .scaleEffect(1.75)
-                                        //                    .rotate(rpm: $viewModel.displayedRPM)
-                                    .blur(radius: 30)
-                                    .foregroundColor (viewModel.houseTempAlarm ? .alarm : .main)
-                                
-                                , viewModel: viewModel)
-                
+                RotatorRender ( rpm: viewModel.displayedRPM ) {
+                    IdentifiableImage.fanIcon.image
+                        .resizable()
+                        .aspectRatio(1.0, contentMode: .fit)
+                        .scaleEffect(1.75)
+                        .blur(radius: 30)
+                        .foregroundColor (viewModel.houseTempAlarm ? .alarm : .main)
+                    
+                }
                 FanInfoAreaRender (
                     viewModel: viewModel,
                     activeSheet: $activeSheet)
@@ -126,12 +124,21 @@ struct FanView: View {
 }
 
 struct RotatorRender<Content: View>: View {
+    var rpm: Int
     var content: Content
-    var viewModel: FanViewModel
+    
     var body: some View {
-        Rotator(rpm: viewModel.displayedRPM, content: content)
+        Rotator(rpm: rpm) { content }
+    }
+    
+    init (rpm: Int, content: @escaping () -> Content) {
+//        self.viewModel = viewModel
+//        print("INIT rotator render with rpm \(rpm.wrappedValue)")
+        self.rpm = rpm
+        self.content = content ()
     }
 }
+
 struct ControllerRender: View {
     @ObservedObject var viewModel: FanViewModel
     @State var requestedSpeed: Int?

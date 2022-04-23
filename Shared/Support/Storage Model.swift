@@ -9,169 +9,6 @@ import Foundation
 import Combine
 import CoreLocation
 
-//class Storage: ObservableObject {
-//    typealias MacAddr = String
-//    typealias IpAddress = String
-//    typealias FanName = String
-//    private var defaults: UserDefaultsProtocol
-//    static let shared = Storage()
-//    private var fanStorage: FanStorageValue
-//    private var houseStorage: HouseStorageValue
-//    static func mock(useDefaults defaults: UserDefaultsProtocol) -> Storage {
-//        Storage.init(defaults: defaults)
-//    }
-//    
-//    @Published var houseLocation: CLLocation? {
-//        willSet {
-//            houseStorage.fanLocation = newValue.map { HouseStorageValue.FanLocation(lat: $0.coordinate.latitude, lon: $0.coordinate.longitude) } ?? nil
-//            let encoder = JSONEncoder()
-//            let data = (try? encoder.encode(houseStorage)) ?? Data()
-//            defaults.set(data, forKey: HouseStorageValue.Key)
-//        }
-//    }
-//    @Published var fanNames = Dictionary<MacAddr, FanName?>() { //use .update at call site
-//        willSet {
-//            for (macAddr, fanName) in newValue {
-//                var changedFan = fanStorage.fans[macAddr] ?? FanStorageValue.Fan()
-//                changedFan.name = fanName
-//                fanStorage.fans.updateValue(changedFan, forKey: macAddr)
-//            }
-//            let encoder = JSONEncoder()
-//            let data = (try? encoder.encode(fanStorage)) ?? Data()
-//            defaults.set(data, forKey: FanStorageValue.Key)
-//        }
-//    }
-//    @Published var fanIpAddrs = Dictionary<MacAddr, IpAddress?>() {
-//        willSet {
-//            for (macAddr, ipAddr) in newValue {
-//                var changedFan = fanStorage.fans[macAddr] ?? FanStorageValue.Fan()
-//                changedFan.lastIp = ipAddr
-//                fanStorage.fans.updateValue(changedFan, forKey: macAddr)
-//            }
-//            let encoder = JSONEncoder()
-//            let data = (try? encoder.encode(fanStorage)) ?? Data()
-//            defaults.set(data, forKey: FanStorageValue.Key)
-//        }
-//    }
-//    @Published var triggeredAlarms = Alarm() {
-//        willSet {
-//            houseStorage.triggeredAlarms = newValue
-//            let encoder = JSONEncoder()
-//            let data = (try? encoder.encode(houseStorage)) ?? Data()
-//            defaults.set(data, forKey: HouseStorageValue.Key)
-//        }
-//    }
-//    @Published var configuredAlarms = Alarm() {
-//        willSet {
-//            newConfiguredAlarms = newValue.subtracting(configuredAlarms)
-//            let encoder = JSONEncoder()
-//            let data = (try? encoder.encode(houseStorage)) ?? Data()
-//            houseStorage.configuredAlarms = newValue
-//            defaults.set(data, forKey: HouseStorageValue.Key)
-//        }
-//    }
-//    @Published private (set) var newConfiguredAlarms = Alarm ()
-//    
-//    @Published var lowTempLimitSet: Double? {
-//        willSet {
-//            houseStorage.lowTempLimitSet = newValue
-//            let encoder = JSONEncoder()
-//            let data = (try? encoder.encode(houseStorage)) ?? Data()
-//            defaults.set(data, forKey: HouseStorageValue.Key)
-//        }
-//    }
-//    @Published var highTempLimitSet: Double? {
-//        willSet {
-//            houseStorage.highTempLimitSet = newValue
-//            let encoder = JSONEncoder()
-//            let data = (try? encoder.encode(houseStorage)) ?? Data()
-//            defaults.set(data, forKey: HouseStorageValue.Key)
-//        }
-//    }
-//    @Published var weatherStorageValue: WeatherStorageValue? {
-//        willSet {
-//            let encoder = JSONEncoder()
-//            let data = (try? encoder.encode(newValue)) ?? Data()
-//            defaults.set(data, forKey: WeatherStorageValue.Key)
-//        }
-//    }
-//    
-//    private init (defaults: UserDefaultsProtocol = UserDefaults.standard) {
-//        self.defaults = defaults
-//        let decoder = JSONDecoder()
-//        fanStorage = {
-//            guard
-//                let data = defaults.data(forKey: FanStorageValue.Key),
-//                let retValue = try? decoder.decode(FanStorageValue.self, from: data)
-//            else { return FanStorageValue(fans: [:]) }
-//           return retValue
-//        }()
-//        houseStorage = {
-//            guard
-//                let data = defaults.data(forKey: HouseStorageValue.Key),
-//                let decodeVal = try? decoder.decode(HouseStorageValue.self, from: data)
-//            else { return HouseStorageValue() }
-//            return decodeVal
-//        }()
-//        weatherStorageValue = {
-//            if let data = defaults.data(forKey: WeatherStorageValue.Key) {
-//                return try? decoder.decode(WeatherStorageValue.self, from: data)
-//            } else { return nil }
-//        }()
-//        
-//        fanNames = fanStorage.fans.compactMapValues({ $0.name })
-//        fanIpAddrs = fanStorage.fans.compactMapValues({ $0.lastIp })
-//        houseLocation = houseStorage.fanCLLocation
-////        triggeredAlarms = houseStorage.triggeredAlarms
-////        configuredAlarms = houseStorage.configuredAlarms
-//        lowTempLimitSet = houseStorage.lowTempLimitSet
-//        highTempLimitSet = houseStorage.highTempLimitSet
-//    }
-//}
-//
-//extension Storage {
-//    struct FanStorageValue: Codable {
-//        static var Key = "fanStorage"
-//        var fans: Dictionary<MacAddr, Fan>
-//        struct Fan: Codable {
-//            var configuredAlarms = Alarm.Fan.alwaysConfigured
-//            var triggeredAlarms = Alarm.Fan()
-//            var lastIp: String?
-//            var name: String?
-//        }
-//    }
-//    struct HouseStorageValue: Codable {
-//        static var Key = "houseStorage"
-//        var fanLocation: FanLocation?
-//        var fanCLLocation: CLLocation? {
-//            return fanLocation.map {CLLocation(latitude: $0.lat, longitude: $0.lon) } ?? nil
-//        }
-//        var configuredAlarms = Alarm.House.alwaysConfigured
-//        var triggeredAlarms = Alarm.House()
-//        var highTempLimitSet: Double?
-//        var lowTempLimitSet: Double?
-//        struct FanLocation: Codable {
-//            var lat: Double
-//            var lon: Double
-//        }
-//        init (fromLoc loc: CLLocation? = nil) {
-//            fanLocation = loc.map { FanLocation(lat: $0.coordinate.latitude, lon: $0.coordinate.longitude) } ?? nil
-//        }
-//    }
-//    struct WeatherStorageValue: Codable {
-//        static var Key = "weatherStorage"
-//        var lastUpdate: Date?
-////        var nextUpdate: Date?
-//        var rawForecast: WeatherObject?
-//    }
-//}
-
-//protocol UserDefaultsProtocol {
-//    func data(forKey: String) -> Data?
-//    func set(_:Any?, forKey: String)
-//}
-//
-//extension UserDefaults: UserDefaultsProtocol {}
 enum StorageKey: Equatable, RawRepresentable, CaseIterable {
     static var allCases: [StorageKey] {
         return [.knownFans, .interlockAlarmEnabled, .temperatureAlarmEnabled, .lowTempLimit, .highTempLimit, .forecast, .lastForecastUpdate, .lastNotificationShown, .coordinate, .fanName("")]
@@ -234,7 +71,7 @@ struct Storage {
         }
         set {
             let encoder = JSONEncoder()
-            let dat = (try? encoder.encode(newValue)) ?? Data()
+            guard let dat = (try? encoder.encode(newValue)) else { Storage.clear(.knownFans); return }
             UserDefaults.standard.set(dat, forKey: StorageKey.knownFans.rawValue)
         }
     }
@@ -261,6 +98,7 @@ struct Storage {
             UserDefaults.standard.object(forKey: StorageKey.lowTempLimit.rawValue) == nil ? nil : UserDefaults.standard.double(forKey: StorageKey.lowTempLimit.rawValue)
         }
         set {
+            guard let newValue = newValue else { Storage.clear(.lowTempLimit); return }
              UserDefaults.standard.set(newValue, forKey: StorageKey.lowTempLimit.rawValue)
         }
     }
@@ -270,6 +108,7 @@ struct Storage {
             UserDefaults.standard.object(forKey: StorageKey.highTempLimit.rawValue) == nil ? nil : UserDefaults.standard.double(forKey: StorageKey.highTempLimit.rawValue)
         }
         set {
+            guard let newValue = newValue else { Storage.clear(.highTempLimit); return }
             UserDefaults.standard.set(newValue, forKey: StorageKey.highTempLimit.rawValue)
         }
     }
@@ -280,7 +119,7 @@ struct Storage {
         }
         set {
             guard let val = newValue else {
-                UserDefaults.standard.set(nil, forKey: StorageKey.forecast.rawValue)
+                UserDefaults.standard.removeObject(forKey: StorageKey.forecast.rawValue)
                 return
             }
             let obj = Weather.WeatherObject(fromResult: val).data
@@ -308,7 +147,8 @@ struct Storage {
         get {
             UserDefaults.standard.data(forKey: StorageKey.coordinate.rawValue)?.decodeCoordinate
         } set {
-            UserDefaults.standard.set(newValue?.data, forKey: StorageKey.coordinate.rawValue)
+            guard let newValue = newValue else { Storage.clear(.coordinate); return }
+            UserDefaults.standard.set(newValue.data, forKey: StorageKey.coordinate.rawValue)
         }
     }
     
@@ -321,58 +161,13 @@ struct Storage {
         let key = StorageKey.fanName(addr).rawValue
         return UserDefaults.standard.object(forKey: key) == nil ? "Fan \(addr)" : UserDefaults.standard.string(forKey: key) ?? "Fan \(addr)"
     }
-
-//    func get() -> Any? {
-//        switch self {
-//            case .interlockAlarmEnabled, .temperatureAlarmEnabled:
-//                return UserDefaults.standard.bool(forKey: self.key)
-//            case .lowTempLimit, .highTempLimit:
-//                return UserDefaults.standard.double(forKey: self.key)
-//            case .forecast:
-//                return UserDefaults.standard.data(forKey: self.key)?.decodeWeatherResult
-//            case .lastForecastUpdate:
-//                return UserDefaults.standard.data(forKey: self.key)?.decodeDate
-//            case .coordinate:
-//                return UserDefaults.standard.data(forKey: self.key)?.decodeCoordinate
-//            case .fanName:
-//                return UserDefaults.standard.string(forKey: self.key)
-//        }
-//    }
-//
-//    static var interlockAlarmEnabled: Bool {
-//        UserDefaults.standard.bool(forKey: StorageKey.interlockAlarmEnabled.key)
-//    }
-//
-//    var temperatureAlarmEnabled: Bool {
-//        UserDefaults.standard.bool(forKey: StorageKey.temperatureAlarmEnabled.key)
-//    }
-//
-//    var highTempLimit: Double {
-//        UserDefaults.standard.double(forKey: StorageKey.highTempLimit.key)
-//    }
-//
-//    var lowTempLimit: Double {
-//        UserDefaults.standard.double(forKey: StorageKey.lowTempLimit.key)
-//    }
-//
-//    var storedWeather: Weather.WeatherResult? {
-//        UserDefaults.standard.data(forKey: StorageKey.forecast.key)?.decodeWeatherResult
-//    }
-//
-//    var lastUpdate: Date {
-//        UserDefaults.standard.data(forKey: StorageKey.lastForecastUpdate.key)?.decodeDate ?? .distantPast
-//    }
-//
-//    var fanCoordinates: Coordinate? {
-//        UserDefaults.standard.data(forKey: StorageKey.coordinate.key)?.decodeCoordinate
-//    }
     
     static func clear (_ key: StorageKey? = nil) {
         if let k = key?.rawValue {
-            UserDefaults.standard.set(nil, forKey: k)
+            UserDefaults.standard.removeObject(forKey: k)
         } else {
             StorageKey.allCases.forEach({
-                UserDefaults.standard.set(nil, forKey: $0.rawValue)
+                UserDefaults.standard.removeObject(forKey: $0.rawValue)
             })
         }
     }

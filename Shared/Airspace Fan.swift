@@ -17,7 +17,7 @@ struct AirspaceFanApp: App {
     @UIApplicationDelegateAdaptor private var appDelegate: AppDelegate
     @Environment(\.scenePhase) var scenePhase
     
-    let location = Location()
+    let location = Location.shared
     let weather: WeatherMonitor
     let houseView: HouseView
     

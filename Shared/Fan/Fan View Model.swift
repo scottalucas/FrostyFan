@@ -28,7 +28,8 @@ class FanViewModel: ObservableObject {
     @Published var showTimerIcon = true
     @Published var showDamperWarning = false
     @Published var showInterlockWarning = false
-    var displayedRPM = CurrentValueSubject<Int, Never>(0)
+    @Published var displayedRPM: Int = .zero
+
     var chars: FanCharacteristics {
         model.fanCharacteristics.value
     }
@@ -189,11 +190,13 @@ class FanViewModel: ObservableObject {
             .map {
                 Int( 80.0 * (Double($0.speed) / max( 1.0, Double($0.levels - 1) ) ) )
             }
-            .sink(receiveValue: { [weak self] val in
-                self?.displayedRPM.send(val)
-            })
-            .store(in: &bag)
-        
+//            .print("\r\rrpm pub")
+            .assign(to: &$displayedRPM)
+//            .sink(receiveValue: { [weak self] val in
+//                self?.displayedRPM.send(val)
+//            })
+//            .store(in: &bag)
+//
 //        Publishers
 //            .CombineLatest3 (
 //                model.fanCharacteristics

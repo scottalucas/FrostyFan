@@ -26,14 +26,28 @@ struct SettingsView: View {
             }
             SettingsWeatherErrorSection ( viewModel: viewModel )
         }
+        .onChange(of: viewModel.temperatureAlertsEnabled, perform: { newValue in
+            print("temp alerts enabled \(newValue)")
+        })
         .foregroundColor(.pageBackground)
         .listStyle(GroupedListStyle())
         .alert (
             "Not Available",
             isPresented: $showAlert,
             actions: {
+                Button ("Cancel") {
+                    viewModel.settingsError = nil
+                    showAlert = false
+                }
                 Button(viewModel.settingsError?.recoverySuggestion ?? "") {
-                    Task { await viewModel.settingsError?.resolve() }
+                    Task {
+                        do {
+                            try await viewModel.settingsError?.resolve(using: viewModel)
+                            viewModel.settingsError = nil
+                        } catch (let err as SettingsError) {
+                            viewModel.settingsError = err
+                        } catch { }
+                    }
                 }
             },
             message: {
@@ -82,7 +96,7 @@ struct SettingsView: View {
 
 struct SettingsLocationSection: View {
     @ObservedObject var viewModel: SettingViewModel
-    
+    @AppStorage (StorageKey.coordinate.rawValue) var coordinates: Data?
     @ViewBuilder
     var body: some View {
         Section(header: Text("Location").settingsAppearance(.header)) {
@@ -98,6 +112,7 @@ struct SettingsLocationSection: View {
                     Spacer()
                     Button(action: {
                         viewModel.clearLocation()
+                        viewModel.temperatureAlertsEnabled = false
                     }, label: {
                         Text("Erase Location")
                             .settingsAppearance(.buttonLabel)
@@ -142,19 +157,19 @@ struct SettingsSwitchesSection: View {
     var body: some View {
         Section(header: Text("Alerts").settingsAppearance(.header)) {
             VStack {
-                Toggle("Interlock", isOn: $interlockAlertsEnabled)
-                Toggle("Temperature", isOn: $temperatureAlertsEnabled)
+                Toggle("Interlock", isOn: $viewModel.interlockAlertsEnabled)
+                Toggle("Temperature", isOn: $viewModel.temperatureAlertsEnabled)
             }
             .toggleStyle(ColoredToggleStyle(onColor: .main, offColor: .gray, thumbColor: .pageBackground))
             .settingsAppearance(.lineLabel)
             
             
-            .onChange(of: interlockAlertsEnabled) { newValue in
+            .onChange(of: viewModel.interlockAlertsEnabled) { newValue in
                 if newValue {
                     viewModel.validateInterlockAlert()
                 }
             }
-            .onChange(of: temperatureAlertsEnabled) { newValue in
+            .onChange(of: viewModel.temperatureAlertsEnabled) { newValue in
                 if newValue {
                     viewModel.validateTempAlert()
                 }
@@ -182,6 +197,7 @@ struct SettingsWeatherErrorSection: View {
                 {
                     HStack {
                         Text("Could not get outside temperature")
+                            .settingsAppearance(.lineLabel)
                         Spacer()
                         Button(action: {
                             Task { await viewModel.retryTemperature() }
@@ -330,7 +346,7 @@ struct Settings_View_Previews: PreviewProvider {
     static var loc: Location {
         @AppStorage(StorageKey.coordinate.rawValue) var coordData: Data?
         coordData = CLLocation(latitude: 38, longitude: -122).data
-        return Location()
+        return Location.shared
     }
     static var previews: some View {
         NavigationView {

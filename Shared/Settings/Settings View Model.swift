@@ -13,9 +13,9 @@ import BackgroundTasks
 
 class SettingViewModel: ObservableObject {
     @Environment(\.scenePhase) var scenePhase
-    @AppStorage(StorageKey.temperatureAlarmEnabled.rawValue) var temperatureAlertsEnabled: Bool = false
-    @AppStorage(StorageKey.interlockAlarmEnabled.rawValue) var interlockAlertsEnabled: Bool = false
-    @AppStorage(StorageKey.coordinate.rawValue) var coordinateData: Data?
+    @AppStorage (StorageKey.temperatureAlarmEnabled.rawValue) var temperatureAlertsEnabled: Bool = false
+    @AppStorage (StorageKey.interlockAlarmEnabled.rawValue) var interlockAlertsEnabled: Bool = false
+    @AppStorage (StorageKey.coordinate.rawValue) var coordinateData: Data?
     @AppStorage (StorageKey.lowTempLimit.rawValue) var lowTempLimit: Double?
     @AppStorage (StorageKey.highTempLimit.rawValue) var highTempLimit: Double?
     private var initTempAlertsEnabled: Bool?
@@ -23,7 +23,7 @@ class SettingViewModel: ObservableObject {
     private var initCoord: Data?
     private var initHighTempLimit: Double?
     private var initLowTempLimit: Double?
-    private var location = Location()
+    private var location = Location.shared
     @Published var showLocation: LocationSectionStatus = .unknown
     @Published var showTempSwitch: Bool = true
 //    @Published var showNoNotisAlert: Bool = false
@@ -44,25 +44,14 @@ class SettingViewModel: ObservableObject {
                 guard await notificationsAuthorized() else {
                     throw SettingsError.alertsDisabled
                 }
-                if coordinateData != nil {
-                    self.settingsError = nil
-                    return
+                guard coordinateData != nil else {
+                    throw SettingsError.noLocation
                 }
-                guard
-                    let d = try? await location.updateLocation(),
-                    let dat = d.data,
-                    dat.decodeCoordinate != nil
-                else {
-                    showLocation = .unknown
-                    throw SettingsError.locationDisabled
-                }
-                self.settingsError = nil
-                coordinateData = dat
-            } catch {
-                self.settingsError = error as? SettingsError
+            } catch (let err as SettingsError) {
                 temperatureAlertsEnabled = false
+                settingsError = err
                 Log.settings.info("Unsupported temperture alert \(self.settingsError?.errorDescription ?? "")")
-            }
+            } catch { }
         }
     }
     
@@ -73,11 +62,11 @@ class SettingViewModel: ObservableObject {
                     throw SettingsError.alertsDisabled
                 }
                 settingsError = nil
-            } catch {
-                settingsError = error as? SettingsError
+            } catch (let err as SettingsError) {
                 interlockAlertsEnabled = false
+                settingsError = err
                 Log.settings.info("Unsupported interlock alert \(self.settingsError?.errorDescription ?? "")")
-            }
+            } catch { }
         }
     }
     
@@ -102,11 +91,12 @@ class SettingViewModel: ObservableObject {
             Log.settings.error("Failed to update location \(error.localizedDescription)")
             settingsError = .noLocation
             showLocation = .unknown
+            Storage.clear(.coordinate)
         }
     }
     
     @MainActor func clearLocation () {
-        location.clearLocation()
+        coordinateData = nil
         showLocation = .unknown
     }
     
@@ -117,26 +107,38 @@ class SettingViewModel: ObservableObject {
         initTempAlertsEnabled = temperatureAlertsEnabled
         initInterlockAlertsEnabled = interlockAlertsEnabled
         Task { @MainActor in
-                do {
-                    guard await notificationsAuthorized() else {
-                        throw SettingsError.alertsDisabled
-                    }
-                    guard coordinateData != nil else {
-                        throw SettingsError.noLocation
-                    }
-                } catch (let err as SettingsError) {
-                    switch err {
-                    case .alertsDisabled:
-                        temperatureAlertsEnabled = false
-                        interlockAlertsEnabled = false
-                    case .noLocation:
-                        temperatureAlertsEnabled = false
-                    default:
-                        break
-                    }
-                    Log.settings.info("appeared with error \( err.errorDescription ?? "" )")
-                } catch {}
+            let notificationsEnabled = await notificationsAuthorized()
+            guard !Task.isCancelled else { return }
+            guard notificationsEnabled else {
+                temperatureAlertsEnabled = false
+                interlockAlertsEnabled = false
+                return
+            }
         }
+        if coordinateData == nil {
+            temperatureAlertsEnabled = false
+        }
+//        Task { @MainActor in
+//                do {
+//                    guard await notificationsAuthorized() else {
+//                        throw SettingsError.alertsDisabled
+//                    }
+//                    guard coordinateData != nil else {
+//                        throw SettingsError.noLocation
+//                    }
+//                } catch (let err as SettingsError) {
+//                    switch err {
+//                    case .alertsDisabled:
+//                        temperatureAlertsEnabled = false
+//                        interlockAlertsEnabled = false
+//                    case .noLocation:
+//                        temperatureAlertsEnabled = false
+//                    default:
+//                        break
+//                    }
+//                    Log.settings.info("appeared with error \( err.errorDescription ?? "" )")
+//                } catch {}
+//        }
         
         if let cData = coordinateData, let coord = cData.decodeCoordinate {
             showLocation = .known("\(coord.lat.latitudeStr) \(coord.lon.longitudeStr)")
