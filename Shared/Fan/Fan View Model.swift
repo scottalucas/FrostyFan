@@ -25,7 +25,7 @@ class FanViewModel: ObservableObject {
     @Published var appInForeground = false
     @Published var indicatedAlarm: IndicatorOpacity.IndicatorBlink?
     @Published var offDateText: String?
-    @Published var showTimerIcon = true
+    @Published var showTimerIcon = false
     @Published var showDamperWarning = false
     @Published var showInterlockWarning = false
     @Published var displayedRPM: Int = .zero
@@ -61,7 +61,7 @@ class FanViewModel: ObservableObject {
     
     func setTimer (addHours hours: Int) {
         Task {
-            registerBackgroundTask()
+            registerBackgroundTask("set timer")
             await model.setFan(addHours: hours)
             endBackgroundTask()
         }
@@ -70,7 +70,7 @@ class FanViewModel: ObservableObject {
     func setSpeed (to spd: Int?) {
         guard let spd = spd else { return }
         Task {
-            registerBackgroundTask()
+            registerBackgroundTask("set speed")
             await model.setFan(toSpeed: spd)
             endBackgroundTask()
         }
@@ -85,14 +85,18 @@ class FanViewModel: ObservableObject {
     //        }
     //    }
     
-    private func registerBackgroundTask() {
-        backgroundTask = UIApplication.shared.beginBackgroundTask { [weak self] in
+    private func registerBackgroundTask(_ name: String) {
+        Log.background.debug("Registered background task for \(name)")
+        backgroundTask = UIApplication.shared.beginBackgroundTask (withName: name) { [weak self] in
+            Log.background.debug("Timeout background task for \(name)")
+
             self?.endBackgroundTask()
         }
         assert(backgroundTask != .invalid)
     }
     
     private func endBackgroundTask() {
+        Log.background.debug("Ending background task for \(String(describing: self.backgroundTask))")
         UIApplication.shared.endBackgroundTask(backgroundTask)
         backgroundTask = .invalid
     }
@@ -147,21 +151,21 @@ class FanViewModel: ObservableObject {
             }
             .assign(to: &$showInterlockWarning)
         
-        model.motorContext
-            .prepend(.standby)
-            .receive(on: DispatchQueue.main)
-            .map {
-                $0 != .adjusting
-            }
-            .combineLatest(
-                model.timerContext
-                    .prepend(.standby)
-                    .map {
-                        $0 != .adjusting
-                    }
-            )
-            .map { $0 && $1 }
-            .assign(to: &$showTimerIcon)
+        Publishers.CombineLatest3 (
+            model.motorContext
+                .prepend( .standby )
+                .map { $0 != .adjusting },
+            model.timerContext
+                .prepend ( .standby )
+                .map { $0 != .adjusting },
+            model.fanCharacteristics
+                .prepend(chars)
+                .map { $0.speed > 0 }
+        )
+        .map { $0 && $1 && $2 }
+        .removeDuplicates()
+        .receive(on: DispatchQueue.main)
+        .assign(to: &$showTimerIcon)
         
         model.fanCharacteristics
             .prepend(chars)

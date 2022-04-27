@@ -35,6 +35,7 @@ struct FanView: View {
                             sheet: $activeSheet,
                             storageKey: StorageKey.fanName(id)) },
                     label: {})
+                
                 NavigationLink(
                     tag: OverlaySheet.timer,
                     selection: $activeSheet,
@@ -44,6 +45,7 @@ struct FanView: View {
                             viewModel: viewModel,
                             timeOnTimer: viewModel.chars.timer)},
                     label: {})
+                
                 NavigationLink(
                     tag: OverlaySheet.detail,
                     selection: $activeSheet,
@@ -52,28 +54,30 @@ struct FanView: View {
                             activeSheet: $activeSheet,
                             chars: viewModel.chars )},
                     label: {})
+                
                 NavigationLink(
                     tag: OverlaySheet.fatalFault,
                     selection: $activeSheet,
                     destination: {
                         FatalFaultSheet()},
                     label: {})
+                
                 NavigationLink(
                     tag: OverlaySheet.settings,
                     selection: $activeSheet,
                     destination: {
                         SettingsView(activeSheet: $activeSheet)},
                     label: {})
-                
+
                 RotatorRender ( rpm: viewModel.displayedRPM ) {
                     IdentifiableImage.fanIcon.image
-                        .resizable()
-                        .aspectRatio(1.0, contentMode: .fit)
-                        .scaleEffect(1.75)
-                        .blur(radius: 30)
-                        .foregroundColor (viewModel.houseTempAlarm ? .alarm : .main)
-                    
+                        .resizable ( )
+                        .aspectRatio ( 1.0, contentMode: .fit )
+                        .scaleEffect ( 1.75 )
+                        .blur ( radius: 30 )
+                        .foregroundColor ( viewModel.houseTempAlarm ? .alarm : .main )
                 }
+
                 FanInfoAreaRender (
                     viewModel: viewModel,
                     activeSheet: $activeSheet)

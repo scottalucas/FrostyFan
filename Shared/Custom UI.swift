@@ -391,6 +391,18 @@ struct MeasureSizeModifier: ViewModifier {
   }
 }
 
+struct DebugTime {
+    private var entries = Dictionary<String, Date>()
+    
+    func diff(_ name: String) -> TimeInterval? {
+        guard let start = entries[name] else { return nil }
+        return start.timeIntervalSinceNow
+    }
+    mutating func mark(_ name: String) {
+        entries[name] = .now
+    }
+}
+
 extension View {
   func measureSize(perform action: @escaping (CGSize) -> Void) -> some View {
     self.modifier(MeasureSizeModifier())

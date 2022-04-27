@@ -91,7 +91,7 @@ class SettingViewModel: ObservableObject {
             Log.settings.error("Failed to update location \(error.localizedDescription)")
             settingsError = .noLocation
             showLocation = .unknown
-            Storage.clear(.coordinate)
+            coordinateData = nil
         }
     }
     

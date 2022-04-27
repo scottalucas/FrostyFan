@@ -15,7 +15,7 @@ struct Rotator<Content: View>: View {
     private let content: Content
     var rpm: Int
     var body: some View {
-            TimelineView (.periodic(from: .now, by: framePeriod)) { timeline in
+        TimelineView (.periodic(from: .now, by: ( framePeriod * 1 ) )) { timeline in
                 RotatedView(rpm: rpm, driver: timeline.date, framePeriod: framePeriod) {
                     content
                 }
@@ -54,14 +54,27 @@ class RotatingViewModel: ObservableObject {
 
     var deg: Angle = .zero
     var animation: Animation
-    private var baseFramePeriod: Double
+    private var baseFramePeriod: TimeInterval
     private var animationIndex: Int = .zero
     private var accum: Array<Angle> = [.zero]
     private let anglePerTransitionFrame: Angle = .init(degrees: 2)
     private var targetRpm: Int = .zero
     private var currentRpm: Double = .zero
+    private var frameMark = Date.now
+    
+    struct FrameTimer {
+        private var entries = Dictionary<String, Date>()
+        
+        func diff(_ name: String) -> TimeInterval? {
+            guard let start = entries[name] else { return nil }
+            return start.timeIntervalSinceNow
+        }
+        mutating func mark(_ name: String) {
+            entries[name] = .now
+        }
+    }
                            
-    init(rpm: Int, framePeriod period: Double = 1.0 / 5.0) {
+    init(rpm: Int, framePeriod period: TimeInterval = 1.0 / 5.0) {
         baseFramePeriod = period
         animation = Animation.linear ( duration: period )
         self.targetRpm = rpm
@@ -85,12 +98,21 @@ class RotatingViewModel: ObservableObject {
     }
     
     func getNextDegree () {
-        let nextIndex = min(accum.count - 1, animationIndex + 1)
-        let nextAngle = deg + accum [ animationIndex ]
-        if nextIndex != accum.count - 1 {
-      }
+        var nextAngle: Angle = .zero
+        defer {
+            frameMark = .now
+            deg = nextAngle
+            animationIndex = min ( animationIndex + 1, accum.count - 1)
+        }
+        let dT = frameMark.timeIntervalSinceNow
+        animation = .linear(duration: dT)
+        let adj = Double ( abs ( dT / baseFramePeriod ) )
+        nextAngle = ( deg + accum [ animationIndex ] * adj )
         currentRpm = rpmFromDeg(accum [ animationIndex ])
-        animationIndex = nextIndex
+        let degPerT = (nextAngle.degrees - deg.degrees) / ( dT == 0 ? .infinity : dT )
+        let rotPerS = degPerT / 360.0
+        let rotPerM = rotPerS * 60.0
+        Log.ui.debug("\(adj) \(String(describing: rotPerM)) \(dT)")
         deg = nextAngle
     }
     
