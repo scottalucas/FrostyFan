@@ -11,8 +11,8 @@ import Combine
 import os.log
 
 struct Rotator<Content: View>: View {
-    var rpm: Double
     @State var pauseRotation = false
+    var rpm: Double
     var content: Content
     
     var body: some View {

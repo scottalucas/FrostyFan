@@ -170,7 +170,10 @@ struct ControllerRender: View {
                 indicatedSegment: $requestedSpeed,
                 indicatorBlink: $viewModel.indicatedAlarm,
                 minMaxLabels: .useStrings(["Off", "Max"]))
-            .frame(height: 50)
+            .frame(height: 40)
+            .frame(maxWidth: 500)
+            .padding([.leading, .trailing])
+//            .frame(maxWidth: 500, minHeight: 30, idealHeight: 50, maxHeight: 50)
             .onAppear() {
                 requestedSpeed = viewModel.currentMotorSpeed
             }
@@ -178,7 +181,6 @@ struct ControllerRender: View {
                 Log.fan.info("selected speed \(String(describing: speed))")
                 viewModel.setSpeed(to: speed)
             }
-            .padding([.leading, .trailing], 20)
         }
         .foregroundColor(HouseStatus.shared.houseTempAlarm ? .alarm : .main)
     }
@@ -329,18 +331,33 @@ struct FanView_Previews: PreviewProvider {
     //    }
     static var previews: some View {
         //        let vm = FanViewModel(chars: fan)
-        FanViewPreviewContainer()
-            .preferredColorScheme(.dark)
-            .task {
-                try? await Task.sleep(interval: 2.0)
-                URLSessionMgr.shared.networkAvailable.send(true)
-                WeatherMonitor.shared.currentTemp = .init(value: 10, unit: .fahrenheit)
-                WeatherMonitor.shared.tooCold = false
-                WeatherMonitor.shared.tooHot = false
-                HouseStatus.shared.houseTempAlarm = true
-//                HouseStatus.shared.houseMessage = "test"
-//                HouseStatus.shared.scanUntil = .now.addingTimeInterval(2.0)
-            }
+        Group {
+            FanViewPreviewContainer()
+                .preferredColorScheme(.light)
+                .task {
+                    try? await Task.sleep(interval: 2.0)
+                    URLSessionMgr.shared.networkAvailable.send(true)
+                    WeatherMonitor.shared.currentTemp = .init(value: 10, unit: .fahrenheit)
+                    WeatherMonitor.shared.tooCold = false
+                    WeatherMonitor.shared.tooHot = false
+                    HouseStatus.shared.houseTempAlarm = true
+                    //                HouseStatus.shared.houseMessage = "test"
+                    //                HouseStatus.shared.scanUntil = .now.addingTimeInterval(2.0)
+                }
+            FanViewPreviewContainer()
+                .previewDevice("iPad Pro (12.9-inch) (5th generation)")
+                .preferredColorScheme(.dark)
+                .task {
+                    try? await Task.sleep(interval: 2.0)
+                    URLSessionMgr.shared.networkAvailable.send(true)
+                    WeatherMonitor.shared.currentTemp = .init(value: 10, unit: .fahrenheit)
+                    WeatherMonitor.shared.tooCold = false
+                    WeatherMonitor.shared.tooHot = false
+                    HouseStatus.shared.houseTempAlarm = true
+                    //                HouseStatus.shared.houseMessage = "test"
+                    //                HouseStatus.shared.scanUntil = .now.addingTimeInterval(2.0)
+                }
+        }
         //            FanNameRender(showTemperatureWarning: .constant(false), showDamperWarning: .constant(false), showInterlockWarning: .constant(false), activeSheet: .constant(nil), name: .constant("Test fan"))
         //            FanImageRender(activeSheet: .constant(nil), viewModel: vm)
         //            VStack {

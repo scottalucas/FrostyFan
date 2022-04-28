@@ -192,7 +192,7 @@ class FanViewModel: ObservableObject {
                 return (chars.speed, levels) }
             .removeDuplicates(by: { ($0.0 == $1.0) && ($0.1 == $1.1) })
             .map {
-                80.0 * (Double($0.speed) / max( 1.0, Double($0.levels - 1) ) )
+                60.0 * (Double($0.speed) / max( 1.0, Double($0.levels - 1) ) )
             }
 //            .print("\r\rrpm pub")
             .assign(to: &$displayedRPM)
