@@ -11,129 +11,135 @@ import Combine
 import os.log
 
 struct Rotator<Content: View>: View {
-    private let framePeriod: Double
-    private let content: Content
-    var rpm: Int
+    var rpm: Double
+    @State var pauseRotation = false
+    var content: Content
+    
     var body: some View {
-        TimelineView (.periodic(from: .now, by: ( framePeriod * 1 ) )) { timeline in
-                RotatedView(rpm: rpm, driver: timeline.date, framePeriod: framePeriod) {
+        VStack {
+        TimelineView(.animation(paused: pauseRotation)) { timeline in
+                RotatedView(rpm: rpm, pacer: timeline.date, pause: $pauseRotation) {
                     content
                 }
             }
+        }
     }
-    init(rpm: Int, frameRate: Double = 10.0, content: @escaping () -> Content) {
-        self.content = content ()
+    
+    init (rpm: Double, content: () -> Content) {
         self.rpm = rpm
-        framePeriod = 1.0 / Double(frameRate)
+        self.content = content ()
     }
 }
 
 struct RotatedView<Content: View>: View {
-    @StateObject var viewModel: RotatingViewModel
-    private var driver: Date = .now
-    private var rpm: Int = .zero
+    @StateObject var viewModel = RotatingViewModel ()
+    @Binding var pauseRotation: Bool
     private var content: Content
+    private var pacer: Date
+    private var rpm: Double
+
     var body: some View {
         content
-            .rotationEffect(viewModel.deg)
-            .animation(viewModel.animation, value: viewModel.deg)
-            .onChange(of: driver) { newValue in
-                viewModel.updateRpm(to: rpm)
-                viewModel.getNextDegree()
+            .rotationEffect(viewModel.getDeg(for: pacer))
+            .onChange(of: rpm, perform: { newValue in
+                viewModel.setRpm(to: newValue)
+            })
+            .onReceive(viewModel.pauseRotation) { pause in
+                pauseRotation = pause
             }
     }
     
-    init(rpm: Int, driver: Date, framePeriod: Double, content: () -> Content) {
-        self.rpm = rpm
+    init (rpm: Double, pacer: Date, pause: Binding<Bool>, _ content: () -> Content) {
         self.content = content ()
-        _viewModel = StateObject(wrappedValue: RotatingViewModel(rpm: rpm, framePeriod: framePeriod))
+        self.pacer = pacer
+        self.rpm = rpm
+        _pauseRotation = pause
     }
 }
 
 class RotatingViewModel: ObservableObject {
+    var pauseRotation = CurrentValueSubject<Bool, Never>(false)
+    private var startTransition: Bool = false
+    private var startSpring: Bool = true
+    private var lastDate: Date = .now
+    private var lastAngle: Angle = .zero
+    private var rpmStart: Double = .zero
+    private var rpmEnd: Double = .zero
+    private var currentRpm: Double?
+    private var transitionRange: Range<Date>?
+    private var springRange: Range<Date>?
+    private var accel: Double = 45 // Degrees/s/s
 
-    var deg: Angle = .zero
-    var animation: Animation
-    private var baseFramePeriod: TimeInterval
-    private var animationIndex: Int = .zero
-    private var accum: Array<Angle> = [.zero]
-    private let anglePerTransitionFrame: Angle = .init(degrees: 2)
-    private var targetRpm: Int = .zero
-    private var currentRpm: Double = .zero
-    private var frameMark = Date.now
-    
-    struct FrameTimer {
-        private var entries = Dictionary<String, Date>()
-        
-        func diff(_ name: String) -> TimeInterval? {
-            guard let start = entries[name] else { return nil }
-            return start.timeIntervalSinceNow
-        }
-        mutating func mark(_ name: String) {
-            entries[name] = .now
-        }
-    }
-                           
-    init(rpm: Int, framePeriod period: TimeInterval = 1.0 / 5.0) {
-        baseFramePeriod = period
-        animation = Animation.linear ( duration: period )
-        self.targetRpm = rpm
-    }
-    
-    func updateRpm (to newRpm: Int) {
-        guard newRpm != targetRpm else { return }
-        targetRpm = newRpm
-        animationIndex = .zero
-        let startDeg = degPerFrame(forRpm: currentRpm)
-        let deltaDeg = degPerFrame(forRpm: targetRpm).degrees - startDeg.degrees
-        let frames = max(5, Int ( ( abs ( deltaDeg ) / anglePerTransitionFrame.degrees ).rounded ( ) ) )
-        let increments = Array<Angle>.init(repeating: (Angle(degrees: deltaDeg)), count: frames)
-        let normalizedCurvePoints =
-        (1...frames)
-            .map ({ idx -> Double in
-                let sIdx = Double(idx) / Double(frames)
-                return pow(sIdx, 2) / ( 2.0 * ( pow(sIdx, 2) - sIdx ) + 1.0 )
-            })
-        accum = zip(increments, normalizedCurvePoints).map({ ( $0 * $1 ) + startDeg })
-    }
-    
-    func getNextDegree () {
+    @MainActor func getDeg(for nextDate: Date) -> Angle {
         var nextAngle: Angle = .zero
+        var instantaneousRpm: Double = .zero
         defer {
-            frameMark = .now
-            deg = nextAngle
-            animationIndex = min ( animationIndex + 1, accum.count - 1)
+            lastDate = nextDate
+            lastAngle = nextAngle
+            currentRpm = instantaneousRpm
+            if instantaneousRpm == rpmEnd, instantaneousRpm == 0, !startTransition {
+                pauseRotation.send(true)
+            }
         }
-        let dT = frameMark.timeIntervalSinceNow
-        animation = .linear(duration: dT)
-        let adj = Double ( abs ( dT / baseFramePeriod ) )
-        nextAngle = ( deg + accum [ animationIndex ] * adj )
-        currentRpm = rpmFromDeg(accum [ animationIndex ])
-        let degPerT = (nextAngle.degrees - deg.degrees) / ( dT == 0 ? .infinity : dT )
-        let rotPerS = degPerT / 360.0
-        let rotPerM = rotPerS * 60.0
-        Log.ui.debug("\(adj) \(String(describing: rotPerM)) \(dT)")
-        deg = nextAngle
+        
+        if startTransition {
+            let timeToTransition = abs ( 6.0 * ( rpmEnd - rpmStart ) / accel ) //seconds
+            transitionRange = Range<Date>.init(uncheckedBounds: (lower: nextDate, upper: nextDate.addingTimeInterval(timeToTransition)))
+            startTransition = false
+        }
+        
+        instantaneousRpm = instantRpm(currentTime: nextDate)
+        
+        if ( instantaneousRpm < 9 && rpmEnd == 0 ) {
+            if springRange == nil, let upperB = transitionRange?.upperBound, upperB > nextDate
+            {
+                springRange = Range<Date>( uncheckedBounds: ( lower: nextDate, upper: upperB ) )
+            }
+            instantaneousRpm = instantaneousRpm * wobbleMultiply(forRpm: instantaneousRpm, at: nextDate)
+        }
+
+        let deltaTime = nextDate.timeIntervalSinceReferenceDate - lastDate.timeIntervalSinceReferenceDate
+        let deltaDeg: Angle = .degrees ( 6.0 * instantaneousRpm * deltaTime )
+        nextAngle = deltaDeg + lastAngle
+        return nextAngle
     }
     
-    
-    private func degPerFrame (forRpm rpm: Double) -> Angle {
-        return .degrees( 6.0 * rpm * baseFramePeriod )
+    func setRpm (to rpm: Double) {
+        guard rpm != rpmEnd else { return }
+        rpmStart = currentRpm ?? rpmEnd
+        rpmEnd = rpm
+        startTransition = true
+        pauseRotation.send(false)
     }
     
-    private func degPerFrame (forRpm rpm: Int) -> Angle {
-        return .degrees( 6.0 * Double ( rpm ) * baseFramePeriod )
+    private func wobbleMultiply (forRpm rpm: Double, at time: Date) -> Double {
+        guard let range = springRange, range.upperBound > time else {
+            springRange = nil
+            return 1.0
+        }
+        let progress = range.lowerBound.timeIntervalSince(time) / ( range.upperBound.timeIntervalSinceReferenceDate - range.lowerBound.timeIntervalSinceReferenceDate )
+        return cos(progress * 10.0 * .pi) * 2.0
     }
     
-    private func rpmFromDeg (_ deg: Angle) -> Double {
-        return deg.degrees / ( 6.0 * baseFramePeriod )
+    private func instantRpm (currentTime: Date) -> Double {
+        guard let upperB = transitionRange?.upperBound, currentTime <= upperB else {
+            transitionRange = nil
+            return Double ( rpmEnd )
+        }
+        guard let lowerB = transitionRange?.lowerBound, currentTime >= lowerB else {
+            return Double ( rpmStart )
+        }
+        let progress: Double = lowerB.timeIntervalSince(currentTime) / lowerB.timeIntervalSince(upperB)
+
+        return ( Double ( rpmEnd - rpmStart ) ) * ( pow ( progress, 2 ) / ( 2.0 * ( pow ( progress, 2 ) - progress ) + 1.0 ) ) + Double ( rpmStart )
     }
+
 }
 
 struct RotateTest: View {
 //    var rpm = CurrentValueSubject<Int, Never>(10)
     @State var toggle: Bool = true
-    @State var rpm: Int = 10
+    var rpm: Double = 10
     
     var body: some View {
         Rotator (rpm: rpm) {
@@ -144,7 +150,6 @@ struct RotateTest: View {
                 .task {
                     while true {
                         try? await Task.sleep(nanoseconds: 5_000_000_000)
-                        rpm = (toggle ? 0 : 60)
                         toggle.toggle()
                     }
                 }

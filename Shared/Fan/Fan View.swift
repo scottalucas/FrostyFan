@@ -23,96 +23,94 @@ struct FanView: View {
     @State private var activeSheet: OverlaySheet?
     
     var body: some View {
-        if id == "No fan" {
-            return NoFanView ().eraseToAnyView ()
-        } else {
-            return ZStack {
-                NavigationLink(
-                    tag: OverlaySheet.fanName,
-                    selection: $activeSheet,
-                    destination: {
-                        NameSheet(
-                            sheet: $activeSheet,
-                            storageKey: StorageKey.fanName(id)) },
-                    label: {})
-                
-                NavigationLink(
-                    tag: OverlaySheet.timer,
-                    selection: $activeSheet,
-                    destination: {
-                        TimerSheet(
-                            activeSheet: $activeSheet,
-                            viewModel: viewModel,
-                            timeOnTimer: viewModel.chars.timer)},
-                    label: {})
-                
-                NavigationLink(
-                    tag: OverlaySheet.detail,
-                    selection: $activeSheet,
-                    destination: {
-                        DetailSheet(
-                            activeSheet: $activeSheet,
-                            chars: viewModel.chars )},
-                    label: {})
-                
-                NavigationLink(
-                    tag: OverlaySheet.fatalFault,
-                    selection: $activeSheet,
-                    destination: {
-                        FatalFaultSheet()},
-                    label: {})
-                
-                NavigationLink(
-                    tag: OverlaySheet.settings,
-                    selection: $activeSheet,
-                    destination: {
-                        SettingsView(activeSheet: $activeSheet)},
-                    label: {})
-
-                RotatorRender ( rpm: viewModel.displayedRPM ) {
-                    IdentifiableImage.fanIcon.image
-                        .resizable ( )
-                        .aspectRatio ( 1.0, contentMode: .fit )
-                        .scaleEffect ( 1.75 )
-                        .blur ( radius: 30 )
-                        .foregroundColor ( viewModel.houseTempAlarm ? .alarm : .main )
-                }
-
-                FanInfoAreaRender (
-                    viewModel: viewModel,
-                    activeSheet: $activeSheet)
-                //                    .ignoresSafeArea()
-                ControllerRender (
-                    viewModel: viewModel,
-                    activeSheet: $activeSheet
-                )
-                //                    .padding(.bottom, 45)
-            }
-//            .background (
-//            )
-            .toolbar(content: {
-                ToolbarItem(placement: .principal) {
-                    FanNameRender(
+        Group {
+            if id == "No fan" {
+                NoFanView ()
+            } else {
+                ZStack {
+                    NavigationLink(
+                        tag: OverlaySheet.fanName,
+                        selection: $activeSheet,
+                        destination: {
+                            NameSheet(
+                                sheet: $activeSheet,
+                                storageKey: StorageKey.fanName(id)) },
+                        label: {})
+                    
+                    NavigationLink(
+                        tag: OverlaySheet.timer,
+                        selection: $activeSheet,
+                        destination: {
+                            TimerSheet(
+                                activeSheet: $activeSheet,
+                                viewModel: viewModel,
+                                timeOnTimer: viewModel.chars.timer)},
+                        label: {})
+                    
+                    NavigationLink(
+                        tag: OverlaySheet.detail,
+                        selection: $activeSheet,
+                        destination: {
+                            DetailSheet(
+                                activeSheet: $activeSheet,
+                                chars: viewModel.chars )},
+                        label: {})
+                    
+                    NavigationLink(
+                        tag: OverlaySheet.fatalFault,
+                        selection: $activeSheet,
+                        destination: {
+                            FatalFaultSheet()},
+                        label: {})
+                    
+                    NavigationLink(
+                        tag: OverlaySheet.settings,
+                        selection: $activeSheet,
+                        destination: {
+                            SettingsView(activeSheet: $activeSheet)},
+                        label: {})
+                    
+                    RotatorRender ( rpm: viewModel.displayedRPM ) {
+                        IdentifiableImage.fanIcon.image
+                            .resizable ( )
+                            .aspectRatio ( 1.0, contentMode: .fit )
+                            .scaleEffect ( 1.75 )
+                            .blur ( radius: 30 )
+                            .foregroundColor ( viewModel.houseTempAlarm ? .alarm : .main )
+                    }
+                    
+                    FanInfoAreaRender (
                         viewModel: viewModel,
-                        activeSheet: $activeSheet, name: $name)
-                    .padding(.bottom, 35)
+                        activeSheet: $activeSheet)
+                    ControllerRender (
+                        viewModel: viewModel,
+                        activeSheet: $activeSheet
+                    )
                 }
-            })
-            .onAppear() {
-                Log.fan.info("view appeared")
-                viewModel.appInForeground = true
+                
+                .toolbar(content: {
+                    ToolbarItem(placement: .principal) {
+                        FanNameRender(
+                            viewModel: viewModel,
+                            activeSheet: $activeSheet, name: $name)
+                        .padding(.bottom, 35)
+                    }
+                })
+                .onAppear() {
+                    Log.fan.info("view appeared")
+                    viewModel.appInForeground = true
+                }
+                .onDisappear() {
+                    Log.fan.info("view disappeared")
+                    viewModel.appInForeground = false
+                }
+                .onScenePhaseChange(phase: .active) {
+                    viewModel.appInForeground = true
+                }
+                .onScenePhaseChange(phase: .background) {
+                    viewModel.appInForeground = false
+                }
             }
-            .onDisappear() {
-                Log.fan.info("view disappeared")
-                viewModel.appInForeground = false
-            }
-            .onScenePhaseChange(phase: .active) {
-                viewModel.appInForeground = true
-            }
-            .onScenePhaseChange(phase: .background) {
-                viewModel.appInForeground = false
-            }
-            .eraseToAnyView()
         }
     }
     
@@ -121,23 +119,18 @@ struct FanView: View {
         id = chars?.macAddr ?? UUID.init().uuidString
         _name = chars == nil ? AppStorage(wrappedValue: "No fan found", StorageKey.fanName("No fan").rawValue) : AppStorage(wrappedValue: "\(chars!.airspaceFanModel)", StorageKey.fanName(chars!.macAddr).rawValue)
         _viewModel = StateObject.init(wrappedValue: FanViewModel(chars: chars ?? FanCharacteristics(), id: chars?.macAddr ?? "No fan"))
-        //        houseViewModel = houseVM
-        //        print("init fan view model \(chars?.airspaceFanModel) selector segments \(viewModel.selectorSegments)")
-        
     }
 }
 
 struct RotatorRender<Content: View>: View {
-    var rpm: Int
+    var rpm: Double
     var content: Content
     
     var body: some View {
         Rotator(rpm: rpm) { content }
     }
     
-    init (rpm: Int, content: @escaping () -> Content) {
-//        self.viewModel = viewModel
-//        print("INIT rotator render with rpm \(rpm.wrappedValue)")
+    init (rpm: Double, content: @escaping () -> Content) {
         self.rpm = rpm
         self.content = content ()
     }
