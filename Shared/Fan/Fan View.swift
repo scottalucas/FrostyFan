@@ -318,7 +318,7 @@ struct FanView_Previews: PreviewProvider {
     //    }
     static var previews: some View {
         //        let vm = FanViewModel(chars: fan)
-        Group {
+        NavigationView {
             FanViewPreviewContainer()
                 .preferredColorScheme(.light)
                 .task {

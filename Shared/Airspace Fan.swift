@@ -27,6 +27,7 @@ struct AirspaceFanApp: App {
                 houseView
                     .background(Color.pageBackground)
                     .foregroundColor(.main)
+                    .ignoresSafeArea()
             }
             .environmentObject(weather)
             .environmentObject(location)

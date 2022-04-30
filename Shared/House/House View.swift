@@ -24,9 +24,9 @@ struct HouseView: View {
                         fanView
                             .tag(fanView.id)
                             .padding(.bottom, 50)
+                            .ignoresSafeArea(.all)
                     }
                 }
-                .ignoresSafeArea(.all)
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))
                 .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .automatic))
             }
@@ -72,15 +72,19 @@ struct HouseViewPreviews: PreviewProvider {
     
     static var previews: some View {
         let vm = ViewModelMock()
-        return HouseView(viewModel: vm)
-            .preferredColorScheme(.dark)
-            .environmentObject(WeatherMonitor.shared)
-            .background(Color.pageBackground)
-            .foregroundColor(.main)
-            .onAppear {
-                WeatherMonitor.shared.tooHot = true
-                WeatherMonitor.shared.tooCold = false
-                HouseStatus.shared.scanUntil = .distantPast
-            }
+        return NavigationView {
+            HouseView(viewModel: vm)
+                .preferredColorScheme(.dark)
+                .environmentObject(WeatherMonitor.shared)
+                .background(Color.pageBackground)
+                .foregroundColor(.main)
+                .ignoresSafeArea()
+                .onAppear {
+                    WeatherMonitor.shared.tooHot = true
+                    WeatherMonitor.shared.tooCold = false
+                    HouseStatus.shared.scanUntil = .distantPast
+                }
+            
+        }
     }
 }
