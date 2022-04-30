@@ -29,6 +29,7 @@ enum StorageKey: Equatable, RawRepresentable, CaseIterable {
     
     case knownFans, //data, decode to [String]
          interlockAlarmEnabled, //bool
+         suppressInterlockForFans,
          temperatureAlarmEnabled, //bool
          lowTempLimit, //double
          highTempLimit, //double
@@ -44,6 +45,8 @@ enum StorageKey: Equatable, RawRepresentable, CaseIterable {
             return "knownFans"
             case .interlockAlarmEnabled:
                 return "interlock"
+        case .suppressInterlockForFans:
+            return "suppressInterlock"
             case .temperatureAlarmEnabled:
                 return "tempAlarm"
             case .lowTempLimit:
@@ -140,6 +143,17 @@ struct Storage {
             UserDefaults.standard.data(forKey: StorageKey.lastNotificationShown.rawValue)?.decodeDate ?? .distantPast
         } set {
             UserDefaults.standard.set(newValue.data, forKey: StorageKey.lastNotificationShown.rawValue)
+        }
+    }
+    
+    static var suppressInterlockWarning: Set<String> {
+        get {
+            UserDefaults.standard.object(forKey: StorageKey.suppressInterlockForFans.rawValue) == nil ? [] : UserDefaults.standard.data(forKey: StorageKey.knownFans.rawValue)?.decodeFans ?? []
+        }
+        set {
+            let encoder = JSONEncoder()
+            guard let dat = (try? encoder.encode(newValue)) else { Storage.clear(.suppressInterlockForFans); return }
+            UserDefaults.standard.set(dat, forKey: StorageKey.suppressInterlockForFans.rawValue)
         }
     }
     

@@ -41,11 +41,11 @@ class FanViewModel: ObservableObject {
         self.chars = chars
         HouseStatus.shared.updateStatus(forFan: id, isOperating: chars.speed > 0)
         startSubscribers(initialChars: chars)
-        Log.fan.info("view model init \(self.id2) \(id)")
+        Log.fan(chars.ipAddr).info("view model init \(self.id2) \(id)")
     }
     
     deinit {
-        Log.fan.info("view model deinit")
+        Log.fan(chars.ipAddr).info("view model deinit")
         fanMonitor?.stop()
     }
     
@@ -70,7 +70,7 @@ class FanViewModel: ObservableObject {
             endBackgroundTask(task)
         }
     }
-
+    
     private func registerBackgroundTask(_ name: String) -> UIBackgroundTaskIdentifier {
         Log.background.debug("Registered background task for \(name)")
         let backgroundTask = UIApplication.shared.beginBackgroundTask (withName: name)
@@ -127,15 +127,15 @@ class FanViewModel: ObservableObject {
                 $0.damper == .operating
             }
             .assign(to: &$showDamperWarning)
-        
-        model.fanCharacteristics
-            .prepend(chars)
-            .receive(on: DispatchQueue.main)
-            .compactMap { $0 }
-            .map {
-                $0.interlock2 || $0.interlock1
-            }
-            .assign(to: &$showInterlockWarning)
+//
+//        model.fanCharacteristics
+//            .prepend(chars)
+//            .receive(on: DispatchQueue.main)
+//            .compactMap { $0 }
+//            .map {
+//                $0.interlock2 || $0.interlock1
+//            }
+//            .assign(to: &$showInterlockWarning)
         
         Publishers.CombineLatest3 (
             model.motorContext
@@ -175,7 +175,8 @@ class FanViewModel: ObservableObject {
             .map { $0.interlock1 || $0.interlock2 }
             .sink(receiveValue: { [weak self] interlocked in
                 guard let self = self else { return }
-                HouseStatus.shared.updateStatus(forFan: self.id, isInterlocked: interlocked)
+                self.showInterlockWarning = interlocked
+                if !interlocked { Storage.suppressInterlockWarning.remove(self.chars.ipAddr) }
             })
             .store(in: &bag)
 
@@ -223,7 +224,7 @@ class NoFanViewModel: ObservableObject {
     private var houseStatus: HouseStatus
     
     init ( ) {
-        Log.fan.info("no fan view model init")
+        Log.fan("no fan").info("no fan view model init")
         houseStatus = HouseStatus.shared
         houseStatus.$houseMessage
             .assign(to: &$houseMessage)
@@ -241,11 +242,11 @@ class FanMonitor {
     deinit {
         task?.cancel()
         task = nil
-        Log.fan.debug("fan monitor deinit")
+        Log.fan(id).debug("fan monitor deinit")
     }
     
     init (id: String, _ refresher: @escaping () async throws -> FanCharacteristics? ) {
-        Log.fan.info("fan monitor init")
+        Log.fan(id).info("fan monitor init")
         self.id = id
         refresh = refresher
     }
@@ -254,11 +255,11 @@ class FanMonitor {
         let interval = TimeInterval( 5 * 60 ) //5 minute loop interval
         if let t = task, !t.isCancelled { return }
         stop()
-        Log.fan.info("fan monitor loop start")
+        Log.fan(id).info("fan monitor loop start")
         task = Task {
             while true {
                 do {
-                    Log.fan.info("fan monitor loop")
+                    Log.fan(id).info("fan monitor loop")
                     try await Task.sleep(interval: interval) //run the loop every 5 minutes to respond as conditions change
                     guard let t = task, !t.isCancelled else { throw BackgroundTaskError.taskCancelled }
                     try await refresh ()
@@ -271,7 +272,7 @@ class FanMonitor {
     }
     
     fileprivate func stop () {
-        Log.fan.info("fan monitor loop kill")
+        Log.fan(id).info("fan monitor loop kill")
         task?.cancel()
         task = nil
     }

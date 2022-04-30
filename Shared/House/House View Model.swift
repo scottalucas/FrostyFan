@@ -23,7 +23,6 @@ class HouseViewModel: ObservableObject {
         Task {
             Log.house.debug("Scanning in houseviewmodel init")
             Log.house.debug("\(Storage.knownFans)")
-            //            await scan ( Set<String>.init(["192.168.1.179:8080", "192.168.1.180:8080"]), timeout: URLSessionMgr.shared.networkAvailable.value ? House.scanDuration : 1.0 )
             await scan ( Storage.knownFans )
         }
     }
@@ -70,7 +69,7 @@ class HouseViewModel: ObservableObject {
     }
     
     func scan (_ hostList: Set<String>) async {
-        Log.fan.info("Scanning for fans")
+        Log.house.info("Scanning for fans")
         let allHosts = NetworkAddress
             .hosts
             .appending("192.168.1.219:8080")
@@ -81,8 +80,9 @@ class HouseViewModel: ObservableObject {
         let sess = URLSessionMgr.shared.session
         Log.house.info ("scanning \(hosts.count) hosts from \(hostList.count > 0 ? "saved hosts" : "all hosts")")
         fanSet.removeAll()
+        Storage.clear(.suppressInterlockForFans)
+        Storage.clear(.knownFans)
         HouseStatus.shared.clearFans()
-        Storage.knownFans = []
         HouseStatus.shared.scanUntil(.now.addingTimeInterval(timeout))
         do {
             try await withThrowingTaskGroup(of: (IPAddr, Data?).self) { group in
@@ -133,6 +133,7 @@ class HouseStatus: ObservableObject {
     @Published var scanUntil: Date = .distantPast
     private var _fansRunning: [FanView.ID : Bool] = [:]
     private var _fansInterlocked: [FanView.ID : Bool] = [:]
+    
     var fansRunning: Bool {
         _fansRunning.values.contains(where: { $0 })
     }
@@ -142,9 +143,9 @@ class HouseStatus: ObservableObject {
     func updateStatus ( forFan fan: FanView.ID, isOperating operating: Bool) {
         _fansRunning[fan] = operating
     }
-    func updateStatus ( forFan fan: FanView.ID, isInterlocked interlocked: Bool) {
-        _fansInterlocked[fan] = interlocked
-    }
+//    func updateStatus ( forFan fan: FanView.ID, isInterlocked interlocked: Bool) {
+//        _fansInterlocked[fan] = interlocked
+//    }
     func scanUntil(_ date: Date) {
         scanUntil = date
     }

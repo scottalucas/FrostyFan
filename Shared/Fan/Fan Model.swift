@@ -23,34 +23,34 @@ struct FanModel {
     }
     
     init(usingChars chars: FanCharacteristics) {
-        Log.fan.info("model init")
         motor = Motor(atAddr: chars.ipAddr)
         timer = FanTimer(atAddr: chars.ipAddr)
         ipAddr = chars.ipAddr
         _fanCharacteristics = CurrentValueSubject<FanCharacteristics, Never>.init(chars)
         fanCharacteristics = _fanCharacteristics.share().eraseToAnyPublisher()
+        Log.fan(id).info("model init")
     }
     
     func setFan(toSpeed finalTarget: Int) async {
         guard !invalidFan else { return }
-        Log.fan.info("\(_fanCharacteristics.value.macAddr) Set speed to \(finalTarget)")
+        Log.fan(id).info("\(_fanCharacteristics.value.macAddr) Set speed to \(finalTarget)")
         motorContext.send(.adjusting)
         do {
             for try await char in motor.setSpeedAsync(to: finalTarget) {
                 guard !Task.isCancelled else { return }
                 _fanCharacteristics.send(char)
             }
-            Log.fan.info("Fan speed adjust successful")
+            Log.fan(id).info("Fan speed adjust successful")
             motorContext.send(.standby)
         } catch {
             motorContext.send(.fault)
-            Log.fan.error("error setting speed \(error.localizedDescription)")
+            Log.fan(id).error("error setting speed \(error.localizedDescription)")
         }
     }
     
     func setFan(addHours hours: Int) async {
         guard !invalidFan else { return }
-        Log.fan.info("Increase timer by \(hours)")
+        Log.fan(id).info("Increase timer by \(hours)")
         guard hours > 0 else {
             timerContext.send(.fault)
             return
@@ -63,17 +63,17 @@ struct FanModel {
                 guard !Task.isCancelled else { return }
                 _fanCharacteristics.send(char)
             }
-            Log.fan.info("Fan timer adjust successful")
+            Log.fan(id).info("Fan timer adjust successful")
             timerContext.send(.standby)
         } catch {
             timerContext.send(.fault)
-            Log.fan.error("error setting timer \(error.localizedDescription)")
+            Log.fan(id).error("error setting timer \(error.localizedDescription)")
         }
     }
     
     @discardableResult func refresh() async -> FanCharacteristics? {
         guard !invalidFan else { return nil }
-        Log.fan.info("refresh")
+        Log.fan(id).info("refresh")
         let newChars = try? await motor.refresh()
         guard !Task.isCancelled else { return nil }
         guard let chars = newChars else { return nil}
@@ -84,8 +84,8 @@ struct FanModel {
 
 extension FanModel {
     init () {
-        Log.fan.info("Initialized generic FanModel")
         self.init(usingChars: FanCharacteristics())
+        Log.fan(id).info("Initialized generic FanModel")
     }
 }
 

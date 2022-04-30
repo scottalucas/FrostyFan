@@ -97,12 +97,10 @@ struct FanView: View {
                     }
                 })
                 .onAppear() {
-                    Log.fan.info("view appeared")
-                    viewModel.appInForeground = true
+                    Log.fan(id).info("view appeared")
                 }
                 .onDisappear() {
-                    Log.fan.info("view disappeared")
-                    viewModel.appInForeground = false
+                    Log.fan(id).info("view disappeared")
                 }
                 .onScenePhaseChange(phase: .active) {
                     viewModel.appInForeground = true
@@ -115,10 +113,10 @@ struct FanView: View {
     }
     
     init (initialCharacteristics chars: FanCharacteristics?) {
-        Log.fan.info("view init")
         id = chars?.macAddr ?? UUID.init().uuidString
         _name = chars == nil ? AppStorage(wrappedValue: "No fan found", StorageKey.fanName("No fan").rawValue) : AppStorage(wrappedValue: "\(chars!.airspaceFanModel)", StorageKey.fanName(chars!.macAddr).rawValue)
         _viewModel = StateObject.init(wrappedValue: FanViewModel(chars: chars ?? FanCharacteristics(), id: chars?.macAddr ?? "No fan"))
+        Log.fan(id).info("view init")
     }
 }
 
@@ -177,7 +175,7 @@ struct ControllerRender: View {
                 requestedSpeed = viewModel.currentMotorSpeed
             }
             .onChange(of: requestedSpeed) { speed in
-                Log.fan.info("selected speed \(String(describing: speed))")
+                Log.fan(viewModel.chars.ipAddr).info("selected speed \(String(describing: speed))")
                 viewModel.setSpeed(to: speed)
             }
         }

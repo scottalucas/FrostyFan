@@ -104,7 +104,6 @@ class RotatingViewModel: ObservableObject {
             if let springRange = springRange {
                 let progress = springRange.upperBound.timeIntervalSince(nextDate) / springRange.upperBound.timeIntervalSince(springRange.lowerBound)
                 let damper = progress * springDecayIntercept
-                print("progress \(progress)")
                 instantaneousRpm = progress <= 0.0 ? 0.0 : progress * springDecayIntercept * wobbleMultiply(forRpm: damper, at: nextDate)
             }
         }

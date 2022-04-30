@@ -35,16 +35,18 @@ class InterlockBackgroundTaskManager {
                 for ip in hostList {
                     guard let url = URL(string: "http://\(ip)/fanspd.cgi?dir=\(FanModel.Action.refresh.rawValue)") else { continue }
                     group.addTask {
-                        if
+                        guard
                             let d = try? await sess.data(from: url).0,
-                            let chars = try? FanCharacteristics(data: d)
-                        {
-                            return chars.interlock1 || chars.interlock2
-                        } else {
-                            return false
-                        }
+                            let chars = try? FanCharacteristics(data: d),
+                            !Storage.suppressInterlockWarning.contains(chars.ipAddr),
+                            (chars.interlock2 || chars.interlock1)
+                        else { return false }
+                        Storage.suppressInterlockWarning.update(with: chars.ipAddr)
+                        return true
+                        
                     }
                 }
+                
                 do {
                     return try await group.reduce(false, { (prev, next) in prev || next })
                 } catch (let err as ConnectionError) {
