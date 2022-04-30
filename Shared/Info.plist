@@ -4,6 +4,7 @@
 <dict>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
+		<string>com.porchdog.whf001.FanMonitor.interlockCheck</string>
 		<string>com.porchdog.whf001.WeatherMonitor.backgroundWeatherCheck</string>
 	</array>
 	<key>CFBundleDevelopmentRegion</key>

@@ -206,7 +206,6 @@ struct SegmentedSpeedPicker: View {
             
                 .onChange(of: highlightedSegment) { newHighlight in
                     let highlight = newHighlight ?? 0
-//                    print("\(highlight) \(cellWidth)")
                     withAnimation(.easeInOut(duration: 0.5)) {
                         highlightOffset = cellWidth * CGFloat (highlight)
                     }
@@ -216,15 +215,12 @@ struct SegmentedSpeedPicker: View {
                 .onAppear() {
                     highlightOffset = cellWidth * CGFloat (highlightedSegment ?? 0)
                     indicatorOffset = cellWidth * CGFloat (indicatedSegment ?? 0)
-//                    indicatorOn.toggle()
                     guard let h = highlightedSegment, let t = indicatedSegment else {
                         indicatorOn = false
                         return
                     }
                     indicatorOn = t != h
                 }
-//        }
-//        .frame(minWidth: 125, idealWidth: 300, maxWidth: 325, minHeight: 20, idealHeight: 30, maxHeight: 40)
     }
     
     init (

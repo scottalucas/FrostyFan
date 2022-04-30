@@ -8,16 +8,13 @@
 import Foundation
 import SwiftUI
 import Combine
+import BackgroundTasks
+//
+//class House {
+//    static var scanDuration: TimeInterval = 5.0
+//    var fanSet = Set<FanCharacteristics>()
+//    init () {
+//        Log.house.info("model init")
+//    }
+//}
 
-class House {
-    static var scanDuration: TimeInterval = 5.0
-    var fanSet = Set<FanCharacteristics>() {
-        didSet {
-            fansRunning = fanSet.map({ $0.speed }).reduce(0, +) > 0
-        }
-    }
-    var fansRunning = false
-    init () {
-        Log.house.info("model init")
-    }
-}

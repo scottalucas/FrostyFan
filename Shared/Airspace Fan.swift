@@ -37,6 +37,7 @@ struct AirspaceFanApp: App {
             }
             .onScenePhaseChange(phase: .background) {
                 Log.app.info("app in background")
+                InterlockBackgroundTaskManager.scheduleInterlockCheckTask (forId: BackgroundTaskIdentifier.interlockActive, waitUntil: .now.addingTimeInterval(10.0 * 60.0))
                 WeatherBackgroundTaskManager.scheduleBackgroundTempCheckTask (forId: BackgroundTaskIdentifier.tempertureOutOfRange, waitUntil: WeatherMonitor.shared.weatherServiceNextCheckDate())
                 WeatherMonitor.shared.suspendMonitor ()
             }
@@ -62,31 +63,34 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 
     func application(_ application: UIApplication, willFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         if BGTaskScheduler.shared.register(forTaskWithIdentifier: BackgroundTaskIdentifier.tempertureOutOfRange, using: nil, launchHandler: { task in
-            Log.background.info("Background task called")
-            guard let task = task as? BGRefreshTask else { return }
+            Log.background.info("Background task for temp check called")
+            guard let task = task as? BGProcessingTask else { return }
             Task {
-                await WeatherBackgroundTaskManager.handleTempCheckTask(task: task)
-                Log.background.info("Background task handle complete.")
+                await WeatherBackgroundTaskManager.handleTempCheckTask (task: task)
+                Log.background.info("Background temp check task handle complete.")
             }
-        }) {
+        })
+        {
             Log.background.info("Background task registered for tempOutOfRange event.")
         } else {
             Log.background.error("Background task failed to register for tempOutOfRange event.")
         }
+        
+        if BGTaskScheduler.shared.register(forTaskWithIdentifier: BackgroundTaskIdentifier.interlockActive, using: nil, launchHandler: { task in
+            Log.background.info("Background task for interlock called")
+            guard let task = task as? BGProcessingTask else { return }
+            Task {
+                await InterlockBackgroundTaskManager.handleInterlockCheckTask (task: task)
+                Log.background.info("Background interlock check task handle complete.")
+            }
+        })
+        {
+            Log.background.info("Background task registered for interlock active event.")
+        } else {
+            Log.background.error("Background task failed to register for interlock active event.")
+        }
         return true
     }
-    
-//    func applicationDidBecomeActive(_ application: UIApplication) {
-//        print("active in app delegate")
-//        BGTaskScheduler.shared.cancelAllTaskRequests()
-//        WeatherMonitor.shared.monitor ()
-//    }
-//
-//    func applicationDidEnterBackground(_ application: UIApplication) {
-//        print("background in app delegate")
-//        WeatherBackgroundTaskManager.scheduleBackgroundTempCheckTask (forId: BackgroundTaskIdentifier.tempertureOutOfRange, waitUntil: WeatherMonitor.shared.weatherServiceNextCheckDate())
-//        WeatherMonitor.shared.suspendMonitor()
-//    }
 }
 
 protocol BGTaskSched {

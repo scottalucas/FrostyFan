@@ -173,7 +173,6 @@ struct ControllerRender: View {
             .frame(height: 40)
             .frame(maxWidth: 500)
             .padding([.leading, .trailing])
-//            .frame(maxWidth: 500, minHeight: 30, idealHeight: 50, maxHeight: 50)
             .onAppear() {
                 requestedSpeed = viewModel.currentMotorSpeed
             }
@@ -197,7 +196,6 @@ struct BaseFanImage: View {
 
 struct FanInfoAreaRender: View {
     @ObservedObject var viewModel: FanViewModel
-    //    @ObservedObject var houseViewModel: HouseViewModel
     @Binding var activeSheet: OverlaySheet?
     
     var body: some View {
@@ -224,7 +222,6 @@ struct FanInfoAreaRender: View {
                 }
                 if let msg = viewModel.houseMessage {
                     Text(msg)
-//                        .multilineTextAlignment(.center)
                 }
             }
             Spacer()
@@ -238,9 +235,6 @@ struct FanInfoAreaRender: View {
 
 struct FanNameRender: View {
     @ObservedObject var viewModel: FanViewModel
-    //    @Binding var showTemperatureWarning: Bool
-    //    @Binding var showDamperWarning: Bool
-    //    @Binding var showInterlockWarning: Bool
     @Binding var activeSheet: OverlaySheet?
     @Binding var name: String
     
@@ -311,13 +305,7 @@ struct FanViewPreviewContainer: View {
     var body: some View {
         
         FanView(initialCharacteristics: FanMock().chars)
-        //                .environmentObject(SharedHouseData.shared)
-        //                .environmentObject(Weather())
             .preferredColorScheme(.light)
-        //                .foregroundColor(.main)
-        //                .tint(.main)
-        //                .accentColor(.main)
-        
     }
 }
 

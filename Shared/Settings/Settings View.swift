@@ -27,7 +27,7 @@ struct SettingsView: View {
             SettingsWeatherErrorSection ( viewModel: viewModel )
         }
         .onChange(of: viewModel.temperatureAlertsEnabled, perform: { newValue in
-            print("temp alerts enabled \(newValue)")
+            Log.settings.info("Temperature alerts \(newValue ? "enabled" : "disabled")")
         })
         .foregroundColor(.pageBackground)
         .listStyle(GroupedListStyle())
@@ -59,6 +59,7 @@ struct SettingsView: View {
         })
         .onChange(of: viewModel.settingsError) { newValue in
             showAlert = newValue != nil
+            Log.settings.info("Error update \( newValue.map { $0.localizedDescription } ?? "error cleared, show alert \(showAlert)" )")
         }
         
         Spacer()
@@ -118,6 +119,9 @@ struct SettingsLocationSection: View {
                             .settingsAppearance(.buttonLabel)
                     })
                 }
+                .onAppear() {
+                    Log.settings.info("Known location view shown \(displayString, privacy: .private)")
+                }
             case .unknown:
                 HStack {
                     Text("Location unknown")
@@ -130,6 +134,9 @@ struct SettingsLocationSection: View {
                             .settingsAppearance(.buttonLabel)
                     })
                 }
+                .onAppear() {
+                    Log.settings.info("Unknown location view shown")
+                }
             case .unavailable:
                 HStack {
                     Text("Location off for this device")
@@ -141,6 +148,9 @@ struct SettingsLocationSection: View {
                         Text("Enable Location")
                             .settingsAppearance(.buttonLabel)
                     })
+                }
+                .onAppear() {
+                    Log.settings.info("Unavailable location view shown")
                 }
             @unknown default:
                 EmptyView()
@@ -207,6 +217,9 @@ struct SettingsWeatherErrorSection: View {
                         })
                     }
                 }
+            }
+            .onAppear() {
+                Log.settings.info("Settings weather error shown")
             }
         } else {
             EmptyView()
@@ -306,10 +319,10 @@ struct TemperatureSelector: View {
             Log.settings.debug("Temp slider enabled: \(enabled)")
             if enabled { initHiLowTemps() }
         }
-        .onAppear(perform: {
+        .onAppear() {
             Log.settings.debug("Temp slider appeared")
             initHiLowTemps()
-        })
+        }
     }
 }
 

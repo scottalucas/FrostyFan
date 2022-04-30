@@ -67,9 +67,6 @@ extension Color {
     static var controlsBackground = Color(.controlsBackground)
 }
 
-struct BackgroundTaskIdentifier {
-    static var tempertureOutOfRange = "com.porchdog.whf001.WeatherMonitor.backgroundWeatherCheck"
-}
 
 public struct OnScenePhaseChange: ViewModifier {
     @Environment(\.scenePhase) private var scenePhase
@@ -233,18 +230,20 @@ extension AdjustmentError: CustomStringConvertible {
 extension ConnectionError: CustomStringConvertible {
     var description: String {
         switch self {
-            case .badUrl:
-                return "Bad url"
-            case .timeout:
-                return "timeout"
-            case .networkError (let reason):
-                return "Network error \(reason)"
-            case .serverError (let reason):
-                return "Server error \(reason)"
-            case .decodeError (let reason):
-                return "Decode error \(reason)"
-            case .upstream (let err):
-                return "Upstream type: \(err.self) description: \(err.localizedDescription)"
+        case .badUrl:
+            return "Bad url"
+        case .timeout:
+            return "timeout"
+        case .networkError (let reason):
+            return "Network error \(reason)"
+        case .serverError (let reason):
+            return "Server error \(reason)"
+        case .decodeError (let reason):
+            return "Decode error \(reason)"
+        case .other(let reason):
+            return "Other reason \(reason)"
+        case .upstream (let err):
+            return "Upstream type: \(err.self) description: \(err.localizedDescription)"
         }
     }
 }
@@ -293,16 +292,20 @@ extension WeatherRetrievalError: CustomStringConvertible {
 extension BackgroundTaskError: CustomStringConvertible {
     var description: String {
         switch self {
-            case .notAuthorized:
-                return "User has disabled notifications."
-            case .fanNotOperating:
-                return "No fans are operating"
-            case .tempAlarmNotSet:
-                return "User has disabled temperature alarms"
-            case .noCurrentTemp:
-                return "No current temperature provided"
-            case .taskCancelled:
-                return "Task cancelled"
+        case .notAuthorized:
+            return "User has disabled notifications"
+        case .fanNotOperating:
+            return "No fans are operating"
+        case .noFans:
+            return "No fans available in house"
+        case .tempAlarmNotSet:
+            return "User has disabled temperature alarms"
+        case .interlockAlarmNotSet:
+            return "User has disabled alarms for interlock"
+        case .noCurrentTemp:
+            return "No current temperature provided"
+        case .taskCancelled:
+            return "Task cancelled"
         }
     }
 }

@@ -68,6 +68,8 @@ class RotatingViewModel: ObservableObject {
     private var currentRpm: Double?
     private var transitionRange: Range<Date>?
     private var springRange: Range<Date>?
+    private var springDecaySlope: Double = 1.0
+    private var springDecayIntercept: Double = .zero
     private var accel: Double = 45 // Degrees/s/s
 
     @MainActor func getDeg(for nextDate: Date) -> Angle {
@@ -79,6 +81,8 @@ class RotatingViewModel: ObservableObject {
             currentRpm = instantaneousRpm
             if instantaneousRpm == rpmEnd, instantaneousRpm == 0, !startTransition {
                 pauseRotation.send(true)
+                springRange = nil
+                transitionRange = nil
             }
         }
         
@@ -90,12 +94,19 @@ class RotatingViewModel: ObservableObject {
         
         instantaneousRpm = instantRpm(currentTime: nextDate)
         
-        if ( instantaneousRpm < 9 && rpmEnd == 0 ) {
+        if ( instantaneousRpm < 3 && rpmEnd == 0 ) {
             if springRange == nil, let upperB = transitionRange?.upperBound, upperB > nextDate
             {
-                springRange = Range<Date>( uncheckedBounds: ( lower: nextDate, upper: upperB ) )
+                springRange = Range<Date>( uncheckedBounds: ( lower: nextDate, upper: nextDate.addingTimeInterval(0.75) ) )
+                springDecaySlope = instantaneousRpm * 2.0
+                springDecayIntercept = instantaneousRpm
             }
-            instantaneousRpm = instantaneousRpm * wobbleMultiply(forRpm: instantaneousRpm, at: nextDate)
+            if let springRange = springRange {
+                let progress = springRange.upperBound.timeIntervalSince(nextDate) / springRange.upperBound.timeIntervalSince(springRange.lowerBound)
+                let damper = progress * springDecayIntercept
+                print("progress \(progress)")
+                instantaneousRpm = progress <= 0.0 ? 0.0 : progress * springDecayIntercept * wobbleMultiply(forRpm: damper, at: nextDate)
+            }
         }
 
         let deltaTime = nextDate.timeIntervalSinceReferenceDate - lastDate.timeIntervalSinceReferenceDate
@@ -114,16 +125,14 @@ class RotatingViewModel: ObservableObject {
     
     private func wobbleMultiply (forRpm rpm: Double, at time: Date) -> Double {
         guard let range = springRange, range.upperBound > time else {
-            springRange = nil
-            return 1.0
+            return .zero
         }
         let progress = range.lowerBound.timeIntervalSince(time) / ( range.upperBound.timeIntervalSinceReferenceDate - range.lowerBound.timeIntervalSinceReferenceDate )
-        return cos(progress * 10.0 * .pi) * 2.0
+        return cos(progress * 5.0 * .pi) * 2.0
     }
     
     private func instantRpm (currentTime: Date) -> Double {
         guard let upperB = transitionRange?.upperBound, currentTime <= upperB else {
-            transitionRange = nil
             return Double ( rpmEnd )
         }
         guard let lowerB = transitionRange?.lowerBound, currentTime >= lowerB else {
@@ -139,20 +148,23 @@ class RotatingViewModel: ObservableObject {
 struct RotateTest: View {
 //    var rpm = CurrentValueSubject<Int, Never>(10)
     @State var toggle: Bool = true
-    var rpm: Double = 10
+    @State var rpm: Double = 15
     
     var body: some View {
-        Rotator (rpm: rpm) {
-            IdentifiableImage.fanLarge.image
-                .resizable()
-                .aspectRatio(1.0, contentMode: .fit)
-                .scaleEffect(1.75)
-                .task {
-                    while true {
-                        try? await Task.sleep(nanoseconds: 5_000_000_000)
-                        toggle.toggle()
+        VStack {
+            Rotator (rpm: $rpm.wrappedValue) {
+                IdentifiableImage.fanLarge.image
+                    .resizable()
+                    .aspectRatio(1.0, contentMode: .fit)
+                    .scaleEffect(1.75)
+                    .task {
+                        while true {
+                            try? await Task.sleep(nanoseconds: 3_000_000_000)
+                            toggle.toggle()
+                            rpm = toggle ? 0 : 20
+                        }
                     }
-                }
+            }
         }
     }
 }

@@ -19,5 +19,7 @@ struct Log {
     static var background = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "background")
     static var alert = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "alert")
     static var settings = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "settings")
+    static var network = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "network")
+
     static func custom(category: String) -> Logger { Logger(subsystem: Bundle.main.bundleIdentifier!, category: category)}
 }

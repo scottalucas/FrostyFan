@@ -133,13 +133,6 @@ struct TimerSheetSpinner: View {
     }
 }
 
-//extension TimerSheetSpinner: Equatable {
-//    static func == (lhs: TimerSheetSpinner, rhs: TimerSheetSpinner) -> Bool {
-//        print("check")
-//        return true
-//    }
-//}
-
 struct Timer_View_Previews: PreviewProvider {
     static var previews: some View {
         //        VStack {

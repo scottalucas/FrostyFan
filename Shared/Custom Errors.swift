@@ -38,6 +38,7 @@ enum ConnectionError: Error {
     case networkError (String)
     case serverError (String)
     case decodeError (String)
+    case other (String)
     case upstream (Error)
 
 }
@@ -56,7 +57,9 @@ enum WeatherRetrievalError: Error {
 enum BackgroundTaskError: Error {
     case notAuthorized
     case fanNotOperating
+    case noFans
     case tempAlarmNotSet
+    case interlockAlarmNotSet
     case noCurrentTemp
     case taskCancelled
 }
@@ -134,23 +137,3 @@ enum SettingsError: LocalizedError {
         }
     }
 }
-/*
-guard await UNUserNotificationCenter.current().getStatus() == .authorized else {
-    print("Notifications not authorized.")
-    task.setTaskCompleted(success: true)
-    return
-}
-guard house.fansOperating, monitor.tempAlarmSet else {
-    print("Background task not required, fan operating: \(house.fansOperating), alarm set: \(monitor.tempAlarmSet)")
-    task.setTaskCompleted(success: true)
-    return
-}
-
-await monitor.updateWeatherAlarmStatus()
-
-guard let currentTemp = monitor.currentTemp else {
-    print("Valid current temp not available.")
-    task.setTaskCompleted(success: false)
-    return
-}
-*/

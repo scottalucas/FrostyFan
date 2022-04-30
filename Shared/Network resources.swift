@@ -96,15 +96,8 @@ struct NetworkAddress {
                 || (firstIP4AddrArr[0] == 172 && (16...31).contains(firstIP4AddrArr[1]))
                 || (firstIP4AddrArr[0] == 192 && firstIP4AddrArr[1] == 168
                 )
-                //                ,
-                //            (0..<255).contains(firstIP4AddrArr[0]),
-                //            (0..<255).contains(firstIP4AddrArr[1]),
-                //            (0..<255).contains(firstIP4AddrArr[2]),
-                //            (0..<255).contains(firstIP4AddrArr[3])
         else { return nil }
         let finalAddr = UInt32(firstIP4AddrArr.reduce(0) { $0 << 8 | Int($1) })
-        
-        //        let firstIP4MaskArr = addresses[0].netmask.split(separator: ".").compactMap({ UInt8.init($0) })
         guard
             firstIP4MaskArr.count == 4,
             (0...255).contains(firstIP4MaskArr[0]),
@@ -132,12 +125,16 @@ struct NetworkAddress {
 class URLSessionMgr {
     static var shared: URLSessionMgr = URLSessionMgr ()
     var networkAvailable: CurrentValueSubject<Bool, Never> = .init(false)
+    #if targetEnvironment(simulator)
+    private let monitor = NWPathMonitor()
+    #else
     private let monitor = NWPathMonitor(requiredInterfaceType: .wifi)
+    #endif
     private let queue = DispatchQueue(label: "Monitor")
     private var gateway: NWEndpoint?
     var session: URLSession {
         let config = URLSession.shared.configuration
-        config.timeoutIntervalForRequest = House.scanDuration
+        config.timeoutIntervalForRequest = 30.0
         config.waitsForConnectivity = true
         config.allowsCellularAccess = false
         config.allowsExpensiveNetworkAccess = false
@@ -148,10 +145,10 @@ class URLSessionMgr {
     
     private func start() {
         monitor.pathUpdateHandler = { path in
-            if path.status == .satisfied && !path.isExpensive && !NetworkAddress.hosts.isEmpty { //make sure path is appropriate for scanning
+            if path.status != .unsatisfied && !path.isExpensive && !NetworkAddress.hosts.isEmpty { //make sure path is appropriate for scanning
                 self.networkAvailable.send(true)
             } else {
-                Log.house.error("network unavailable, status : \(path.status), expensive: \(path.isExpensive), host count: \(NetworkAddress.hosts.count)")
+                Log.network.error("network unavailable, status : \(path.status), expensive: \(path.isExpensive), host count: \(NetworkAddress.hosts.count)")
                 self.networkAvailable.send(false)
             }
         }

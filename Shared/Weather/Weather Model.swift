@@ -213,12 +213,10 @@ class WeatherMonitor: ObservableObject {
         }
         
         guard
-//            HouseMonitor.shared.fansRunning,
             Storage.temperatureAlarmEnabled,
             let highTempLimit = Storage.highTempLimit,
             let lowTempLimit = Storage.lowTempLimit
         else {
-//            print("Fan operating: \(HouseMonitor.shared.fansRunning)\rHigh temp limit: \(Storage.highTempLimit)\rLow temp limit: \(Storage.lowTempLimit)\rAlarm enabled: \(Storage.temperatureAlarmEnabled)")
             Log.weather.info("Next check calculated, 12 hours after last update \(Storage.lastForecastUpdate.addingTimeInterval(12 * 3600).formatted())")
             nextCheck = Storage.lastForecastUpdate.addingTimeInterval(12 * 3600)
             return nextCheck
@@ -244,73 +242,5 @@ class WeatherMonitor: ObservableObject {
         nextCheck = result.date
         return nextCheck
     }
-    
-    func issueTempNotification () async throws {
-//        guard Storage.lastNotificationShown.addingTimeInterval(3 * 3600) < .now else { throw NotificationError.tooSoon }
-        guard .distantPast < .now else { throw NotificationError.tooSoon }
-        let subtitleString = tooHot ? "It's hot outside." : "It's cold outside."
-        let bodySubstring = tooHot ? "heating up" : "cooling down"
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
-        //present the alert
-        let content = UNMutableNotificationContent()
-        content.title = "Whole House Fan Alert"
-        content.subtitle = subtitleString
-        content.body = "Your fan is \(bodySubstring) your house. Turn it off?"
-        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
-        try await UNUserNotificationCenter.current().add(request)
-        Storage.lastNotificationShown = .now
-    }
 }
 
-class WeatherBackgroundTaskManager {
-    @MainActor static func handleTempCheckTask (task: BGRefreshTask) async -> () {
-        defer {
-            scheduleBackgroundTempCheckTask(forId: BackgroundTaskIdentifier.tempertureOutOfRange, waitUntil: WeatherMonitor.shared.weatherServiceNextCheckDate()
-            )
-        }
-        Log.weather.info("Background fetch being handled")
-        task.expirationHandler = {
-            Log.weather.error("Background handler expired")
-            task.setTaskCompleted(success: false)
-        }
-        do {
-            guard await UNUserNotificationCenter.current().getStatus() == .authorized else { throw BackgroundTaskError.notAuthorized }
-            
-            guard HouseStatus.shared.fansRunning else { throw BackgroundTaskError.fanNotOperating }
-            
-            guard Storage.temperatureAlarmEnabled else { throw BackgroundTaskError.tempAlarmNotSet }
-            
-            try await WeatherMonitor.shared.updateWeatherConditions()
-            
-            try await WeatherMonitor.shared.issueTempNotification()
-            
-//            guard let ct = monitor.currentTemp else { throw BackgroundTaskError.noCurrentTemp }
-            
-        } catch {
-            task.setTaskCompleted(success: false)
-            if let err = error as? BackgroundTaskError {
-                Log.weather.error ( "\(err.description)" )
-            } else if let err = error as? WeatherRetrievalError {
-                Log.weather.error ( "\(err.description)" )
-            } else {
-                Log.weather.error ( "\(error.localizedDescription)" )
-            }
-            return
-        }
-        
-        Log.weather.info("Background task complete.")
-        task.setTaskCompleted(success: true)
-    }
-
-    static func scheduleBackgroundTempCheckTask (forId: String, waitUntil date: Date) {
-        Log.weather.info("Background fetch being scheduled")
-        let request = BGAppRefreshTaskRequest(identifier: forId)
-        request.earliestBeginDate = date
-        do {
-            try BGTaskScheduler.shared.submit(request)
-            Log.weather.info("background task scheduled for date \(date.formatted())")
-        } catch {
-            Log.weather.info ("Could not schedule app refresh request, error: \(error.localizedDescription), requested date: \(date.formatted()), id: \(forId)")
-        }
-    }
-}

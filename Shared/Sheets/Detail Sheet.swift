@@ -28,16 +28,6 @@ struct DetailSheet: View {
                     }
                 }
                 .padding(.horizontal)
-//                Button ("Print Defaults", action: {
-//                    let macAddr = data.first(where: {
-//                        $0.label == "MAC Address"
-//                    })?.value
-//                    Storage.printAll(forAddr: macAddr)
-//                })
-//                    .foregroundColor(.background)
-//                Button ("Clear Defaults", action: {
-//                    Storage.clear()
-//                })
                     .foregroundColor(.pageBackground)
                 Spacer()
             }

@@ -10,35 +10,37 @@ import Combine
 import SwiftUI
 
 struct FanModel {
-    var fanCharacteristics: CurrentValueSubject<FanCharacteristics, Never>
+    var fanCharacteristics: AnyPublisher<FanCharacteristics, Never>
     var motorContext = CurrentValueSubject<Motor.Context, Never>(.standby)
     var timerContext = CurrentValueSubject<FanTimer.Context, Never>(.standby)
     private var motor: MotorDelegate!
     private var timer: TimerDelegate!
     private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
     private var ipAddr: String
+    private var _fanCharacteristics: CurrentValueSubject<FanCharacteristics, Never>
     private var invalidFan: Bool {
-        fanCharacteristics.value.ipAddr == "INVALID"
+        _fanCharacteristics.value.ipAddr == "INVALID"
     }
-//    private var monitorTask: Task<(), Never>?
     
     init(usingChars chars: FanCharacteristics) {
         Log.fan.info("model init")
         motor = Motor(atAddr: chars.ipAddr)
         timer = FanTimer(atAddr: chars.ipAddr)
         ipAddr = chars.ipAddr
-        fanCharacteristics = CurrentValueSubject<FanCharacteristics, Never>.init(chars)
+        _fanCharacteristics = CurrentValueSubject<FanCharacteristics, Never>.init(chars)
+        fanCharacteristics = _fanCharacteristics.share().eraseToAnyPublisher()
     }
     
     func setFan(toSpeed finalTarget: Int) async {
         guard !invalidFan else { return }
-        Log.fan.info("\(fanCharacteristics.value.macAddr) Set speed to \(finalTarget)")
+        Log.fan.info("\(_fanCharacteristics.value.macAddr) Set speed to \(finalTarget)")
         motorContext.send(.adjusting)
         do {
             for try await char in motor.setSpeedAsync(to: finalTarget) {
                 guard !Task.isCancelled else { return }
-                fanCharacteristics.send(char)
+                _fanCharacteristics.send(char)
             }
+            Log.fan.info("Fan speed adjust successful")
             motorContext.send(.standby)
         } catch {
             motorContext.send(.fault)
@@ -54,14 +56,14 @@ struct FanModel {
             return
         }
         timerContext.send(.adjusting)
-        let current = fanCharacteristics.value.timer
+        let current = _fanCharacteristics.value.timer
         let target = min (current + hours * 60, 12 * 60) - 10
-//        print("timer target \(target)")
         do {
             for try await char in timer.setTimerAsync(to: target) {
                 guard !Task.isCancelled else { return }
-                fanCharacteristics.send(char)
+                _fanCharacteristics.send(char)
             }
+            Log.fan.info("Fan timer adjust successful")
             timerContext.send(.standby)
         } catch {
             timerContext.send(.fault)
@@ -69,73 +71,37 @@ struct FanModel {
         }
     }
     
-    func refresh() {
-        guard !invalidFan else { return }
+    @discardableResult func refresh() async -> FanCharacteristics? {
+        guard !invalidFan else { return nil }
         Log.fan.info("refresh")
-//        print("executing refresh")
-        Task {
-            let newChars = try? await motor.refresh()
-            guard !Task.isCancelled else { return }
-            if let chars = newChars {
-                fanCharacteristics.send(chars)
-            }
-        }
+        let newChars = try? await motor.refresh()
+        guard !Task.isCancelled else { return nil }
+        guard let chars = newChars else { return nil}
+        _fanCharacteristics.send(chars)
+        return chars
     }
-    
-//    private func fanMonitor () async {
-//        let interval = TimeInterval( 5 * 60 ) //5 minute loop interval
-//        while true {
-//            do {
-//                guard let cancelled = monitorTask?.isCancelled, !cancelled else {
-//                    throw BackgroundTaskError.taskCancelled
-//                }
-//                print("Fan monitor loop @ \(Date.now.formatted()), last update \(Storage.lastForecastUpdate.formatted())")
-//                try await Task.sleep(interval: interval) //run the loop every 5 minutes to respond as conditions change
-//                try await refresh()
-//            } catch {
-//                let e = error as? BackgroundTaskError ?? error
-//                print("exited fan monitor loop @ \(Date.now.formatted()), error: \(e.localizedDescription)")
-//                break
-//            }
-//        }
-//    }
-//
-//    mutating private func registerBackgroundTask() {
-//        //        print("BG task started")
-//        backgroundTask = UIApplication.shared.beginBackgroundTask {
-//            //            print("BG task expired")
-//            endBackgroundTask()
-//        }
-//        assert(backgroundTask != .invalid)
-//    }
-//
-//    mutating private func endBackgroundTask() {
-//        //        print("Background task ended.")
-//        UIApplication.shared.endBackgroundTask(backgroundTask)
-//        backgroundTask = .invalid
-//    }
 }
 
 extension FanModel {
     init () {
-//        print("Test fan model init")
+        Log.fan.info("Initialized generic FanModel")
         self.init(usingChars: FanCharacteristics())
     }
 }
 
 extension FanModel: Hashable {
     func hash(into hasher: inout Hasher) {
-        hasher.combine(fanCharacteristics.value.macAddr)
+        hasher.combine(_fanCharacteristics.value.macAddr)
     }
     
     static func ==(lhs: FanModel, rhs: FanModel) -> Bool {
-        return lhs.fanCharacteristics.value.macAddr == rhs.fanCharacteristics.value.macAddr
+        return lhs._fanCharacteristics.value.macAddr == rhs._fanCharacteristics.value.macAddr
     }
 }
 
 extension FanModel: Identifiable {
     var id: String {
-        fanCharacteristics.value.macAddr
+        _fanCharacteristics.value.macAddr
     }
 }
 
