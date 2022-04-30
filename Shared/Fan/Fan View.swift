@@ -77,6 +77,7 @@ struct FanView: View {
                             .scaleEffect ( 1.75 )
                             .blur ( radius: 30 )
                             .foregroundColor ( viewModel.houseTempAlarm ? .alarm : .main )
+                            .ignoresSafeArea ( )
                     }
                     
                     FanInfoAreaRender (
@@ -170,7 +171,7 @@ struct ControllerRender: View {
                 minMaxLabels: .useStrings(["Off", "Max"]))
             .frame(height: 40)
             .frame(maxWidth: 500)
-            .padding([.leading, .trailing])
+            .padding([.leading, .trailing, .bottom])
             .onAppear() {
                 requestedSpeed = viewModel.currentMotorSpeed
             }
@@ -318,6 +319,18 @@ struct FanView_Previews: PreviewProvider {
     static var previews: some View {
         //        let vm = FanViewModel(chars: fan)
         Group {
+            FanViewPreviewContainer()
+                .preferredColorScheme(.light)
+                .task {
+                    try? await Task.sleep(interval: 2.0)
+                    URLSessionMgr.shared.networkAvailable.send(true)
+                    WeatherMonitor.shared.currentTemp = .init(value: 10, unit: .fahrenheit)
+                    WeatherMonitor.shared.tooCold = false
+                    WeatherMonitor.shared.tooHot = false
+                    HouseStatus.shared.houseTempAlarm = true
+                    //                HouseStatus.shared.houseMessage = "test"
+                    //                HouseStatus.shared.scanUntil = .now.addingTimeInterval(2.0)
+                }
             FanViewPreviewContainer()
                 .preferredColorScheme(.light)
                 .task {

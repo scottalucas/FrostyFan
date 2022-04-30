@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-
 struct SegmentedSpeedPicker: View {
     @Binding var segments: Int
     @Binding var highlightedSegment: Int? //user selection, indicates either current motor speed or user selection
@@ -18,12 +17,38 @@ struct SegmentedSpeedPicker: View {
     @State private var indicatorOffset: CGFloat = 0
     @State private var highlightOffset: CGFloat = 0
     @State private var msg: String = "init"
-    @State private var width: CGFloat = .zero
-    @State private var cornerRadius: CGFloat = .zero
-    @State private var cellWidth: CGFloat = .zero
-
+    @State private var size: CGSize = CGSize(width: 200, height: 50)
+    private var cornerRadius: CGFloat {
+        size.height * 0.3
+    }
+    private var cellWidth: CGFloat {
+        size.width / CGFloat (segments)
+    }
+    /*
+     highlightOffset = cellWidth * CGFloat (highlightedSegment ?? 0)
+     indicatorOffset = cellWidth * CGFloat (indicatedSegment ?? 0)
+     
+     cornerRadius = newSize.height * 0.3
+     cellWidth = newSize.width/CGFloat(segments)
+     */
     var minMaxLabels: PickerLabel.Appearance
     var middleLabels: PickerLabel.Appearance
+    
+    struct SizePreferenceKey: PreferenceKey {
+        static var defaultValue = CGSize.zero
+        
+        static func reduce(value: inout CGSize, nextValue: () -> CGSize) {
+            value = nextValue()
+        }
+    }
+    
+    struct MeasureSizeModifier: ViewModifier {
+        func body(content: Content) -> some View {
+            content.background(GeometryReader { geometry in
+                Color.clear.preference(key: SizePreferenceKey.self, value: geometry.size)
+            })
+        }
+    }
     
     struct PickerLabel: View, Identifiable {
         var id: Int
@@ -134,30 +159,33 @@ struct SegmentedSpeedPicker: View {
     }
     
     var body: some View {
-        RoundedRectangle(cornerRadius: cornerRadius)
-            .measureSize {
-                width = $0.width
-                cornerRadius = $0.height * 0.3
-                cellWidth = $0.width/CGFloat(segments)
-            }
-            .foregroundColor(.segmentControllerBackground)
-            .overlay (
-                VStack {
-                    if highlightedSegment == nil {
-                        RoundedRectangle(cornerRadius: cornerRadius)
-                            .foregroundColor(Color.clear)
-                    } else {
-                        RoundedRectangle(cornerRadius: cornerRadius)
-                            .inset(by: 3.0)
-                            .strokeBorder(lineWidth: 1.0)
-                            .foregroundColor(
-                                highlightedSegmentAlarm ? Color(.alarm) : Color(.clear)
-                            )
-                            .background(RoundedRectangle(cornerRadius: cornerRadius)
+        GeometryReader { geo in
+            
+            RoundedRectangle(cornerRadius: cornerRadius)
+//                .modifier(MeasureSizeModifier())
+//                .onPreferenceChange(SizePreferenceKey.self) { newSize in
+//                    width = newSize.width
+//                    cornerRadius = newSize.height * 0.3
+//                    cellWidth = newSize.width/CGFloat(segments)
+//                }
+                .foregroundColor(.segmentControllerBackground.opacity(0.5))
+                .overlay (
+                    VStack {
+                        if highlightedSegment == nil {
+                            RoundedRectangle(cornerRadius: cornerRadius)
+                                .foregroundColor(Color.clear)
+                        } else {
+                            RoundedRectangle(cornerRadius: cornerRadius)
                                 .inset(by: 3.0)
-                                .fill()
-                                .foregroundColor(Color(.systemBackground))
-                                .shadow(color: highlightedSegmentAlarm ? Color(.alarm) : Color(.black), radius: 0.75, x: 0.5, y: 0.5)
+                                .strokeBorder(lineWidth: 1.0)
+                                .foregroundColor(
+                                    highlightedSegmentAlarm ? Color(.alarm) : Color(.clear)
+                                )
+                                .background(RoundedRectangle(cornerRadius: cornerRadius)
+                                    .inset(by: 3.0)
+                                    .fill()
+                                    .foregroundColor(Color(.systemBackground))
+                                    .shadow(color: highlightedSegmentAlarm ? Color(.alarm) : Color(.black), radius: 0.75, x: 0.5, y: 0.5)
                                 )
                                 .frame(width: cellWidth)
                                 .offset(x: highlightOffset, y: 0)
@@ -190,8 +218,11 @@ struct SegmentedSpeedPicker: View {
                         }
                     , alignment: .topLeading)
             
+            
                 .onChange(of: segments) { newSegments in
-                    cellWidth = width / CGFloat ( newSegments )
+                    let newWidth = geo.size.width / CGFloat ( newSegments )
+                    highlightOffset = newWidth * CGFloat ( highlightedSegment ?? 0 )
+                    indicatorOffset = newWidth * CGFloat ( indicatedSegment ?? 0 )
                 }
                 .onChange(of: indicatedSegment) { newTarget in
                     guard let newTarget = newTarget, let highlightedSegment = highlightedSegment else {
@@ -213,6 +244,9 @@ struct SegmentedSpeedPicker: View {
                 }
             
                 .onAppear() {
+                    Log.fan("on appear").debug("Width \(size.width)")
+                    size = geo.size
+                    let cellWidth = size.width / CGFloat ( segments )
                     highlightOffset = cellWidth * CGFloat (highlightedSegment ?? 0)
                     indicatorOffset = cellWidth * CGFloat (indicatedSegment ?? 0)
                     guard let h = highlightedSegment, let t = indicatedSegment else {
@@ -221,6 +255,7 @@ struct SegmentedSpeedPicker: View {
                     }
                     indicatorOn = t != h
                 }
+        }
     }
     
     init (
@@ -247,10 +282,10 @@ struct IndicatorOpacity: ViewModifier {
         case fastBlink = 0.25, slowBlink = 1.25
         var animation: Animation {
             switch self {
-                case .fastBlink:
-                    return .linear(duration: rawValue).repeatForever(autoreverses: true)
-                case .slowBlink:
-                    return .linear(duration: rawValue).repeatForever(autoreverses: true)
+            case .fastBlink:
+                return .linear(duration: rawValue).repeatForever(autoreverses: true)
+            case .slowBlink:
+                return .linear(duration: rawValue).repeatForever(autoreverses: true)
             }
         }
     }
@@ -261,12 +296,12 @@ struct IndicatorOpacity: ViewModifier {
     
     private func recalc(on: Bool, blink: IndicatorBlink?) -> (endOpacity: Double, animation: Animation) {
         switch (on, blink) {
-            case (false, _):
-                return (0.0, Animation.linear(duration: 0.5))
-            case (_, .some(let rate)):
-                return (1.0, rate.animation)
-            case (_, nil):
-                return (1.0, .linear(duration: 0.5))
+        case (false, _):
+            return (0.0, Animation.linear(duration: 0.5))
+        case (_, .some(let rate)):
+            return (1.0, rate.animation)
+        case (_, nil):
+            return (1.0, .linear(duration: 0.5))
         }
     }
     
@@ -310,7 +345,7 @@ struct VerticalLine: Shape {
 
 struct Segmented_Indicator_Picker_Previews: PreviewProvider {
     static var previews: some View {
-        SegmentedSpeedPicker(
+        SegmentedSpeedPicker (
             segments: .constant(5),
             highlightedSegment: .mock(1),
             highlightedAlarm: .constant(false),
