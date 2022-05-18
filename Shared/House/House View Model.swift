@@ -28,15 +28,7 @@ class HouseViewModel: ObservableObject {
     }
     
     private func startSubscribers () {
-        
-        WeatherMonitor.shared.$tooHot.prepend(false)
-            .combineLatest(WeatherMonitor.shared.$tooCold.prepend(false))
-            .receive(on: DispatchQueue.main)
-            .map { (tooHot, tooCold) in
-                if !(tooHot || tooCold) { return false }
-                else { return HouseStatus.shared.fansRunning }
-            }
-            .assign(to: &HouseStatus.shared.$houseTempAlarm)
+
         
         Publishers
             .CombineLatest4 (
@@ -142,6 +134,7 @@ class HouseStatus: ObservableObject {
     }
     func updateStatus ( forFan fan: FanView.ID, isOperating operating: Bool) {
         _fansRunning[fan] = operating
+        fansOperating = fansRunning
     }
 //    func updateStatus ( forFan fan: FanView.ID, isInterlocked interlocked: Bool) {
 //        _fansInterlocked[fan] = interlocked
@@ -155,6 +148,22 @@ class HouseStatus: ObservableObject {
     }
     private init () {
         Log.house.info("house status init")
+
+//        WeatherMonitor.shared.$tooHot.prepend(false)
+//            .combineLatest(WeatherMonitor.shared.$tooCold.prepend(false))
+//
+//
+        Publishers
+            .CombineLatest3(
+                WeatherMonitor.shared.$tooHot,
+                WeatherMonitor.shared.$tooCold,
+                $fansOperating
+            )
+            .receive(on: DispatchQueue.main)
+            .map { (tooHot, tooCold, operating) in
+                ((tooHot || tooCold) && operating)
+            }
+            .assign(to: &$houseTempAlarm)
     }
 }
 

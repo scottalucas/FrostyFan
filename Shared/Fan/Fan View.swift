@@ -180,7 +180,7 @@ struct ControllerRender: View {
                 viewModel.setSpeed(to: speed)
             }
         }
-        .foregroundColor(HouseStatus.shared.houseTempAlarm ? .alarm : .main)
+        .foregroundColor(viewModel.houseTempAlarm ? .alarm : .main)
     }
 }
 
