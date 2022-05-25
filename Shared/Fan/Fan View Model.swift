@@ -69,8 +69,13 @@ class FanViewModel: ObservableObject {
             await model.setFan(toSpeed: spd)
             endBackgroundTask(task)
         }
+        
     }
     
+    func refresh () async {
+        await model.refresh()
+    }
+
     private func registerBackgroundTask(_ name: String) -> UIBackgroundTaskIdentifier {
         Log.background.debug("Registered background task for \(name)")
         let backgroundTask = UIApplication.shared.beginBackgroundTask (withName: name)

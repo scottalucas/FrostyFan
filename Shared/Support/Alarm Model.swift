@@ -132,8 +132,8 @@ class WeatherBackgroundTaskManager {
         do {
             guard await UNUserNotificationCenter.current().getStatus() == .authorized else { throw BackgroundTaskError.notAuthorized }
             
-            guard HouseStatus.shared.fansRunning else { throw BackgroundTaskError.fanNotOperating }
-            
+            guard await HouseStatus.knownFanOperating() else { throw BackgroundTaskError.fanNotOperating }
+                        
             guard Storage.temperatureAlarmEnabled else { throw BackgroundTaskError.tempAlarmNotSet }
             
             try await WeatherMonitor.shared.updateWeatherConditions()
@@ -173,13 +173,13 @@ class WeatherBackgroundTaskManager {
         guard .distantPast < .now else { throw NotificationError.tooSoon }
         let tooHot = await WeatherMonitor.shared.tooHot
         let subtitleString = tooHot ? "It's hot outside." : "It's cold outside."
-        let bodySubstring = tooHot ? "heating up" : "cooling down"
+        let bodySubstring = tooHot ? "too hot" : "too cold"
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
         //present the alert
         let content = UNMutableNotificationContent()
         content.title = "Whole House Fan Alert"
         content.subtitle = subtitleString
-        content.body = "Your fan is \(bodySubstring) your house. Turn it off?"
+        content.body = "Your fan may make your house \(bodySubstring). Turn it off?"
         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
         try await UNUserNotificationCenter.current().add(request)
         Storage.lastNotificationShown = .now

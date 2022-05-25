@@ -43,26 +43,26 @@ enum StorageKey: Equatable, RawRepresentable, CaseIterable {
         switch self {
         case .knownFans:
             return "knownFans"
-            case .interlockAlarmEnabled:
-                return "interlock"
+        case .interlockAlarmEnabled:
+            return "interlock"
         case .suppressInterlockForFans:
             return "suppressInterlock"
-            case .temperatureAlarmEnabled:
-                return "tempAlarm"
-            case .lowTempLimit:
-                return "lowTempLimit"
-            case .highTempLimit:
-                return "highTempLimit"
-            case .forecast:
-                return "forecast"
-            case .lastForecastUpdate:
-                return "lastForecastUpdate"
-            case .lastNotificationShown:
-                return "lastNotificationShown"
-            case .coordinate:
-                return "coordinate"
-            case .fanName(let macAddr):
-                return "name\(macAddr)"
+        case .temperatureAlarmEnabled:
+            return "tempAlarm"
+        case .lowTempLimit:
+            return "lowTempLimit"
+        case .highTempLimit:
+            return "highTempLimit"
+        case .forecast:
+            return "forecast"
+        case .lastForecastUpdate:
+            return "lastForecastUpdate"
+        case .lastNotificationShown:
+            return "lastNotificationShown"
+        case .coordinate:
+            return "coordinate"
+        case .fanName(let macAddr):
+            return "name\(macAddr)"
         }
     }
 }

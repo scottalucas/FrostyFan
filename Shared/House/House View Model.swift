@@ -19,45 +19,11 @@ class HouseViewModel: ObservableObject {
     init (initialFans: Set<FanCharacteristics>) {
         fanSet = []
         Log.house.info("view model init")
-        startSubscribers()
         Task {
             Log.house.debug("Scanning in houseviewmodel init")
             Log.house.debug("\(Storage.knownFans)")
             await scan ( Storage.knownFans )
         }
-    }
-    
-    private func startSubscribers () {
-
-        
-        Publishers
-            .CombineLatest4 (
-                WeatherMonitor.shared.$tooHot
-                    .prepend(false),
-                WeatherMonitor.shared.$tooCold
-                    .prepend(false),
-                WeatherMonitor.shared.$currentTemp
-                    .prepend(nil),
-                URLSessionMgr.shared.networkAvailable
-                    .prepend(true)
-            )
-            .receive(on: DispatchQueue.main)
-            .map { (tooHot, tooCold, temp, networkAvailable) in
-                if !networkAvailable {
-                    return "Network unavailable"
-                }
-                guard temp != nil, HouseStatus.shared.fansRunning else { return nil }
-                if tooHot {
-                    return "It's hot outside.\rTurn off fan?"
-                } else if tooCold {
-                    return "It's cold outside.\rTurn off fan?"
-                } else {
-                    return nil
-                }
-            }
-            .prepend ("Checking for known fans, \rplease wait...")
-            .assign(to: &HouseStatus.shared.$houseMessage)
-        
     }
     
     func scan (_ hostList: Set<String>) async {
@@ -146,6 +112,51 @@ class HouseStatus: ObservableObject {
         _fansRunning.removeAll()
         _fansInterlocked.removeAll()
     }
+    
+    static func knownFanOperating () async -> Bool {
+        let hosts = Storage.knownFans
+        var operating = false
+        guard hosts.count > 0 else { return false }
+        let sess = URLSessionMgr.shared.session
+        sess.configuration.timeoutIntervalForRequest = 5.0
+        sess.configuration.waitsForConnectivity = true
+        sess.configuration.allowsCellularAccess = false
+        sess.configuration.allowsExpensiveNetworkAccess = false
+        do {
+            try await withThrowingTaskGroup(of: Data?.self) { group in
+                
+                group.addTask {
+                    try? await Task.sleep(interval: 20.0)
+                    throw ConnectionError.timeout
+                }
+                for ip in hosts {
+                    guard let url = URL(string: "http://\(ip)/fanspd.cgi?dir=\(FanModel.Action.refresh.rawValue)") else { continue }
+                    group.addTask {
+                        let d = try? await sess.data(from: url).0
+                        return (d)
+                    }
+                }
+                
+                for try await (optData) in group {
+                    do {
+                        guard !group.isCancelled else { throw ConnectionError.other("Refresh All task cancelled") }
+                        let chars = try FanCharacteristics(data: optData)
+                        if chars.speed > 0 { operating = true }
+                    } catch (let err as ConnectionError) { // there will be lots of errors in this section as network device connection attempts fail. We only want to handle the timeout.
+                        if case .timeout = err {
+                            throw err
+                        }
+                    } catch { }
+                }
+            }
+        } catch (let err as ConnectionError) {
+            Log.network.error("Error during scan \(err.description)")
+        } catch {
+            Log.network.fault("Error during scan \(error.localizedDescription, privacy: .public)")
+        }
+        return operating
+    }
+    
     private init () {
         Log.house.info("house status init")
 
@@ -164,6 +175,37 @@ class HouseStatus: ObservableObject {
                 ((tooHot || tooCold) && operating)
             }
             .assign(to: &$houseTempAlarm)
+        
+        
+        Publishers
+            .CombineLatest4 (
+                WeatherMonitor.shared.$tooHot
+                    .combineLatest(WeatherMonitor.shared.$tooCold)
+                    .prepend((false, false)),
+                WeatherMonitor.shared.$currentTemp
+                    .prepend(nil),
+                URLSessionMgr.shared.networkAvailable
+                    .prepend(true),
+                $fansOperating
+                    .prepend(false)
+            )
+            .receive(on: DispatchQueue.main)
+            .map { (tooHotTooColdTuple, temp, networkAvailable, operating) in
+                let (tooHot, tooCold) = tooHotTooColdTuple
+                if !networkAvailable {
+                    return "Network unavailable"
+                }
+                guard temp != nil, HouseStatus.shared.fansRunning else { return nil }
+                if tooHot {
+                    return "It's hot outside.\rTurn off fan?"
+                } else if tooCold {
+                    return "It's cold outside.\rTurn off fan?"
+                } else {
+                    return nil
+                }
+            }
+            .prepend ("Checking for known fans, \rplease wait...")
+            .assign(to: &$houseMessage)
     }
 }
 
