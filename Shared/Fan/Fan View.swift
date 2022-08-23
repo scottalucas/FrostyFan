@@ -99,6 +99,7 @@ struct FanView: View {
                 })
                 .onAppear() {
                     Log.fan(id).info("view appeared")
+                    let _ = task { await viewModel.refresh() }
                 }
                 .onDisappear() {
                     Log.fan(id).info("view disappeared")
