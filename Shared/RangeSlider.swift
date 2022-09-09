@@ -3,7 +3,10 @@
 //  Fan with SwiftUI
 //
 //  Created by Scott Lucas on 12/3/21.
-//
+/*
+ This custom control is a slider with an upper and lower handle. Used mostly to allow users to set a temperature range for alerts, i.e. to provide alerts when outdoor temperatures fall below or above certain values.
+ This was suprisingly hard to build, but it works very well. Note that the extensive customization capabilities aren't used in the app. They were an opportunity for experimentation and learning.
+ */
 
 import Foundation
 import SwiftUI

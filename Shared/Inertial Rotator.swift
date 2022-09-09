@@ -4,13 +4,18 @@
 //
 //  Created by Scott Lucas on 11/29/21.
 //
+/*
+ This is a view modifier designed to apply an adjustable, continuously rotating effect to a view. Available rotation animation options can't easily change speed mid-rotation without jerkiness. This animation also adds inertial changes and a "judder" that simulates an electric motor stopping.
+ 
+ This is used in the Fan View/Rotator Render view.
+ */
 
 import Foundation
 import SwiftUI
 import Combine
 import os.log
 
-struct Rotator<Content: View>: View {
+struct Rotator<Content: View>: View { //this is what's called in the view. RPM does not need to trigger state redraws since the TimelineView updates continuously. In fact, using a State variable has unintended side effects if/when it triggers a rebuild (i.e. child view properties being reinitialized and causing animation stutters).
     @State var pauseRotation = false
     var rpm: Double
     var content: Content
@@ -31,7 +36,7 @@ struct Rotator<Content: View>: View {
     }
 }
 
-struct RotatedView<Content: View>: View {
+fileprivate struct RotatedView<Content: View>: View { //this struct rotates the underlying View.
     @StateObject var viewModel = RotatingViewModel ()
     @Binding var pauseRotation: Bool
     private var content: Content
@@ -57,7 +62,7 @@ struct RotatedView<Content: View>: View {
     }
 }
 
-class RotatingViewModel: ObservableObject {
+fileprivate class RotatingViewModel: ObservableObject { //do all the math here
     var pauseRotation = CurrentValueSubject<Bool, Never>(false)
     private var startTransition: Bool = false
     private var startSpring: Bool = true
@@ -72,21 +77,21 @@ class RotatingViewModel: ObservableObject {
     private var springDecayIntercept: Double = .zero
     private var accel: Double = 45 // Degrees/s/s
 
-    @MainActor func getDeg(for nextDate: Date) -> Angle {
+    @MainActor func getDeg(for nextDate: Date) -> Angle { //this is a continuous animation. This function calculates the next rotational degree based on time delta from the last time it was set.
         var nextAngle: Angle = .zero
         var instantaneousRpm: Double = .zero
-        defer {
+        defer { //clean up to prepare for next call of the function.
             lastDate = nextDate
             lastAngle = nextAngle
             currentRpm = instantaneousRpm
-            if instantaneousRpm == rpmEnd, instantaneousRpm == 0, !startTransition {
+            if instantaneousRpm == rpmEnd, instantaneousRpm == 0, !startTransition { // fan animation has stopped, pause animation. Not sure if this has to be done, but the .animation TimelineScheduler keeps firing if you don't.
                 pauseRotation.send(true)
                 springRange = nil
                 transitionRange = nil
             }
         }
         
-        if startTransition {
+        if startTransition { //this handles calculations for inertial speed changes.
             let timeToTransition = abs ( 6.0 * ( rpmEnd - rpmStart ) / accel ) //seconds
             transitionRange = Range<Date>.init(uncheckedBounds: (lower: nextDate, upper: nextDate.addingTimeInterval(timeToTransition)))
             startTransition = false
@@ -94,7 +99,7 @@ class RotatingViewModel: ObservableObject {
         
         instantaneousRpm = instantRpm(currentTime: nextDate)
         
-        if ( instantaneousRpm < 3 && rpmEnd == 0 ) {
+        if ( instantaneousRpm < 3 && rpmEnd == 0 ) { // add "judder" to simulate a stopping electric motor.
             if springRange == nil, let upperB = transitionRange?.upperBound, upperB > nextDate
             {
                 springRange = Range<Date>( uncheckedBounds: ( lower: nextDate, upper: nextDate.addingTimeInterval(0.75) ) )
@@ -122,7 +127,7 @@ class RotatingViewModel: ObservableObject {
         pauseRotation.send(false)
     }
     
-    private func wobbleMultiply (forRpm rpm: Double, at time: Date) -> Double {
+    private func wobbleMultiply (forRpm rpm: Double, at time: Date) -> Double { //function to create the modifier for ending judder.
         guard let range = springRange, range.upperBound > time else {
             return .zero
         }
@@ -130,7 +135,7 @@ class RotatingViewModel: ObservableObject {
         return cos(progress * 5.0 * .pi) * 2.0
     }
     
-    private func instantRpm (currentTime: Date) -> Double {
+    private func instantRpm (currentTime: Date) -> Double { //calculate the instantaneous rpm. If the fan's rotating at a steady state, this returns the same value for each animation. If it's making an inertial change, this returns an appropriate value for the current inertial progress.
         guard let upperB = transitionRange?.upperBound, currentTime <= upperB else {
             return Double ( rpmEnd )
         }

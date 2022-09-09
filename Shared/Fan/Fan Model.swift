@@ -4,6 +4,17 @@
 //
 //  Created by Scott Lucas on 12/9/20.
 //
+/*
+ Handles characteristics related to the fan. There are two controllable elements on the fan: the fan speed (controlled with the MotorDelegate) and the timer (controlled with the TimerDelegate).
+ 
+ Communication with the fan takes place via the manufacturer's API, which does not conform to the JSON standard. The API returns all fan parameters at once. Later in this file there's a custom decoder that processes information returned by the API and creates a FanCharacteristics structure.
+ 
+ Combine publishers handle updates from the fan since they are asynchronous. The fanCharacteristics publisher emits a new value whenever the fan responds with an update.
+ 
+ If fan communication fails, the fan sets the invalidFan flag, which prevents any further adjustment attempts.
+ 
+ motorContext and timerContext provide status for these two adjustable fan parameters. They're used by the view to communicate status to the user.
+ */
 
 import Foundation
 import Combine
@@ -135,7 +146,7 @@ struct FanCharacteristics: Decodable, Hashable {
     var dipSwitch: String?
     var remoteSwitch: String?
     var setpoint: Int?
-    var labelValueDictionary: [String: (value: String, alarm: Bool)] {
+    var labelValueDictionary: [String: (value: String, alarm: Bool)] { //used by the Detail view.
         let iT = insideTemp.map ({
             Measurement<UnitTemperature>(value: Double($0), unit: .fahrenheit).formatted(Measurement<UnitTemperature>.FormatStyle.truncatedTemp)
         }) ?? "Not reported"
@@ -257,7 +268,7 @@ struct FanCharacteristics: Decodable, Hashable {
         setpoint = setpointStr.map { Int($0) } ?? nil
     }
     
-    init (data: Data?) throws {
+    init (data: Data?) throws { //since the API isn't JSON decodable, this initializer converts fan API data to JSON decodable data, then uses the custom decoder defined above.
         guard let data = data else { throw ConnectionError.decodeError("Data was nil.")}
         guard let tupleSource = String(data: data, encoding: .ascii) else { throw ConnectionError.decodeError("Data could not be encoded to ASCII") }
         let s = tupleSource
@@ -286,7 +297,7 @@ extension FanCharacteristics: Identifiable {
     var id: MACAddr { macAddr }
 }
 
-struct FanStatusLoader {
+struct FanStatusLoader { //this is the structure used to make a network call to the fan.
     typealias OutputPublisher = AnyPublisher<FanCharacteristics, ConnectionError>
     private var ip: IPAddr
     
@@ -313,6 +324,13 @@ struct FanStatusLoader {
     }
 }
 
+/*
+ This app adjusts the fan speed and a fan timer that will shut the fan off after a pre-set interval. Both the speed and timer are controlled by the fan. The API interface for these two parameters is crude and models physical keypresses. Users can increase/decrease the speed by one step at a time. The timer can be increased by an hour at a time, or reset to zero by turning the fan off. Possible API actions are reflected in the FanModel.Action structure.
+ 
+ The app allows the user to select a target speed or time, and behind the scenes it performs the required "keypresses" to set the fan to the desired target. The motor and timer delegates handle the timing aspects of setting fan speed and timer values. Unfortunately, the fan API is quirky. The fan returns a status after each API call, but the reported status will lag the actual fan status. You might, for example, send a command to increase speed but the API does not reflect the new speed for several seconds. The speed and timer setting routines accomodate these issues with wait and refresh actions that ensure the fan's actual state is known before issuing additional speed up/slow down or timer increase commands.
+ 
+ These routines use some advanced async constructs like AsyncThrowingStreams to both monitor fan status and report fan status back up to the fanCharacteristics publisher.
+ */
 struct Motor: MotorDelegate {
     
     enum Context { case adjusting, standby, fault }

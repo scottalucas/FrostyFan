@@ -4,6 +4,13 @@
 //
 //  Created by Scott Lucas on 12/9/20.
 //
+/*
+ The FanView is embedded in an overall view of the House (which can contain multiple fans). There are a number of items related to the fan, such as a user-friendly name, timer status, fan status, and detailed settings that this view controls via NavigationLinks.
+ 
+ The subviews are organized into "Render" views to allow SwiftUI to contain updates so you're not redrawing all the views whenever there's a change in a subview. It's organized this way because re-renders were causing the fan animation to glitch. However, I subsequently rewrote the fan animation to use a continuous model, which may eliminate the need for these isolated views.
+ 
+ Persistant items are stored in AppStorage. The fan itself can't, for example, save a user-friendly name, so that's done in the app.
+ */
 
 import SwiftUI
 
@@ -122,7 +129,7 @@ struct FanView: View {
     }
 }
 
-struct RotatorRender<Content: View>: View {
+struct RotatorRender<Content: View>: View { //builds the fan image and rotates it.
     var rpm: Double
     var content: Content
     
@@ -136,7 +143,7 @@ struct RotatorRender<Content: View>: View {
     }
 }
 
-struct ControllerRender: View {
+struct ControllerRender: View { //builds the segmented controller and manages its status. This view area also shows the timer icon and a time-left display if the timer is active.
     @ObservedObject var viewModel: FanViewModel
     @State var requestedSpeed: Int?
     @Binding var activeSheet: OverlaySheet?
@@ -185,7 +192,7 @@ struct ControllerRender: View {
     }
 }
 
-struct BaseFanImage: View {
+struct BaseFanImage: View { // just a simple struct to manage all the view elements that make up the base fan image.
     var body: some View {
         IdentifiableImage.fanIcon.image
             .resizable()
@@ -194,7 +201,7 @@ struct BaseFanImage: View {
     }
 }
 
-struct FanInfoAreaRender: View {
+struct FanInfoAreaRender: View { //User sees and "i" icon that can be selected to show detailed fan information as reported by the fan. This view area also shows the outside temperature if available, as well as a scan spinner if the House is scanning for new fans.
     @ObservedObject var viewModel: FanViewModel
     @Binding var activeSheet: OverlaySheet?
     
@@ -233,7 +240,7 @@ struct FanInfoAreaRender: View {
     }
 }
 
-struct FanNameRender: View {
+struct FanNameRender: View { //this view builds the fan name used in the toolbar. A long press opens the fan name for editing. This view area also houses some small icons indicating current fan status for temp out of range, damper in operation, and whether the fan safety interlock has been triggered. Users navigate to the settings screen from an icon in this view area.
     @ObservedObject var viewModel: FanViewModel
     @Binding var activeSheet: OverlaySheet?
     @Binding var name: String
@@ -311,8 +318,8 @@ struct FanViewPreviewContainer: View {
 
 struct FanView_Previews: PreviewProvider {
     //    struct InjectedIndicators {
-    //        static var indicators: HouseMonitor {
-    //            let retVal = HouseMonitor.shared
+    //        static var indicators: HouseStatus {
+    //            let retVal = HouseStatus.shared
     //            retVal.scanning = true
     //            return retVal
     //        }
@@ -364,7 +371,7 @@ struct FanView_Previews: PreviewProvider {
         //                BaseFanImage()
         //                Spacer()
         //            }
-        //        .environmentObject(HouseMonitor.shared)
+        //        .environmentObject(HouseStatus.shared)
             
     }
 }

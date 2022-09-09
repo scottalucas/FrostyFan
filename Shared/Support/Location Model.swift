@@ -4,6 +4,11 @@
 //
 //  Created by Scott Lucas on 1/10/21.
 //
+/*
+ Routines to get the user location. Unlike other apps, we only need to get the location once, when the user is near their fan. We're not interested in user location, we're interested in fan location (which will not change over time).
+ 
+ Built using continuations to translate the delegate-based CoreLocation APIs into async functions. Probably didn't need to do this but it was a great way to learn about how to bridge older APIs to async.
+ */
 
 import Foundation
 import CoreLocation

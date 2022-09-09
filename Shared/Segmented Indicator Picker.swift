@@ -4,6 +4,11 @@
 //
 //  Created by Scott Lucas on 11/14/21.
 //
+/*
+ This control is an enhanced version of the native segmented controller. It adds a few things the native control doesn't have in order to provide additional user feedback regarding current fan status, especially when the fan speed is being adjusted. Specifically, the fan's current speed does not immediately go to the selected speed. Rather, it increases by steps until the final speed is reached. The SegmentedSpeedPicker control displays two pieces of information. When a speed level is highlighted, that signifies either 1) the fan's current speed when no adjustments are being made (the "highlighted segment") or 2) the target speed if the user has selected a new speed (the "indicated segment"). While adjusting, a arrow overlay indicates fan true speed, and moves as the fan reports new speeds. New user selections and true fan speed changes are animated, and the cell separators show/hide based on the highlighted segment.
+
+The control can be modified to use different labels, min/max indicators, colors, and segment separators. That wasn't necessary for the app, I built it that way as a learning experiment.
+ */
 
 import SwiftUI
 

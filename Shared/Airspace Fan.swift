@@ -4,6 +4,19 @@
 //
 //  Created by Scott Lucas on 12/9/20.
 //
+/*
+ This is the main App. At a top level, the app is constructed with a single House that can contain multiple Fans. There are activities, events, and alarms that happen at the House level, such as:
+        * house location (used to retrieve current outdoor temperatures
+        * temperature alarms that notify users if they should consider turning their fan on or off
+ 
+ There are other activities, events, and alarms that happen at the Fan level, such as:
+        * fan speed displays and adjustments
+        * fan timer displays and adjustments
+        * fan safety interlock notifications
+        * fan user-friendly names
+ 
+ Handle scene phase changes here. Specifically, there are two possible alerts that may be presented to the user when the app is in background, and check routines for those alerts are initiated here. One process queries the fan to see if the fan itself is in an alarm state, the other process queries the weather to see if the user needs to be notified of outside temperatures that may require user attention to change the fan's operation.
+ */
 
 import SwiftUI
 import CoreLocation
@@ -66,9 +79,18 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         if BGTaskScheduler.shared.register(forTaskWithIdentifier: BackgroundTaskIdentifier.tempertureOutOfRange, using: nil, launchHandler: { task in
             Log.background.info("Background task for temp check called")
             guard let task = task as? BGProcessingTask else { return }
+            task.expirationHandler = {
+                Log.background.error("Background handler for temperature check expired")
+                task.setTaskCompleted(success: false)
+            }
             Task {
-                await WeatherBackgroundTaskManager.handleTempCheckTask (task: task)
-                Log.background.info("Background temp check task handle complete.")
+                if await WeatherBackgroundTaskManager.handleTempCheckTask() {
+                    task.setTaskCompleted(success: true)
+                    Log.background.info("Background temp check task handle success.")
+                } else {
+                    task.setTaskCompleted(success: false)
+                    Log.background.info("Background temp check task handle failed.")
+                }
             }
         })
         {
@@ -79,10 +101,19 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         
         if BGTaskScheduler.shared.register(forTaskWithIdentifier: BackgroundTaskIdentifier.interlockActive, using: nil, launchHandler: { task in
             Log.background.info("Background task for interlock called")
+            task.expirationHandler = {
+                Log.background.error("Background handler for interlock check expired")
+                task.setTaskCompleted(success: false)
+            }
             guard let task = task as? BGProcessingTask else { return }
             Task {
-                await InterlockBackgroundTaskManager.handleInterlockCheckTask (task: task)
-                Log.background.info("Background interlock check task handle complete.")
+                if await InterlockBackgroundTaskManager.handleInterlockCheckTask () {
+                    task.setTaskCompleted(success: true)
+                    Log.background.info("Background interlock check task handle success.")
+                } else {
+                    task.setTaskCompleted(success: false)
+                    Log.background.info("Background interlock check task handle fail.")
+                }
             }
         })
         {
@@ -93,23 +124,3 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         return true
     }
 }
-
-protocol BGTaskSched {
-    static var shared: BGTaskScheduler { get }
-    func register(forTaskWithIdentifier identifier: String,
-                  using queue: DispatchQueue?,
-                  launchHandler: @escaping (BGTask) -> Void) -> Bool
-    func submit(_ taskRequest: BGTaskRequest) throws
-    func cancel(taskRequestWithIdentifier: String)
-    func cancelAllTaskRequests()
-}
-
-extension BGTaskScheduler: BGTaskSched { }
-
-protocol BGRefreshTask: AnyObject {
-    var identifier: String { get }
-    var expirationHandler: (() -> Void)? { get set }
-    func setTaskCompleted(success: Bool)
-}
-
-extension BGAppRefreshTask: BGRefreshTask { }

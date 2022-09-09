@@ -4,6 +4,11 @@
 //
 //  Created by Scott Lucas on 4/16/22.
 //
+/*
+ Manages the data used for user settings. There are options to enable/disable alerts for outdoor temperature and safety interlocks. This code does some sanity checking to determine whether or not to show the UI needed to set alerts. For example, if the user has disabled location services, we can't get local temperatures and therefore can't provide temperature alerts. The two "validate" routines make these determinations.
+ 
+ Other functions handle user input from the SettingsView.
+ */
 
 import Foundation
 import SwiftUI

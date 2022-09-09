@@ -26,24 +26,7 @@ class TestViewModel: ObservableObject {
     }
 }
 class TestWeather {
-//    static var roomTempWeatherData: Data {
-//        let forecast: [(Date, Measurement<UnitTemperature>)] = Range<Int>.init((1...8)).map( { (Date(timeIntervalSinceNow: Double($0) * 3600), Measurement<UnitTemperature>.init(value: 72, unit: .fahrenheit)) } )
-//        let res = Weather.WeatherResult.init(currentTemp: Measurement<UnitTemperature>.init(value: 72, unit: .fahrenheit), forecast: forecast)
-//        return Weather.WeatherObject.init(fromResult: res).data
-//    }
-//
-//    static var coldTempWeatherData: Data {
-//        let forecast: [(Date, Measurement<UnitTemperature>)] = Range<Int>.init((1...8)).map( { (Date(timeIntervalSinceNow: Double($0) * 3600), Measurement<UnitTemperature>.init(value: 10, unit: .fahrenheit)) } )
-//        let res = Weather.WeatherResult.init(currentTemp: Measurement<UnitTemperature>.init(value: 10, unit: .fahrenheit), forecast: forecast)
-//        return Weather.WeatherObject.init(fromResult: res).data
-//    }
-//
-//    static var hotTempWeatherData: Data {
-//        let forecast: [(Date, Measurement<UnitTemperature>)] = Range<Int>.init((1...8)).map( { (Date(timeIntervalSinceNow: Double($0) * 3600), Measurement<UnitTemperature>.init(value: 100, unit: .fahrenheit)) } )
-//        let res = Weather.WeatherResult.init(currentTemp: Measurement<UnitTemperature>.init(value: 100, unit: .fahrenheit), forecast: forecast)
-//        return Weather.WeatherObject.init(fromResult: res).data
-//    }
-    
+
     static var testCoordinate: Coordinate {
         //40.584422, -105.070148
         Coordinate(lat: 40.584422, lon: -105.070148)
@@ -61,7 +44,6 @@ class TestWeather {
             start.addingTimeInterval(Double(c) * 3600.0) })
         let forecast: [(Date, Measurement<UnitTemperature>)] = zip(dateArray, tempArray).map ({ ($0, $1) })
         return Weather.WeatherResult.init(currentTemp: Measurement<UnitTemperature>.init(value: currentTemp, unit: .fahrenheit), forecast: forecast)
-//        return Weather.WeatherObject.init(fromResult: res).data
     }
 }
 
@@ -73,7 +55,7 @@ extension CLAuthorizationStatus {
             case 1:
                 return "restricted"
             case 2:
-                return  "denied"
+                return "denied"
             case 3:
                 return "authorizedAlways"
             case 4:

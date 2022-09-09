@@ -4,6 +4,13 @@
 //
 //  Created by Scott Lucas on 12/9/20.
 //
+/*
+ The FanViewModel recieves fan updates and translates them into published characteristics used by the fan view.
+ 
+ This makes heavy use of Combine publishers to process received updates from the fan model and the house model.
+ 
+ Since fan speed or timer adjustments can take as long as 30 seconds, this class creates background tasks for potentially long-running steps that need to continue when the user navigates out of the app.
+ */
 
 import Foundation
 import SwiftUI
@@ -17,7 +24,7 @@ class FanViewModel: ObservableObject {
     var id: FanView.ID
     var id2 = UUID().uuidString
     @Published var selectorSegments: Int = 2
-    @Published var currentMotorSpeed: Int?
+    @Published var currentMotorSpeed: Int? //as reported by the fan.
     
     @Published var scanUntil: Date = .distantPast //from HouseStatus.shared
     @Published var houseMessage: String? //from HouseStatus.shared
@@ -30,7 +37,7 @@ class FanViewModel: ObservableObject {
     @Published var showInterlockWarning = false
     @Published var displayedRPM: Double = .zero
     var chars: FanCharacteristics
-    private var fanMonitor: FanMonitor?
+    private var fanMonitor: FanMonitor? //periodically checks fan status if the fan is in the foreground of the app.
 //    private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
     private var bag = Set<AnyCancellable>()
     
@@ -63,7 +70,7 @@ class FanViewModel: ObservableObject {
     }
     
     func setSpeed (to spd: Int?) {
-        guard let spd = spd else { return }
+        guard let spd = spd else { return } //if the spd property isn't provided then exit
         Task {
             let task = registerBackgroundTask("set speed")
             await model.setFan(toSpeed: spd)
@@ -98,7 +105,7 @@ class FanViewModel: ObservableObject {
         houseStatus.$houseTempAlarm
             .assign(to: &$houseTempAlarm)
 
-        houseStatus.$displayedFanID
+        houseStatus.$displayedFanID //this changes as the user flips between fans in a multi-fan house
             .map ({ $0 == self.id })
             .prepend(false)
             .combineLatest($appInForeground
@@ -132,17 +139,8 @@ class FanViewModel: ObservableObject {
                 $0.damper == .operating
             }
             .assign(to: &$showDamperWarning)
-//
-//        model.fanCharacteristics
-//            .prepend(chars)
-//            .receive(on: DispatchQueue.main)
-//            .compactMap { $0 }
-//            .map {
-//                $0.interlock2 || $0.interlock1
-//            }
-//            .assign(to: &$showInterlockWarning)
         
-        Publishers.CombineLatest3 (
+        Publishers.CombineLatest3 ( //handles the factors that govern whether a timer notification appears. Suppress the timer icon (which also prevents the user from making timer adjustments) whenever we can't handle a timer adjustment.
             model.motorContext
                 .prepend( .standby )
                 .map { $0 != .adjusting },
@@ -211,7 +209,7 @@ class FanViewModel: ObservableObject {
             }
             .assign(to: &$offDateText)
         
-        model.fanCharacteristics
+        model.fanCharacteristics //the app supports a number of fan models that have different available speed levels. This receiver processes the fan model number and publishes the appropriate number of available speeds. Used to build the segmented controller.
             .prepend(chars)
             .receive(on: DispatchQueue.main)
             .map { $0.airspaceFanModel }
@@ -221,7 +219,9 @@ class FanViewModel: ObservableObject {
             .assign(to: &$selectorSegments)
     }
 }
-
+/*
+ The NoFanViewModel is needed when no fans are found during a scan for fans.
+ */
 @MainActor
 class NoFanViewModel: ObservableObject {
     @Published var scanUntil: Date = .distantPast //from Notification
@@ -239,7 +239,7 @@ class NoFanViewModel: ObservableObject {
     }
 }
 
-class FanMonitor {
+class FanMonitor { // periodically interrogates the fan to provide current status information. This class includes the ability to stop checking, which happens when the fan view is inactive.
     private var id: String
     private var task: Task<(), Never>?
     private var refresh: () async throws -> FanCharacteristics?
@@ -267,7 +267,7 @@ class FanMonitor {
                     Log.fan(id).info("fan monitor loop")
                     try await Task.sleep(interval: interval) //run the loop every 5 minutes to respond as conditions change
                     guard let t = task, !t.isCancelled else { throw BackgroundTaskError.taskCancelled }
-                    try await refresh ()
+                    let _ = try await refresh ()
                 } catch {
                     break
                 }

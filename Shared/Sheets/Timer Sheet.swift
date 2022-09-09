@@ -4,7 +4,13 @@
 //
 //  Created by Scott Lucas on 1/1/21.
 //
-
+/*
+ The TimerSheet is accessed when the user wants to set a new time for the fan. The fan timer supports durations up to 12 hours in whole-hour increments.
+ 
+ The view displays a spinner for the user to increment the timer to a new value, as well as a display showing remaining time on the timer.
+ 
+ The biggest challenge here is to build the spinner with only valid values.
+ */
 import SwiftUI
 //(initialValue: String, key: String)
 struct TimerSheet: View {

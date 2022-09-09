@@ -4,6 +4,9 @@
 //
 //  Created by Scott Lucas on 11/5/21.
 //
+/*
+A simple view that displays when there are no fans in the House.
+ */
 
 import SwiftUI
 

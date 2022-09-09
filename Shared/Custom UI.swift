@@ -4,6 +4,9 @@
 //
 //  Created by Scott Lucas on 12/10/20.
 //
+/*
+Elements related to custom UI, such as colors and app icons, are managed here. Note the IdentifiableImage struct, which helps manage certain informational icons in Sets. I put a number of description extensions here as well.
+ */
 
 import Foundation
 import SwiftUI
@@ -115,8 +118,8 @@ struct ColoredToggleStyle: ToggleStyle {
 
 struct Utilities_Previews: PreviewProvider {
 //    struct GlobalIndicatorHolder {
-//        static var sharedHouseData: HouseMonitor {
-//            let retVal = HouseMonitor.shared
+//        static var sharedHouseData: HouseStatus {
+//            let retVal = HouseStatus.shared
 //            retVal.scanning = true
 //            return retVal
 //        }

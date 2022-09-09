@@ -4,6 +4,9 @@
 //
 //  Created by Scott Lucas on 1/1/21.
 //
+/*
+ This is a simple view that displays all information available from the fan.
+ */
 
 import SwiftUI
 

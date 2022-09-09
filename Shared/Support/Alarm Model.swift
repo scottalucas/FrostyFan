@@ -4,25 +4,23 @@
 //
 //  Created by Scott Lucas on 1/10/21.
 //
+/*
+ Manages the two types of alerts provided by the app. One notifies the user when the outside temperature exceeds user-defined limits. The other notifies the user if a fan's safely interlock is active. This code also schedules the background tasks that get the current information needed to evaluate the need for an alert. For interlock alerts, we need to query the fan itself. For weather alerts, we need the current temperature.
+ */
 
 import Foundation
 import SwiftUI
 import BackgroundTasks
 
 class InterlockBackgroundTaskManager {
-    @MainActor static func handleInterlockCheckTask (task: BGProcessingTask) async -> () {
+    @MainActor static func handleInterlockCheckTask () async -> Bool {
         defer {
             scheduleInterlockCheckTask(forId: BackgroundTaskIdentifier.interlockActive, waitUntil: .now.addingTimeInterval(60.0 * 10.0) //check every 10 minutes
             )
         }
         Log.background.info("Background fetch being handled for interlock")
-        task.expirationHandler = {
-            Log.background.error("Background handler for interlock check expired")
-            task.setTaskCompleted(success: false)
-        }
         
         do {
-            
             guard await UNUserNotificationCenter.current().getStatus() == .authorized else { throw BackgroundTaskError.notAuthorized }
             guard Storage.interlockAlarmEnabled else { throw BackgroundTaskError.interlockAlarmNotSet }
             let hostList = Storage.knownFans
@@ -74,12 +72,12 @@ class InterlockBackgroundTaskManager {
                 Log.background.error ( "Unknwon error type \(error.localizedDescription, privacy: .public)" )
             }
             Log.background.error("Interlock alert handling failed. \(error.localizedDescription, privacy: .public)")
-            task.setTaskCompleted(success: false)
-            return
+            return false
+
         }
         
         Log.background.info("Background interlock check task complete.")
-        task.setTaskCompleted(success: true)
+        return true
     }
     
     static func scheduleInterlockCheckTask (forId: String, waitUntil date: Date) {
@@ -104,7 +102,6 @@ class InterlockBackgroundTaskManager {
     
     static func issueInterlockNotification () async throws {
         guard .distantPast < .now else { throw NotificationError.tooSoon }
-        let subtitleString = "Speed reduced"
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
         //present the alert
         let content = UNMutableNotificationContent()
@@ -119,16 +116,12 @@ class InterlockBackgroundTaskManager {
 }
 
 class WeatherBackgroundTaskManager {
-    @MainActor static func handleTempCheckTask (task: BGProcessingTask) async -> () {
+    @MainActor static func handleTempCheckTask () async -> Bool {
         defer {
             scheduleBackgroundTempCheckTask(forId: BackgroundTaskIdentifier.tempertureOutOfRange, waitUntil: WeatherMonitor.shared.weatherServiceNextCheckDate()
             )
         }
         Log.background.info("Background weather check fetch being handled")
-        task.expirationHandler = {
-            Log.background.error("Background handler expired")
-            task.setTaskCompleted(success: false)
-        }
         do {
             guard await UNUserNotificationCenter.current().getStatus() == .authorized else { throw BackgroundTaskError.notAuthorized }
             
@@ -148,12 +141,11 @@ class WeatherBackgroundTaskManager {
             } else {
                 Log.background.error ( "\(error.localizedDescription)" )
             }
-            task.setTaskCompleted(success: false)
-            return
+            return false
         }
         
         Log.weather.info("Background task complete.")
-        task.setTaskCompleted(success: true)
+        return true
     }
     
     static func scheduleBackgroundTempCheckTask (forId: String, waitUntil date: Date) {

@@ -4,6 +4,9 @@
 //
 //  Created by Scott Lucas on 12/9/20.
 //
+/*
+ The HouseViewModel manages discovered fans, scanning activities, and status events that are house-wide.
+ */
 
 import Foundation
 import SwiftUI
@@ -26,7 +29,7 @@ class HouseViewModel: ObservableObject {
         }
     }
     
-    func scan (_ hostList: Set<String>) async {
+    func scan (_ hostList: Set<String>) async { //scanning uses async task groups to publish discovered fans while scanning is still happening (rather than presenting all discovered fans at once, after the scan completes). The function stores discovered fans for quick initialization when the app opens or is moved to the foreground.
         Log.house.info("Scanning for fans")
         let allHosts = NetworkAddress
             .hosts

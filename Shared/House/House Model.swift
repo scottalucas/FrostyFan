@@ -5,6 +5,10 @@
 //  Created by Scott Lucas on 12/9/20.
 //
 
+/*
+ The house model was simple enough that I refactored it into the view model. A House model was just making things too complicated.
+ */
+
 import Foundation
 import SwiftUI
 import Combine

@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		930CFF4E2581878D00E8E979 /* Airspace Fan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF252581878B00E8E979 /* Airspace Fan.swift */; };
-		930CFF502581878D00E8E979 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF262581878B00E8E979 /* ContentView.swift */; };
 		930CFF522581878D00E8E979 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 930CFF272581878C00E8E979 /* Assets.xcassets */; };
 		930CFF67258187EE00E8E979 /* Network resources.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF66258187EE00E8E979 /* Network resources.swift */; };
 		930CFF732581881000E8E979 /* Fan Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930CFF722581881000E8E979 /* Fan Model.swift */; };
@@ -55,7 +54,6 @@
 
 /* Begin PBXFileReference section */
 		930CFF252581878B00E8E979 /* Airspace Fan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Airspace Fan.swift"; sourceTree = "<group>"; };
-		930CFF262581878B00E8E979 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		930CFF272581878C00E8E979 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		930CFF2C2581878C00E8E979 /* Fan with SwiftUI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Fan with SwiftUI.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		930CFF2F2581878C00E8E979 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -128,7 +126,6 @@
 				93D1EEB0273EF88600D7DF77 /* Pulldown Refresh.swift */,
 				93D1EEB327418A0900D7DF77 /* Segmented Indicator Picker.swift */,
 				930CFF252581878B00E8E979 /* Airspace Fan.swift */,
-				930CFF262581878B00E8E979 /* ContentView.swift */,
 				937F7C5625952358009E4754 /* Custom Errors.swift */,
 				937F7C4F25952138009E4754 /* Custom Operators.swift */,
 				937F7C612595239B009E4754 /* Custom UI.swift */,
@@ -347,7 +344,6 @@
 				937F7C5725952358009E4754 /* Custom Errors.swift in Sources */,
 				930CFF732581881000E8E979 /* Fan Model.swift in Sources */,
 				934C8AD025AB92AB0037906C /* Storage Model.swift in Sources */,
-				930CFF502581878D00E8E979 /* ContentView.swift in Sources */,
 				937F7C5025952138009E4754 /* Custom Operators.swift in Sources */,
 				93EFF7DD27557635000E3308 /* Inertial Rotator.swift in Sources */,
 				930CFF4E2581878D00E8E979 /* Airspace Fan.swift in Sources */,
@@ -536,6 +532,7 @@
 				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = U5FYS9QYU3;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_TESTABILITY = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				"INFOPLIST_FILE[sdk=*]" = Shared/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

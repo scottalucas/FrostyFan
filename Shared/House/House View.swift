@@ -4,6 +4,11 @@
 //
 //  Created by Scott Lucas on 12/9/20.
 //
+/*
+ The HouseView is fairly simple. A TabView displays discovered fans, and a pulldownRefresh view modifier creates a way for users to re-scan for fans.
+ 
+ The FanView communicates the currently-active fan via the selectedTab state. Individual fans receive that state to manage how often (or if) they check a fan's current status.
+ */
 
 import SwiftUI
 import Combine
@@ -34,12 +39,7 @@ struct HouseView: View {
         .pulldownRefresh {
             await viewModel.scan([])
         }
-        
-//        .onChange(of: scenePhase) { phase in
-//            if phase == .active && !URLSessionMgr.shared.networkAvailable.value {
-//                viewModel.fanSet.removeAll()
-//            }
-//        }
+
         .onChange(of: selectedTab) { newId in
             HouseStatus.shared.displayedFanID = newId
         }

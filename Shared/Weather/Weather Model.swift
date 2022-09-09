@@ -4,6 +4,11 @@
 //
 //  Created by Scott Lucas on 1/9/21.
 //
+/*
+ API interface for openweathermap.org. Throttling code helps prevent swamping the API. To minimize transactions on the API, I store weather forecasts and return forecasted temperatures when available. If weather API calls were inexpensive this code could be simpler.
+ 
+ There are two uses for retrieved temperature data. First, we check to see if tempertures are outside the user-set bounds for a notification. Second, we provide the temperature value for display to the user.
+ */
 
 import Foundation
 import CoreLocation
@@ -12,9 +17,9 @@ import SwiftUI
 import BackgroundTasks
 
 struct Weather {
-    typealias Forecast = Array<(Date, Measurement<UnitTemperature>)>
     typealias TempMeasurement = Measurement<UnitTemperature>
-    typealias WeatherLoader = () async -> Measurement<UnitTemperature>
+    typealias Forecast = Array<(Date, TempMeasurement)>
+    typealias WeatherLoader = () async -> TempMeasurement
     private static func url(atCoord coord: Coordinate) -> URL? {
         var accumElements:[URLQueryItem] = []
         accumElements.append(URLQueryItem(name: "lat", value: String(format: "%f", coord.lat)))
@@ -29,12 +34,12 @@ struct Weather {
         return components.url
     }
     
-    static fileprivate func loadCurrentTemp() async throws -> Measurement<UnitTemperature> {
+    static fileprivate func loadCurrentTemp() async throws -> TempMeasurement {
         let result: WeatherResult
         do {
             guard abs(Storage.lastForecastUpdate.timeIntervalSinceNow) > 15 * 60 else {
                     throw WeatherRetrievalError.throttle(lastUpdate: Storage.lastForecastUpdate.formatted())
-            }
+            } //return something from the stored forecast is it's available and not stale.
             
             guard let coord = Storage.coordinate else {
                     throw WeatherRetrievalError.noLocation
@@ -132,7 +137,7 @@ struct Weather {
 }
 
 @MainActor
-class WeatherMonitor: ObservableObject {
+class WeatherMonitor: ObservableObject { //manages interactions with the weather service on a periodic schedule. Needs to be done even when app is backgrounded if the user wants temperature alerts.
     static var shared = WeatherMonitor()
     @Published var tooHot: Bool = false
     @Published var tooCold: Bool = false

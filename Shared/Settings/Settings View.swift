@@ -4,6 +4,11 @@
 //
 //  Created by Scott Lucas on 12/9/20.
 //
+/*
+ This view gives the user an opportunity to set alerts for temperature extremes and fan safety interlocks. It's also where the user manages their location information. Since we only need to get the location once (and then we store it), this view has provisions to clear the saved location or retrieve it again.
+ 
+ Much of this code also provides the user with reasons why they don't see certain options (such as temperature alerts). This is one of the more complicated views in the app as a result.
+ */
 
 import SwiftUI
 import CoreLocation

@@ -4,6 +4,9 @@
 //
 //  Created by Scott Lucas on 1/10/21.
 //
+/*
+ Storage code manages the elements we save in persistant storage for retrieval when the app restarts. These are self explanatory, although there are two time-based items that deserve some explanation. "lastForecastUpdate" keeps track of the Date of the last time the app hit the weather API. That helps limit expensive API calls. The "lastNotificationShown" property tracks the Date of the last time we posted a notification to the user to prevent over notification and user irritation.
+ */
 
 import Foundation
 import Combine

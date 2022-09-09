@@ -4,6 +4,9 @@
 //
 //  Created by Scott Lucas on 12/24/20.
 //
+/*
+ There are a number of custom operators used in this app, and most of them are here. A few were lifted from SO but many of them are original, especially the ones relating to data decoding and formatting.
+ */
 
 import Foundation
 import Combine

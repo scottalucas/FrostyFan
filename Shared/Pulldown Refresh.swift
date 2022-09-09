@@ -4,7 +4,9 @@
 //
 //  Created by Scott Lucas on 11/12/21.
 //
-
+/*
+ Native pulldown refresh seems to only work with Lists, so I built this pulldown refresh control for my use case. It's designed as a View Modifier. For this use case, the pulldown refresh initiates a network scan for fans (in the HouseViewModel) via a closure that's executed when the pulldown view drag gesture exceeds 75 pixels.
+ */
 import Foundation
 import SwiftUI
 

@@ -4,6 +4,9 @@
 //
 //  Created by Scott Lucas on 1/1/21.
 //
+/*
+ Simple view used to edit the user-friendly fan name.
+ */
 
 import SwiftUI
 

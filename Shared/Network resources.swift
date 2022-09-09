@@ -4,13 +4,16 @@
 //
 //  Created by Scott Lucas on 12/9/20.
 //
+/*
+ There are some network-related complications for this app. Specifically, these fans are only reachable when both the device and the fan are on the same subnet. There are no supported use cases for public network connections or WAN connections, so these routines will only allow scans and connection attempts when connected via WiFi to a private network address block.
+ */
 
 import Foundation
 import Combine
 import Network
 
 struct NetworkAddress {
-    static var hosts: [String] {
+    static var hosts: [String] { //returns an array of host IP addresses constrained to valid subaddress values.
         (firstHost...lastHost)
             .map ({ hostIpInt in
                 [3, 2, 1, 0].map({ index in (UInt8(hostIpInt >> (index * 8) & UInt32(0xFF))) })
@@ -26,7 +29,7 @@ struct NetworkAddress {
         //            ["0.0.0.0:8181"] //testing only
     }
     
-    private static var netInfo: (address: UInt32, mask: UInt32)? {
+    private static var netInfo: (address: UInt32, mask: UInt32)? { //gets the base network address and mask for the connected network
         struct NetInfo {
             var ip: String
             var netmask: String
@@ -122,7 +125,7 @@ struct NetworkAddress {
     }
 }
 
-class URLSessionMgr {
+class URLSessionMgr { //This custom URL session manager limits connections to WiFi and adds a custom connection timeout.
     static var shared: URLSessionMgr = URLSessionMgr ()
     var networkAvailable: CurrentValueSubject<Bool, Never> = .init(false)
     #if targetEnvironment(simulator)
