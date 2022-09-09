@@ -21,7 +21,6 @@ struct SegmentedSpeedPicker: View {
     @State private var indicatorOn: Bool = false
     @State private var indicatorOffset: CGFloat = 0
     @State private var highlightOffset: CGFloat = 0
-    @State private var msg: String = "init"
     @State private var size: CGSize = CGSize(width: 200, height: 50)
     private var cornerRadius: CGFloat {
         size.height * 0.3
@@ -29,13 +28,7 @@ struct SegmentedSpeedPicker: View {
     private var cellWidth: CGFloat {
         size.width / CGFloat (segments)
     }
-    /*
-     highlightOffset = cellWidth * CGFloat (highlightedSegment ?? 0)
-     indicatorOffset = cellWidth * CGFloat (indicatedSegment ?? 0)
-     
-     cornerRadius = newSize.height * 0.3
-     cellWidth = newSize.width/CGFloat(segments)
-     */
+
     var minMaxLabels: PickerLabel.Appearance
     var middleLabels: PickerLabel.Appearance
     
